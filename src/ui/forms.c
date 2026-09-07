@@ -97,7 +97,8 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
         if(key==KEY_F2){
             int sf=field_supported ? 12:d->solver.sf;
             d->solver=(OdeSettings){0,1,.1,20000,1,sf};d->solver_custom=0;
-            model_sync_solver_window(d);selected=0;continue;
+            int projection=d->view.phase;d->view.phase=0;
+            model_sync_solver_window(d);d->view.phase=projection;selected=0;continue;
         }
         double current=field==0 ? d->solver.xmin:(field==1 ? d->solver.xmax:(field==2 ? d->solver.h:
             (field==3 ? d->solver.step:(field==4 ? d->solver.sf:(double)d->solver.max_steps))));
@@ -106,15 +107,16 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
 }
 void ui_vwindow(Document *d)
 {
-    int selected=0;NumberEdit edit={0};
+    int selected=0;NumberEdit edit={0};ViewWindow *active=model_view(d);
+    bool phase=model_phase_supported(d) && d->view.phase;
     for(;;) {
         const char *labels[]={"Xmin","max","scale","dot","Ymin","max","scale"};
-        char values[7][48];double dot=model_xdot(&d->view);
-        snprintf(values[0],48,"%.9g",d->view.xmin);snprintf(values[1],48,"%.9g",d->view.xmax);
-        snprintf(values[2],48,"%.9g",d->view.xscale);snprintf(values[3],48,"%.9g",dot);
-        snprintf(values[4],48,"%.9g",d->view.ymin);snprintf(values[5],48,"%.9g",d->view.ymax);
-        snprintf(values[6],48,"%.9g",d->view.yscale);
-        ui_frame("View Window",NULL);
+        char values[7][48];double dot=model_xdot(active);
+        snprintf(values[0],48,"%.9g",active->xmin);snprintf(values[1],48,"%.9g",active->xmax);
+        snprintf(values[2],48,"%.9g",active->xscale);snprintf(values[3],48,"%.9g",dot);
+        snprintf(values[4],48,"%.9g",active->ymin);snprintf(values[5],48,"%.9g",active->ymax);
+        snprintf(values[6],48,"%.9g",active->yscale);
+        ui_frame(phase ? "Phase View Window":"View Window",NULL);
         for(int i=0;i<7;i++)ui_field(i,labels[i],edit.active && i==selected ? edit.text:values[i],i==selected);
         number_cursor(&edit,selected);
         ui_form_hint(&edit,"Xdot edits Xmax; Xmin/Xmax recalculate Xdot");
@@ -125,23 +127,24 @@ void ui_vwindow(Document *d)
         if(edit.active) {
             int action=key==KEY_EXIT || key==KEY_UP || key==KEY_DOWN ? 1:number_key(&edit,event);
             if(action==0)continue;
-            double value;ViewWindow before=d->view;
+            double value;ViewWindow before=*active;
             if(!number_value(&edit,&value))continue;
-            if(selected==0)d->view.xmin=value;
-            if(selected==1)d->view.xmax=value;
-            if(selected==2)d->view.xscale=value;
-            if(selected==3 && !model_set_xdot(&d->view,value)) {
-                d->view=before;ui_message("Invalid Xdot","Xdot must be positive and finite.");continue;
+            if(selected==0)active->xmin=value;
+            if(selected==1)active->xmax=value;
+            if(selected==2)active->xscale=value;
+            if(selected==3 && !model_set_xdot(active,value)) {
+                *active=before;ui_message("Invalid Xdot","Xdot must be positive and finite.");continue;
             }
-            if(selected==4)d->view.ymin=value;
-            if(selected==5)d->view.ymax=value;
-            if(selected==6)d->view.yscale=value;
-            ViewWindow *v=&d->view;
+            if(selected==4)active->ymin=value;
+            if(selected==5)active->ymax=value;
+            if(selected==6)active->yscale=value;
+            ViewWindow *v=active;
             if(v->xmin>=v->xmax || v->ymin>=v->ymax || v->xscale<=0 || v->yscale<=0
                 || !isfinite(v->xmax-v->xmin) || !isfinite(v->ymax-v->ymin)) {
-                d->view=before;ui_message("Invalid window","Require min < max and positive scales.");continue;
+                *active=before;ui_message("Invalid window","Require min < max and positive scales.");continue;
             }
             if(selected<=3)model_sync_solver_window(d);
+            if(phase)d->phase_ready=1;
             edit.active=false;
             ui_field_complete(key,true,&selected,7);
             if(key==KEY_UP && selected>0)selected--;
@@ -150,9 +153,13 @@ void ui_vwindow(Document *d)
         }
         key=ui_field_complete(key,false,&selected,7);event.key=(unsigned)key;
         if(key==KEY_EXIT || key==KEY_F6)return;
-        if(key==KEY_F1){model_window_defaults(&d->view);model_sync_solver_window(d);selected=0;continue;}
-        double current=selected==0 ? d->view.xmin:(selected==1 ? d->view.xmax:(selected==2 ? d->view.xscale:
-            (selected==3 ? dot:(selected==4 ? d->view.ymin:(selected==5 ? d->view.ymax:d->view.yscale)))));
+        if(key==KEY_F1){
+            if(phase){model_phase_window_defaults(active);d->phase_ready=1;}
+            else model_window_defaults(active);
+            model_sync_solver_window(d);selected=0;continue;
+        }
+        double current=selected==0 ? active->xmin:(selected==1 ? active->xmax:(selected==2 ? active->xscale:
+            (selected==3 ? dot:(selected==4 ? active->ymin:(selected==5 ? active->ymax:active->yscale)))));
         number_select(&edit,event,current,&selected,7);
     }
 }
@@ -161,11 +168,12 @@ static const char *const field_names[]={"Pale Blue","Pale Red","Pale Cyan","Pale
 static const char *const curve_names[]={"Blue","Red","Magenta","Black","Cyan","Bright Green"};
 void ui_graph_settings(Document *d)
 {
+    ViewWindow *view=model_view(d);
     int selected=0;bool supported=model_field_supported(d);int count=supported ? 4:2;
     for(;;) {
         ui_frame("Graph settings",NULL);
-        ui_field(0,"Grid",d->view.grid ? "On":"Off",selected==0);
-        ui_field(1,"Axis Label",d->view.labels ? "On":"Off",selected==1);
+        ui_field(0,"Grid",view->grid ? "On":"Off",selected==0);
+        ui_field(1,"Axis Label",view->labels ? "On":"Off",selected==1);
         if(supported) {
             ui_text(14,94,UI_MUTED,"Slope Field");
             ui_field(4,"Style",d->field_style==FIELD_ARROW ? "Arrow":"Segment",selected==2);
@@ -182,10 +190,10 @@ void ui_graph_settings(Document *d)
         if(key==KEY_UP && selected>0)selected--;
         if(key==KEY_DOWN && selected+1<count)selected++;
         if(key==KEY_F4) {
-            d->view.grid=d->view.labels=1;model_field_appearance_defaults(d);selected=0;continue;
+            view->grid=view->labels=1;model_field_appearance_defaults(d);selected=0;continue;
         }
         if(selected<2) {
-            int *value=selected ? &d->view.labels:&d->view.grid;
+            int *value=selected ? &view->labels:&view->grid;
             if(key==KEY_LEFT || key==KEY_RIGHT)*value=!*value;
         } else if(selected==2) {
             if(key==KEY_F1)d->field_style=FIELD_SEGMENT;

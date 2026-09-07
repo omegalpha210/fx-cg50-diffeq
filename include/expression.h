@@ -22,6 +22,8 @@ typedef struct {
 } ExprScope;
 ExprError expr_compile(const char *text,ExprScope scope,ExprProgram *out);
 ExprStatus expr_eval(const ExprProgram *p,double x,const double *y,int n,double *out);
+/* Conservative bytecode dependency: an emitted x load marks time dependence. */
+bool expr_uses_x(const ExprProgram *p);
 const char *expr_status_text(ExprStatus status);
 bool expr_to_system(const char *src,char *dst,unsigned capacity);
 #endif

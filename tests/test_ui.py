@@ -126,7 +126,7 @@ actual=run(graph+'F2 F1')
 assert metrics(actual)[-1][0]>metrics(base)[-1][0] and plot(actual)!=plot(base)
 run(graph+'F2 F3',['TRACE'])
 run('2 F6 F6 F4 DOWN RIGHT LEFT',['ON','OFF','LEFT/RIGHT: ON/OFF toggle'])
-run('4 2 F6 F6 F6 F6 F4 F2 F3 F5',
+run('4 2 F6 F6 F6 F6 F4 F3 F2 F3 F5',
     ['Preparing table...','Table','MID','STAT data saved'],['DIR','Table / IC1'])
 run(graph+'EXIT EXIT EXIT EXIT F5 1',['Recall','DIFF EQ / Linear 2nd'])
 run('EXIT EXIT F6 EXE EXIT',['No session.','SCRIPT COMPLETE'])

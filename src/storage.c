@@ -16,13 +16,13 @@
 #endif
 
 #define RECORD_MAGIC 0x44455131u
-#define RECORD_VERSION 7u
+#define RECORD_VERSION 8u
 
 typedef struct {
     uint32_t magic,version,size,generation,has_recall;
 } RecordHeader;
 
-/* This type describes the version-7 byte layout. No object of this
+/* This type describes the current version-8 byte layout. No object of this
    type is allocated; session data is streamed directly from App documents. */
 typedef struct {
     uint32_t magic,version,size,generation,has_recall;
@@ -57,6 +57,21 @@ typedef struct {
     uint8_t color[9][9];
     uint8_t field_style,field_color;
 } Version6Document;
+/* Frozen v7 ABI: unified output and ten IC slots, before phase-only state. */
+typedef struct {
+    int kind,dim,nic;
+    char text[9][192];
+    double power;
+    InitialCondition ic[10];
+    OdeSettings solver;
+    int solver_custom;
+    ViewWindow view;
+    uint16_t enabled;
+    uint8_t color[10][9];
+    uint8_t field_style,field_color;
+} Version7Document;
+_Static_assert(offsetof(Document,phase_view)==sizeof(Version7Document),
+    "v7 document prefix changed");
 typedef struct {
     char path[256];
     RecordHeader header;
@@ -141,6 +156,7 @@ static size_t document_size(uint32_t version)
     if(version==4)return aligned_size(offsetof(LegacyDocument,field_style),_Alignof(LegacyDocument));
     if(version==5)return sizeof(LegacyDocument);
     if(version==6)return sizeof(Version6Document);
+    if(version==7)return sizeof(Version7Document);
     return sizeof(Document);
 }
 static size_t checksum_offset(uint32_t version)
@@ -243,11 +259,39 @@ static bool migrate_expression(char text[EXPR_TEXT],const double constants[28])
     }
     result[used]=0;memcpy(text,result,used+1);return true;
 }
+
+/* Old records had one window serving both time and phase plots. Preserve an
+   active SYS2 phase window as phase geometry. Its time geometry cannot be
+   recovered, so install safe defaults while retaining the selected phase mode
+   and the stored solver (including an automatic solver) byte-for-byte. */
+static void migrate_phase_state(Document *d,bool present)
+{
+    model_phase_window_defaults(&d->phase_view);
+    d->phase_field=1;d->phase_nullclines=0;d->phase_ready=0;
+    if(!present || !model_phase_supported(d) || !d->view.phase)return;
+    d->phase_view=d->view;
+    d->phase_view.phase=1;d->phase_view.phase_x=0;d->phase_view.phase_y=1;
+    model_window_defaults(&d->view);
+    d->view.phase=1;
+}
+
 static bool read_document(int fd,Document *d,uint32_t version,bool present,uint32_t *hash,unsigned *warnings)
 {
     memset(d,0,sizeof(*d));
     if(version==RECORD_VERSION) {
         if(!native_read_hashed(fd,d,sizeof(*d),hash))return false;
+        model_sanitize_colors(d);model_sanitize_field(d);return true;
+    }
+    if(version==7) {
+        size_t position=0;
+#define V7_FIELD(member) do {if(!legacy_field(fd,&d->member,sizeof(((Version7Document *)0)->member),offsetof(Version7Document,member),&position,hash))return false;} while(0)
+        V7_FIELD(kind);V7_FIELD(dim);V7_FIELD(nic);V7_FIELD(text);V7_FIELD(power);
+        V7_FIELD(ic);V7_FIELD(solver);V7_FIELD(solver_custom);V7_FIELD(view);
+        V7_FIELD(enabled);V7_FIELD(color);V7_FIELD(field_style);V7_FIELD(field_color);
+#undef V7_FIELD
+        if(!skip_hashed(fd,document_size(version)-position,hash))return false;
+        if(present && (d->nic<0 || d->nic>10))return false;
+        migrate_phase_state(d,present);
         model_sanitize_colors(d);model_sanitize_field(d);return true;
     }
     if(version==6) {
@@ -259,6 +303,7 @@ static bool read_document(int fd,Document *d,uint32_t version,bool present,uint3
 #undef V6_FIELD
         if(!skip_hashed(fd,document_size(version)-position,hash))return false;
         if(present && (d->nic<0 || d->nic>9))return false;
+        migrate_phase_state(d,present);
         model_sanitize_colors(d);model_sanitize_field(d);return true;
     }
     size_t position=0;double constants[28];uint16_t graph[9],list[9];
@@ -272,6 +317,7 @@ static bool read_document(int fd,Document *d,uint32_t version,bool present,uint3
     if(version>=5){FIELD(field_style);FIELD(field_color);}else model_field_appearance_defaults(d);
 #undef FIELD
     if(!skip_hashed(fd,document_size(version)-position,hash))return false;
+    migrate_phase_state(d,present);
     if(!present)return true; /* Unused recall bytes need only checksum validation. */
     if(d->dim<1 || d->dim>ODE_MAX_DIM || d->nic<0 || d->nic>9)return false;
     *warnings|=STORAGE_LEGACY;

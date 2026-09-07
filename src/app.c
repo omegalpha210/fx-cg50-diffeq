@@ -87,23 +87,32 @@ static void new_document(App *a,EquationKind kind,int dimension)
 {
     OdeSettings solver=a->doc.solver;ViewWindow view=a->doc.view;
     int solver_custom=a->doc.solver_custom;
+    ViewWindow phase_view=a->doc.phase_view;
+    uint8_t phase_field=a->doc.phase_field,phase_nullclines=a->doc.phase_nullclines,phase_ready=a->doc.phase_ready;
     uint8_t field_style=a->doc.field_style,field_color=a->doc.field_color;
     model_defaults(&a->doc,kind,dimension);
     a->doc.solver=solver;a->doc.solver_custom=solver_custom;a->doc.view=view;
     a->doc.field_style=field_style;a->doc.field_color=field_color;
-    if(a->doc.dim<2)a->doc.view.phase=0;
+    a->doc.phase_view=phase_view;a->doc.phase_field=phase_field;
+    a->doc.phase_nullclines=phase_nullclines;a->doc.phase_ready=phase_ready;
+    a->doc.view.phase=0;
     model_sync_solver_window(&a->doc);a->dirty=true;
     pristine_input=input_fingerprint(&a->doc);
 }
 
 static void use_recall(App *a)
 {
+    bool was_phase_system=model_phase_supported(&a->doc);
     OdeSettings solver=a->doc.solver;ViewWindow view=a->doc.view;
     int solver_custom=a->doc.solver_custom;
+    ViewWindow phase_view=a->doc.phase_view;
+    uint8_t phase_field=a->doc.phase_field,phase_nullclines=a->doc.phase_nullclines,phase_ready=a->doc.phase_ready;
     uint8_t field_style=a->doc.field_style,field_color=a->doc.field_color;
     a->doc=a->recall;a->doc.solver=solver;a->doc.solver_custom=solver_custom;a->doc.view=view;
     a->doc.field_style=field_style;a->doc.field_color=field_color;
-    if(a->doc.dim<2)a->doc.view.phase=0;
+    a->doc.phase_view=phase_view;a->doc.phase_field=phase_field;
+    a->doc.phase_nullclines=phase_nullclines;a->doc.phase_ready=phase_ready;
+    if(a->doc.dim<2 || was_phase_system!=model_phase_supported(&a->doc))a->doc.view.phase=0;
     model_sync_solver_window(&a->doc);a->dirty=true;
     pristine_input=0;
 }

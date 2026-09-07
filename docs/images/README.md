@@ -33,3 +33,5 @@ hint were regenerated with the exact public candidate renderer.
 
 Captures were visually checked. Host output is not evidence of physical LCD
 contrast, calculator key timing or OS behavior; hardware retesting remains pending.
+
+Three additional Phase screens and reproduction details are documented in [PHASE.md](PHASE.md).

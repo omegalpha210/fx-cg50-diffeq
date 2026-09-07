@@ -22,6 +22,8 @@ typedef struct {
     uint16_t enabled; /* One dependent-output mask, shared by Graph/Table/CSV. */
     uint8_t color[ODE_MAX_IC][ODE_MAX_DIM];
     uint8_t field_style,field_color;
+    ViewWindow phase_view;
+    uint8_t phase_field,phase_nullclines,phase_ready;
 } Document;
 typedef struct {
     int kind,dim;
@@ -30,6 +32,7 @@ typedef struct {
 } CompiledModel;
 typedef struct {int equation; ExprError expression; OdeStatus values;} ModelError;
 bool model_field_supported(const Document *d);
+bool model_phase_supported(const Document *d);
 void model_field_appearance_defaults(Document *d);
 void model_sanitize_field(Document *d);
 void model_defaults(Document *d,EquationKind kind,int dim);
@@ -40,6 +43,9 @@ void model_output_defaults(Document *d);
 void model_output_color(Document *d,int variable,unsigned color);
 void model_sanitize_colors(Document *d);
 void model_window_defaults(ViewWindow *v);
+void model_phase_window_defaults(ViewWindow *v);
+ViewWindow *model_view(Document *d);
+const ViewWindow *model_view_const(const Document *d);
 void model_sync_solver_window(Document *d);
 double model_xdot(const ViewWindow *v);
 bool model_set_xdot(ViewWindow *v,double xdot);

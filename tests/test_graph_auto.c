@@ -29,15 +29,18 @@ int main(void)
     d.view.xmin=-1;d.view.xmax=1;
     strcpy(d.text[0],"sqrt(2-x)");assert(model_compile(&d,&m).values==ODE_OK);
     assert(graph_auto_window(&d,&m)==ODE_OK);
-    /* A phase trajectory needs both selected axis states' Graph flags. */
+    /* SYS2 phase is independent of TIME Output flags and has its own bounds. */
     d.view.phase=1;d.view.phase_x=0;d.view.phase_y=1;
-    assert(!graph_family_enabled(&d,0));
+    assert(graph_family_enabled(&d,0));
     d.enabled=3;assert(graph_family_enabled(&d,0));
     strcpy(d.text[0],"0");strcpy(d.text[1],"0");
     d.view.xmin=9;d.view.xmax=11;d.ic[0].y[1]=20;
     assert(model_compile(&d,&m).values==ODE_OK);
+    d.phase_field=0;before=d.view;
+    assert(graph_render(&d,&m,true).status==ODE_OK);
     assert(graph_auto_window(&d,&m)==ODE_OK);
-    assert(d.view.xmin==9 && d.view.xmax==11 && d.view.ymin<20 && d.view.ymax>20);
+    assert(!memcmp(&before,&d.view,sizeof(before)));
+    assert(d.phase_view.xmin<10 && d.phase_view.xmax>10 && d.phase_view.ymin<20 && d.phase_view.ymax>20);
     d.view.xmin=-1;d.view.xmax=1;strcpy(d.text[0],"sqrt(-1)");
     assert(model_compile(&d,&m).values==ODE_OK);before=d.view;
     assert(graph_auto_window(&d,&m)!=ODE_OK && !memcmp(&before,&d.view,sizeof(before)));

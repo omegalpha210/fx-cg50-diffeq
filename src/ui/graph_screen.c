@@ -2,6 +2,7 @@
 #include "gsolve.h"
 #include "ui.h"
 #include "trace.h"
+#include "phase_graph.h"
 #include <math.h>
 #include <stdio.h>
 static bool pan_key(ViewWindow *view,int key)
@@ -17,7 +18,7 @@ static bool accept_window(Document *d,ViewWindow before,OdeSettings solver)
     model_sync_solver_window(d);
     ModelWork plan=model_preflight(d,&d->solver);
     if(plan.status==ODE_OK)return true;
-    d->view=before;d->solver=solver;
+    *model_view(d)=before;d->solver=solver;
     ui_rect(0,198,384,18,UI_BLUE);
     ui_text(7,202,C_WHITE,"Too many steps: increase h / Max Steps");dupdate();
     int key;do {key=ui_getkey().key;}while(key!=KEY_EXE && key!=KEY_EXIT);
@@ -25,6 +26,19 @@ static bool accept_window(Document *d,ViewWindow before,OdeSettings solver)
 }
 static bool graph_more(App *a,GraphResult last)
 {
+    if(model_phase_supported(&a->doc)) {
+        const char *const items[]={"Graph settings","Calculation / window details"};
+        int n=ui_choose("Graph options",items,2,0);
+        if(n==0)return true;
+        if(n==1) {
+            const ViewWindow *v=model_view_const(&a->doc);char text[220];
+            snprintf(text,sizeof(text),"%s view\n%s\nSteps: %u\nX: %.7g to %.7g\nY: %.7g to %.7g\nIntegration h: %.7g",
+                a->doc.view.phase ? "PHASE":"TIME",ode_status_text(last.status),last.steps,
+                v->xmin,v->xmax,v->ymin,v->ymax,a->doc.solver.h);
+            ui_message("Graph details",text);
+        }
+        return false;
+    }
     const char *const choices[]={"Phase plot: toggle","Phase horizontal state","Phase vertical state",
         "Auto V-Window","Graph settings","Calculation / window details"};
     int choice=ui_choose("Graph options",choices,6,0);Document *d=&a->doc;
@@ -77,7 +91,7 @@ void ui_trace(App *a)
         if(d->view.phase) {
             int visible=0;
             for(int i=0;i<d->nic;i++)if(graph_family_enabled(d,i) && visible++==selected)curve.family=i;
-            curve.variable=d->view.phase_y;
+            curve.variable=model_view_const(d)->phase_y;
         } else gsolve_curve_at(d,selected,&curve);
         if(prepared!=selected) {
             /* Capture into bounded scratch without modifying any graph pixel.
@@ -93,7 +107,9 @@ void ui_trace(App *a)
             ui_text(8,184,UI_BLUE,"x=");ui_inline_draw(&edit,25,184,210,UI_BLUE,C_WHITE);
         } else if(valid) {
             char label[16];model_variable_label(d,curve.variable,label,sizeof(label));
-            ui_text(8,184,UI_BLUE,"IC%d x=%.7g %s=%.7g",curve.family+1,point.x,label,point.y[curve.variable]);
+            if(model_phase_supported(d) && d->view.phase)
+                ui_text(8,184,UI_BLUE,"x=%.5g y1=%.5g y2=%.5g",point.x,point.y[0],point.y[1]);
+            else ui_text(8,184,UI_BLUE,"IC%d x=%.7g %s=%.7g",curve.family+1,point.x,label,point.y[curve.variable]);
         } else ui_text(8,184,UI_BLUE,"Trace unavailable; graph retained");
         if(boundary) {
             ui_rect(0,179,384,19,C_WHITE);ui_text(8,184,UI_BLUE,follow_error==ODE_STEP_LIMIT || follow_error==ODE_WORK_LIMIT ?
@@ -115,7 +131,17 @@ void ui_trace(App *a)
                 if(!trace_value(&edit,&value)){input_error=true;continue;}
                 input_error=false;
                 const OdeSettings *extent=valid ? trace_extent():&d->solver;
-                value=fmax(fmax(extent->xmin,d->view.xmin),fmin(fmin(extent->xmax,d->view.xmax),value));
+                if(model_phase_supported(d) && d->view.phase)value=fmax(extent->xmin,fmin(extent->xmax,value));
+                else value=fmax(fmax(extent->xmin,d->view.xmin),fmin(fmin(extent->xmax,d->view.xmax),value));
+                if(model_phase_supported(d) && d->view.phase) {
+                    OdeStatus status=trace_navigate(d,&a->model,value,true,&point);
+                    if(status==ODE_CANCELLED) {
+                        if(ui_trace_key(&blink).key==KEY_EXIT)break;
+                        continue;
+                    }
+                    if(status!=ODE_OK && status!=ODE_HAS_INVALID){input_error=true;continue;}
+                    a->dirty=true;edit.active=false;boundary=status==ODE_HAS_INVALID;continue;
+                }
                 OdeResult r=ode_integrate(model_rhs,&a->model,d->dim,d->ic[curve.family].x,
                     d->ic[curve.family].y,value,extent,NULL,NULL,ui_trace_cancel,NULL);
                 if(r.status==ODE_CANCELLED) {
@@ -327,67 +353,148 @@ static void gsolve_menu(App *a,GraphResult *last)
         }
     }
 }
+static void equilibrium_info(int selected)
+{
+    const PhaseResults *r=graph_phase_results();
+    if(selected<0 || (unsigned)selected>=r->count) {
+        ui_message("Phase analysis","EQPT searches this Phase window.\nAutonomous 2D systems only.\nClassification is local linear.\nN1 (red): f1=0\nN2 (blue): f2=0");return;
+    }
+    const PhaseRoot *p=&r->root[selected];char text[360];
+    snprintf(text,sizeof(text),"y1=%.9g  y2=%.9g\nLinearized: %s\nJ: %.6g  %.6g\n   %.6g  %.6g\nL1: %.6g %+.6gi\nL2: %.6g %+.6gi\nLocal linear; neutral is inconclusive.",
+        p->y[0],p->y[1],phase_type_name(p->type),p->jacobian[0],p->jacobian[1],
+        p->jacobian[2],p->jacobian[3],p->eigen_real[0],p->eigen_imag[0],p->eigen_real[1],p->eigen_imag[1]);
+    ui_message("Equilibrium / INFO",text);
+}
+/* Small settings transaction: phase preflight can abort before a graph pixel
+   changes. Never copy the Document or keep a second framebuffer on the stack. */
+typedef struct {
+    ViewWindow window,phase_window;OdeSettings solver;
+    uint8_t projection,field,nullclines,ready;
+} GraphChange;
+static GraphChange change_begin(const Document *d)
+{
+    return (GraphChange){*model_view_const(d),d->phase_view,d->solver,d->view.phase,
+        d->phase_field,d->phase_nullclines,d->phase_ready};
+}
+static void change_restore(Document *d,const GraphChange *before)
+{
+    d->view.phase=before->projection;d->phase_view=before->phase_window;*model_view(d)=before->window;d->solver=before->solver;
+    d->phase_field=before->field;d->phase_nullclines=before->nullclines;d->phase_ready=before->ready;
+}
 UiGraphAction ui_graph(App *a,bool first)
 {
-    bool redraw=true,zoom_menu=false;
+    enum {BASE,ZOOM,VIEW,ANALYSIS} menu=BASE;
+    bool redraw=true,pending=false,eq_shown=false;
+    int selected=-1;OdeStatus notice=ODE_OK;
+    Document *d=&a->doc;GraphChange before=change_begin(d);
     GraphResult result={.status=ODE_OK,.failed_family=-1};
     for(;;) {
+        bool system=model_phase_supported(d),phase=system && d->view.phase;
         if(redraw) {
-            /* Keep the displayed plot while streaming the next render to the
-               same VRAM. Menu-only changes never enter this branch. */
             ui_rect(0,198,384,18,UI_BLUE);
             ui_text(7,202,C_WHITE,"Drawing... EXIT cancels");dupdate();
-            result=graph_render(&a->doc,&a->model,first);first=false;redraw=false;
+            GraphResult next=graph_render(d,&a->model,first);first=false;redraw=false;
+            if(pending && next.status!=ODE_OK && next.status!=ODE_HAS_INVALID) {
+                change_restore(d,&before);notice=next.status;
+                if(system && !phase && trace_cache_matches(d)) {
+                    graph_backdrop(d,&a->model);trace_cache_render(d);graph_phase_markers(d,-1);
+                }
+            } else {result=next;if(pending)a->dirty=true;}
+            pending=false;phase=system && d->view.phase;
         }
-        if(zoom_menu)ui_softkeys("IN","OUT","AUTO","ORIG","","");
-        else ui_softkeys("TRACE","ZOOM","V-WIN","TABLE","G-SLV","PREV");
-        dupdate();
-        key_event_t event=ui_getkey();int key=event.key;
-        if(zoom_menu) {
-            if(key==KEY_EXIT){zoom_menu=false;continue;}
-            ViewWindow before=a->doc.view;OdeSettings solver=a->doc.solver;
-            redraw=pan_key(&a->doc.view,key);
-            if(key==KEY_F4) {model_window_defaults(&a->doc.view);redraw=true;}
+        if(menu==ZOOM)ui_softkeys("IN","OUT","AUTO","ORIG","","");
+        else if(menu==VIEW)ui_softkeys("TIME","PHASE","TABLE","","","");
+        else if(menu==ANALYSIS)ui_softkeys("FIELD","NULL","EQPT","INFO","","");
+        else ui_softkeys("TRACE","ZOOM","V-WIN",system ? "VIEW":"TABLE",phase ? "ANLYS":"G-SLV","PREV");
+        if(menu==ANALYSIS && eq_shown) {
+            const PhaseResults *r=graph_phase_results();
+            ui_rect(0,163,384,35,C_WHITE);
+            if(selected>=0 && (unsigned)selected<r->count) {
+                const PhaseRoot *p=&r->root[selected];graph_phase_markers(d,selected);
+                ui_text(6,165,UI_BLUE,"EQPT %d/%u%s y1=%.6g y2=%.6g",selected+1,r->count,
+                    r->truncated ? "+":"",p->y[0],p->y[1]);
+                ui_text(6,182,UI_BLUE,"Linearized: %s",phase_type_name(p->type));
+            } else ui_text(6,181,UI_BLUE,"EQPT: Not found%s",r->has_invalid ? " (valid regions)":"");
+        }
+        if(notice!=ODE_OK) {
+            ui_rect(0,179,384,19,C_WHITE);ui_text(6,184,UI_BLUE,"Phase: %s",ode_status_text(notice));
+        }
+        dupdate();int key=ui_getkey().key;notice=ODE_OK;
+        if(menu==VIEW) {
+            if(key==KEY_EXIT){menu=BASE;continue;}
+            if(key==KEY_F3)return UI_GRAPH_TABLE;
             if(key==KEY_F1 || key==KEY_F2) {
-                redraw=graph_zoom(&a->doc.view,key==KEY_F1 ? .67:1.5,0,0);
+                before=change_begin(d);
+                if(key==KEY_F2 && !d->phase_ready) {
+                    if(!trace_cache_phase_window(d,&d->phase_view))model_phase_window_defaults(&d->phase_view);
+                    d->phase_ready=1;
+                }
+                d->view.phase=key==KEY_F2;pending=true;redraw=true;menu=BASE;
+            }
+            continue;
+        }
+        if(menu==ANALYSIS) {
+            if(key==KEY_EXIT){menu=BASE;redraw=true;eq_shown=false;continue;}
+            if(key==KEY_F1 || key==KEY_F2) {
+                before=change_begin(d);
+                if(key==KEY_F1)d->phase_field=!d->phase_field;
+                else d->phase_nullclines=!d->phase_nullclines;
+                pending=true;redraw=true;
             }
             if(key==KEY_F3) {
-                ui_rect(0,198,384,18,UI_BLUE);ui_text(7,202,C_WHITE,"Fitting Y... EXIT cancels");dupdate();
-                OdeStatus status=graph_auto_window(&a->doc,&a->model);
-                redraw=status==ODE_OK;
-                if(!redraw) {
+                if(!phase_autonomous(&a->model)) {
+                    ui_message("EQPT","Autonomous systems only.");redraw=true;continue;
+                }
+                OdeStatus s=graph_phase_search(d,&a->model,ui_cancel,NULL);
+                if(s==ODE_OK){eq_shown=true;selected=graph_phase_results()->count ? 0:-1;redraw=true;}
+                else notice=s;
+            }
+            if(key==KEY_F4){equilibrium_info(selected);redraw=true;}
+            const PhaseResults *r=graph_phase_results();
+            if(eq_shown && r->count && (key==KEY_LEFT || key==KEY_RIGHT)) {
+                selected=(selected+(key==KEY_LEFT ? (int)r->count-1:1))%(int)r->count;redraw=true;
+            }
+            continue;
+        }
+        if(menu==ZOOM && key==KEY_EXIT){menu=BASE;continue;}
+        if(menu==BASE && (key==KEY_EXIT || key==KEY_F6))return UI_GRAPH_BACK;
+        if(menu==BASE && key==KEY_F1){ui_trace(a);continue;}
+        if(menu==BASE && key==KEY_F2){menu=ZOOM;continue;}
+        before=change_begin(d);ViewWindow *v=model_view(d);
+        bool changed=pan_key(v,key);
+        if(menu==ZOOM) {
+            if(key==KEY_F4) {
+                if(phase)model_phase_window_defaults(v);else model_window_defaults(v);
+                changed=true;
+            }
+            if(key==KEY_F1 || key==KEY_F2)changed=graph_zoom(v,key==KEY_F1 ? .67:1.5,0,0);
+            if(key==KEY_F3) {
+                OdeStatus s=graph_auto_window(d,&a->model);changed=s==ODE_OK;
+                if(!changed) {
                     ui_rect(0,198,384,18,UI_BLUE);
-                    ui_text(7,202,C_WHITE,"AUTO: %s - EXE",status==ODE_BAD_INPUT ?
-                        "No samples in X range":ode_status_text(status));dupdate();
+                    ui_text(7,202,C_WHITE,"AUTO: %s - EXE",s==ODE_BAD_INPUT ? "No samples in X range":ode_status_text(s));dupdate();
                     while((key=ui_getkey().key)!=KEY_EXE && key!=KEY_EXIT) {}
                 }
             }
-            if(redraw){redraw=accept_window(&a->doc,before,solver);if(redraw)a->dirty=true;}
-            continue;
+        } else {
+            if(key==KEY_ADD || key==KEY_SUB)changed=graph_zoom(v,key==KEY_ADD ? .67:1.5,0,0);
+            if(key==KEY_F3)return UI_GRAPH_VWINDOW;
+            if(key==KEY_F4){if(system){menu=VIEW;continue;}return UI_GRAPH_TABLE;}
+            if(key==KEY_F5) {
+                if(phase){menu=ANALYSIS;continue;}
+                if(d->view.phase) {
+                    ui_rect(0,198,384,18,UI_BLUE);ui_text(7,202,C_WHITE,"G-Solve: turn Phase off (EXE)");dupdate();
+                    while((key=ui_getkey().key)!=KEY_EXE && key!=KEY_EXIT) {}
+                } else gsolve_menu(a,&result);
+            }
+            if(key==KEY_OPTN) {
+                if(graph_more(a,result))return UI_GRAPH_SETTINGS;
+                redraw=true;
+            }
         }
-        if(key==KEY_EXIT || key==KEY_F6)return UI_GRAPH_BACK;
-        if(key==KEY_F1){ui_trace(a);continue;}
-        if(key==KEY_F2) {
-            zoom_menu=true;continue;
-        }
-        ViewWindow before=a->doc.view;OdeSettings solver=a->doc.solver;
-        if(key==KEY_ADD)graph_zoom(&a->doc.view,.67,0,0);
-        if(key==KEY_SUB)graph_zoom(&a->doc.view,1.5,0,0);
-        pan_key(&a->doc.view,key);
-        if(key==KEY_ADD || key==KEY_SUB || key==KEY_LEFT || key==KEY_RIGHT
-            || key==KEY_UP || key==KEY_DOWN){redraw=accept_window(&a->doc,before,solver);if(redraw)a->dirty=true;}
-        if(key==KEY_F3)return UI_GRAPH_VWINDOW;
-        if(key==KEY_F4)return UI_GRAPH_TABLE;
-        /* A bounded softkey submenu, not a dispatcher screen re-entry. */
-        if(key==KEY_F5) {
-            if(a->doc.view.phase) {
-                ui_rect(0,198,384,18,UI_BLUE);ui_text(7,202,C_WHITE,"G-Solve: turn Phase off (EXE)");dupdate();
-                while((key=ui_getkey().key)!=KEY_EXE && key!=KEY_EXIT) {}
-            } else gsolve_menu(a,&result);
-        }
-        if(key==KEY_OPTN) {
-            if(graph_more(a,result))return UI_GRAPH_SETTINGS;
-            redraw=true;
+        if(changed && accept_window(d,before.window,before.solver)) {
+            if(phase)d->phase_ready=1;
+            pending=true;redraw=true;
         }
     }
 }

@@ -8,7 +8,7 @@ if(SANITIZE AND CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
   add_compile_options(-fsanitize=undefined -fno-omit-frame-pointer)
   add_link_options(-fsanitize=undefined)
 endif()
-add_library(core STATIC ../src/ode/initial.c ../src/ode/validity.c ../src/ode/ode.c ../src/ode/rk4.c ../src/ode/gsolve.c ../src/math/expression.c ../src/ode/model.c ../src/app_state.c ../src/storage.c ../src/ode/table.c ../src/ode/sampling.c ../src/graph/geometry.c)
+add_library(core STATIC ../src/ode/phase.c ../src/ode/initial.c ../src/ode/validity.c ../src/ode/ode.c ../src/ode/rk4.c ../src/ode/gsolve.c ../src/math/expression.c ../src/ode/model.c ../src/app_state.c ../src/storage.c ../src/ode/table.c ../src/ode/sampling.c ../src/graph/geometry.c)
 target_include_directories(core PUBLIC ../include host)
 # Host-only function entry counters and syscall wrappers; target sources/build
 # receive none of these options. Counts are printed beside framebuffer hashes.
@@ -34,7 +34,7 @@ set_tests_properties(equation_models PROPERTIES TIMEOUT 30)
 
 # The actual UI/app code against a small drawing/key adapter, not a CPU emulator.
 set(HOST_APP_SOURCES ../src/graph/trace.c ../src/main.c ../src/app.c ../src/ui/common.c
-  ../src/ui/editor.c ../src/ui/forms.c ../src/graph/renderer.c ../src/ui/graph_screen.c
+  ../src/ui/editor.c ../src/ui/forms.c ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/graph_screen.c
   ../src/ui/table_screen.c host/gint_host.c)
 add_executable(host_app ${HOST_APP_SOURCES})
 target_include_directories(host_app PRIVATE host)
@@ -68,7 +68,7 @@ add_test(NAME navigation_stress COMMAND ${Python3_EXECUTABLE}
   $<TARGET_FILE:host_app>)
 set_tests_properties(navigation_stress PROPERTIES TIMEOUT 30)
 
-add_executable(test_graph_auto test_graph_auto.c ../src/graph/renderer.c
+add_executable(test_graph_auto test_graph_auto.c ../src/graph/trace.c ../src/graph/renderer.c ../src/graph/phase.c
   ../src/ui/common.c host/gint_host.c)
 target_include_directories(test_graph_auto PRIVATE host)
 target_link_libraries(test_graph_auto core m)
@@ -83,7 +83,7 @@ target_link_libraries(test_key_lifecycle core m)
 add_test(NAME key_lifecycle COMMAND test_key_lifecycle)
 add_test(NAME trace_repeat COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/test_trace.py $<TARGET_FILE:host_app>)
-add_executable(test_colors test_colors.c ../src/graph/renderer.c ../src/ui/common.c host/gint_host.c)
+add_executable(test_colors test_colors.c ../src/graph/trace.c ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/common.c host/gint_host.c)
 target_include_directories(test_colors PRIVATE host)
 target_link_libraries(test_colors core m)
 add_test(NAME output_color_storage COMMAND test_colors)
@@ -95,7 +95,7 @@ add_test(NAME hardware_feedback_ui COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/test_feedback.py $<TARGET_FILE:host_app>)
 set_tests_properties(hardware_feedback_ui PROPERTIES TIMEOUT 60)
 foreach(validity_test test_valid_regions test_segment_stream)
-  add_executable(${validity_test} ${validity_test}.c ../src/graph/trace.c ../src/graph/renderer.c ../src/ui/common.c host/gint_host.c)
+  add_executable(${validity_test} ${validity_test}.c ../src/graph/trace.c ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/common.c host/gint_host.c)
   target_include_directories(${validity_test} PRIVATE host)
   target_link_libraries(${validity_test} core m)
   add_test(NAME ${validity_test} COMMAND ${validity_test})
@@ -106,7 +106,7 @@ set_tests_properties(simplified_ui PROPERTIES TIMEOUT 60)
 add_executable(test_solver_safety test_solver_safety.c)
 target_link_libraries(test_solver_safety core m)
 add_test(NAME solver_safety COMMAND test_solver_safety)
-add_executable(test_trace_cache test_trace_cache.c ../src/graph/trace.c ../src/graph/renderer.c ../src/ui/common.c host/gint_host.c)
+add_executable(test_trace_cache test_trace_cache.c ../src/graph/trace.c ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/common.c host/gint_host.c)
 target_include_directories(test_trace_cache PRIVATE host)
 target_link_libraries(test_trace_cache core m)
 add_test(NAME trace_cache_transaction COMMAND test_trace_cache)
@@ -114,7 +114,7 @@ add_test(NAME solver_safety_ui COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOU
 set_tests_properties(solver_safety_ui PROPERTIES TIMEOUT 60)
 add_executable(benchmark_solver benchmark_solver.c)
 target_link_libraries(benchmark_solver core m)
-add_executable(test_field test_field.c ../src/graph/trace.c ../src/graph/renderer.c ../src/ui/common.c host/gint_host.c)
+add_executable(test_field test_field.c ../src/graph/trace.c ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/common.c host/gint_host.c)
 target_include_directories(test_field PRIVATE host)
 target_link_libraries(test_field core m)
 add_test(NAME slope_field_renderer COMMAND test_field)
@@ -129,3 +129,20 @@ add_test(NAME contextual_ui_polish COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT
 set_tests_properties(contextual_ui_polish PROPERTIES TIMEOUT 60)
 add_test(NAME trace_ic_polish COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_trace_polish.py $<TARGET_FILE:host_app>)
 set_tests_properties(trace_ic_polish PROPERTIES TIMEOUT 60)
+
+add_executable(test_phase test_phase.c)
+target_link_libraries(test_phase core m)
+add_test(NAME phase_numerics COMMAND test_phase)
+
+add_executable(test_phase_cache test_phase_cache.c ../src/graph/trace.c ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/common.c host/gint_host.c)
+target_include_directories(test_phase_cache PRIVATE host)
+target_link_libraries(test_phase_cache core m)
+add_test(NAME phase_cache COMMAND test_phase_cache)
+add_executable(test_phase_renderer test_phase_renderer.c ../src/graph/trace.c ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/common.c host/gint_host.c)
+target_include_directories(test_phase_renderer PRIVATE host)
+target_link_libraries(test_phase_renderer core m)
+add_test(NAME phase_renderer COMMAND test_phase_renderer)
+add_test(NAME phase_ui COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_phase_ui.py $<TARGET_FILE:host_app>)
+set_tests_properties(phase_ui PROPERTIES TIMEOUT 60)
+add_executable(benchmark_phase benchmark_phase.c)
+target_link_libraries(benchmark_phase core m)

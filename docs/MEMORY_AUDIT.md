@@ -1,17 +1,266 @@
-> Historical beta.1 memory audit. Current beta.2 section sizes and validation are in [ACCEPTANCE.md](ACCEPTANCE.md).
+# Phase milestone memory update (2026-09-08)
 
-# Target memory boundary
+The current P0–P4 build adds **1,824 B BSS** (62,992 → 64,816), with data unchanged
+at **704 B**. One static `PhaseResults` holds at most 16 roots (**1,484 B SH**).
+Phase window/preferences occupy **72 B per Document**, and current/recall add
+144 B. TRACE capture bookkeeping and streamed bounds add approximately 204 B;
+linker alignment accounts for the difference in aggregate BSS.
 
-The validated source baseline has SH data 704 bytes, BSS 62,736 bytes, Document
-2,920 bytes and App 13,960 bytes. TRACE reuses its existing 44,756-byte fixed scratch:
-20,660 sample cache + 9,504 one-bit raster mask + 14,592 footer. No second full
-framebuffer or trajectory clone was introduced for invalid-region support.
+The existing 258-point TRACE storage and overlay/staging union are reused; there
+is no extra trajectory, framebuffer, vector grid or contour list. Contours keep
+two small sampled rows on the stack. Candidate search stages one result locally.
+In the full target build the largest new numerical frame is `phase_equilibria`
+**2,144 B**, nullclines **1,192 B**; `ui_graph` is **2,572 B** and is the largest
+individual application frame. These exclude nested calls and gint/OS frames;
+physical stack high-water remains HARDWARE TEST REQUIRED.
 
-The largest individual application frame in the source baseline is 1,932 bytes,
-below the 3,072-byte warning threshold. Frames exclude callees. Gint's default
-single VRAM is 177,408 bytes and its stack reservation is 16 KiB. ELF BSS/data do
-not measure runtime OS/library allocation or combined stack high-water.
+The earlier audit below documents prior milestones. For current trajectory,
+storage and cancellation behavior use [Phase acceptance](ACCEPTANCE.md) and
+[Phase algorithms](PHASE_NUMERICS.md).
 
-Recheck with `sh-elf-size build-cg/diffeq`, `sh-elf-nm -S --size-sort build-cg/diffeq`
-and the compiler-generated `.su` files. Release-specific validation is recorded in
-[ACCEPTANCE.md](ACCEPTANCE.md). Physical runtime margins remain HARDWARE TEST REQUIRED.
+---
+
+# Memory and resource audit
+
+## Current feedback milestone (33bcd2a)
+
+The new validity stream and UI changes reuse the existing TRACE buffers. No new
+static allocation is 1 KB or larger, and no trajectory or full framebuffer copy,
+Document field, session-record buffer or heap allocation has been added.
+
+| Measurement | 6addf4d baseline | Current SH | Delta |
+|---|---:|---:|---:|
+| text | 151,384 | 154,712 | +3,328 |
+| initialized data | 704 | 704 | 0 |
+| BSS | 62,720 | 62,736 | +16 |
+| ELF sum | 214,808 | 218,152 | +3,344 |
+| Document | 2,920 | 2,920 | 0 |
+| App | 13,960 | 13,960 | 0 |
+| TRACE cache/mask/footer | 44,756 | 44,756 | 0 |
+| app_run frame | 1,328 | 1,332 | +4 |
+| ui_trace frame | 1,336 | 608 | -728 |
+| ui_graph frame | 72 | 80 | +8 |
+| gsolve_input frame | 1,196 | 476 | -720 |
+| largest application frame (constants) | 1,928 | 1,932 | +4 |
+
+The cache is 20,660 bytes, mask 9,504 and footer 14,592. TraceSamples' invalid flag
+uses existing structure padding. The new highlight XOR value is two bytes; net
+BSS rises 16 bytes including placement/alignment. The validity visitor is bounded
+stack state (model_path_branch frame 180 bytes). G-Solve Search adds small status/
+continuity fields and still retains at most 32 results; its compiler frame is
+856 bytes. ICPT remembers a failed secondary branch boundary without copying it.
+Document/App layout and v4/v3 saved-record handling remain unchanged.
+
+Current _euram is 0x08110a50, leaving **439,728 bytes** to the installed stack
+boundary 0x0817c000, 16 bytes below the prior static address-space margin. This is
+not measured free heap or a combined call-chain high-water. Gint's single
+177,408-byte VRAM and 16 KiB stack reservation are unchanged. No frame exceeds the
+existing 3,072-byte warning limit. Physical stack/library allocation margins are
+**HARDWARE TEST REQUIRED**.
+
+TRACE still prepares only one IVP, then moves/blinks without integration. Its
+priority/cancellation and timer/repeat cleanup remain. Scalar X/Y-CAL cursor blink
+uses one stopped-on-return timer and footer redraw, with no extra integration.
+Graph/ZOOM, chooser, IC, navigation and TRACE stress tests remain bounded; host
+counters cannot establish OS/library allocation high-water or LCD/key timing.
+
+Evidence: [full SH memory/symbols/frames](build-logs/validity-release-memory.txt),
+[target layout probe](build-logs/validity-release-layout.txt),
+[full strict build](build-logs/validity-release-native.txt),
+[17 host/UBSan groups](build-logs/validity-release-tests.txt).
+
+## Historical measurements below
+
+All following uses of “current” belong to the explicitly named older milestones.
+Their field semantics and numerical-invalidity descriptions are superseded by
+[WORKFLOW_SPEC.md](WORKFLOW_SPEC.md) and [NUMERICAL_VALIDITY_AUDIT.md](NUMERICAL_VALIDITY_AUDIT.md).
+
+## Historical 6addf4d / 7cd5027 measurements
+
+The confirmed TRACE defect is a repeat-queue saturation path into numerical
+cancellation and destructive redraw; see [TRACE_EVENT_AUDIT.md](TRACE_EVENT_AUDIT.md).
+No CPU-overload or new RAM-exhaustion cause is claimed. The earlier Fugue reboot
+fix is preserved. Physical stack/allocator high-water remains **HARDWARE TEST REQUIRED**.
+
+| Measurement | 06a491e | Current SH target | Delta |
+|---|---:|---:|---:|
+| text | 146,924 | 151,384 | +4,460 |
+| initialized data | 704 | 704 | 0 |
+| BSS | 17,776 | 62,720 | +44,944 |
+| ELF sum | 165,404 | 214,808 | +49,404 |
+| Document | 2,836 | 2,920 | +84 |
+| App | 13,792 | 13,960 | +168 |
+| app_run frame | 1,332 | 1,328 | -4 |
+| largest application frame (constants) | 1,928 | 1,928 | 0 |
+
+New fixed TRACE scratch is **44,756 bytes**: 20,660-byte selected-IVP cache
+(129 exact RK4 points per direction, 258 including duplicated IC), 9,504-byte
+one-bit curve raster, and 14,592-byte 384x19 footer strip. Tiny event/overlay flags
+and alignment account for the remaining net BSS change beyond the App growth.
+There is no full framebuffer clone or unbounded trajectory storage. Long traces
+retain a coarser Step-aligned sample grid; all curve segments can still be drawn.
+Only one selected IVP is cached, so 9 ICs x 9 states do not multiply this buffer.
+Scratch preparation changes neither the saved plot nor any complete/partial state;
+failed work is not displayed. Overlays are reversed on exit.
+
+Colors add 81 bytes plus target padding to each Document. App's current/recall
+increase by 168 bytes; its two-Document load staging still fits the existing
+8,116-byte CompiledModel union. v3 target record is 5,696 bytes, v4 is 5,864; both
+are streamed. No additional permanent session record or heap allocation is used.
+
+Current ui_trace frame is 1,336 bytes, ui_graph 72, gsolve_input 1,196, V-Window 716,
+Parameters 628 and IC 368. These exclude callees. Navigation remains iterative;
+TRACE is a bounded Graph mode. No frame exceeds the existing 3,072-byte warning
+threshold. The largest reported application frame remains constants at 1,928.
+
+Current _euram is 0x08110a40. Margin to the 0x0817c000 stack boundary is 439,744
+bytes, down 44,944 from 06a491e. This is a static address-space margin, not measured
+free heap. Gint's single 177,408-byte VRAM and 16 KiB stack reservation are unchanged.
+There are no app malloc/calloc/realloc/free/alloca calls. TRACE allocates no heap;
+its one blink timer is stopped on exit and its key repeat transform is restored.
+Library allocations and physical key/timer/OS timing are not inferred from host.
+
+Evidence: [SH memory/frames](build-logs/feedback-memory.txt),
+[target layout probe](build-logs/feedback-layout.txt),
+[full strict build](build-logs/feedback-full-native.txt),
+[15 UBSan test groups](build-logs/feedback-tests.txt). Host stresses 100 TRACE
+entry/exit, blink and curve-switch cycles, 100 chooser and IC cycles, 100 ZOOM/
+G-Solve menu cycles, and 1,000 SET/navigation cycles. Native-branch adapters also
+check repeat flood/control priority, released-HOLD discard, transform restoration
+and balanced timer lifetimes. None of this establishes device runtime high-water.
+
+## Historical measurements below
+
+The remaining sections describe the **06a491e/84aefe0 history**. Their uses of
+“current” and no-cache/v3-only descriptions apply to those old milestones and are
+superseded by the table and ownership description above.
+
+## Historical 06a491e comparison against 84aefe0 (2026-09-07)
+
+| Measurement | 84aefe0 | Current | Delta |
+|---|---:|---:|---:|
+| text | 145,048 | 146,924 | +1,876 |
+| initialized data | 704 | 704 | 0 |
+| BSS | 17,744 | 17,776 | +32 |
+| ELF sum | 163,496 | 165,404 | +1,908 |
+| App object | 13,792 | 13,792 | 0 |
+| app_run frame | 652 | 1,332 | +680 |
+| ui_graph frame | 440 | 72 | -368 |
+| largest frame (constants) | 1,924 | 1,928 | +4 |
+
+The BSS delta is exactly the eight transformed key events and their count. The
+larger dispatcher frame contains bounded per-stage UI state and compiler-inlined
+validation/dimension input; it does not grow with navigation. ui_parameters is
+628 bytes, ui_initial_conditions 352 and graph_auto_window 260. No full Document,
+Session, framebuffer or trajectory copy was added. G-Solve operations remain
+bounded synchronous helpers beneath the local softkey menu.
+
+The current _euram is 0x08105ab0, leaving 484,688 bytes to the 0x0817c000 stack
+boundary before runtime allocation (32 fewer than 84aefe0). This is not physical
+heap/stack high-water. The 16 KiB stack reservation and gint's single 177,408-byte
+VRAM are unchanged. The source has no direct heap allocation; no application
+allocation accumulates in menu loops. Library allocation high-water is unmeasured.
+
+Final compiler evidence is in build-logs/release-memory.txt. All application
+sources passed the strict full SH build. The following sections preserve the
+**84aefe0 crash-fix measurements/history**; their then-current sizes and automatic
+checkpoint policy are historical, superseded by this table and WORKFLOW_SPEC.md.
+
+## Reproduction method
+
+The release target is configured with `-Os -g -Wall -Wextra -Werror -Wframe-larger-than=3072 -fstack-usage` and a linker map at `build-cg/diffeq.map`. The measurements use the installed SH GCC/binutils rather than host object sizes:
+
+```sh
+source tools/env.sh
+fxsdk build-cg -c
+fxsdk build-cg -j8
+sh-elf-size build-cg/diffeq
+sh-elf-nm -S --size-sort build-cg/diffeq
+find build-cg -name '*.su' -type f
+```
+
+`sizeof` values were compiled for `-mb -m4-nofpu`; the macOS host has a different pointer size and alignment and is not used for target accounting.
+
+## Linked image and static RAM
+
+| Measurement | `df7bdc8` baseline | Current target | Change |
+|---|---:|---:|---:|
+| `.text` | 142,904 | 145,048 | +2,144 |
+| `.data` | 704 | 704 | 0 |
+| `.bss` | 21,904 | 17,744 | -4,160 |
+| ELF `text+data+bss` | 165,512 | 163,496 | -2,016 |
+
+The code increase comes from the iterative dispatcher, checked streaming storage workers and blink handling. Static RAM fell because the 5,696-byte session `Record` scratch and 512-byte CSV line scratch were replaced by a 2,048-byte page-format buffer, a net reduction of 4,160 bytes.
+
+The current principal application objects are:
+
+| Object | SH bytes | Lifetime and ownership |
+|---|---:|---|
+| `App` (`_app`) | 13,792 | Static for the add-in lifetime |
+| `Document` | 2,836 | Current and Recall are members of `App` |
+| `CompiledModel` | 8,116 | Unioned with two-Document load staging |
+| `ExprProgram` | 900 | Up to nine programs inside `CompiledModel` |
+| export `TablePage` (`_csv_page`) | 768 | Static, reused one page at a time |
+| export format buffer (`_csv_buffer`) | 2,048 | Static, reused after integration returns |
+| session `Record` scratch | 0 | Version-3 bytes are streamed from live Documents |
+
+The installed fx-CG50 linker script maps application static RAM from `0x08101400` and reserves the first `0x1400` bytes of user RAM for gint's VBR. The current `_euram` is `0x08105a90`. Gint places the user stack below `0x0817c000`, reserving 16 KiB at the top of the 512 KiB user-RAM region. This leaves 484,720 bytes between `_euram` and the stack boundary for gint's static-RAM allocation arena before runtime allocations. This is an address-space margin, not a measured free-heap guarantee.
+
+Gint also creates a 350 KiB arena in the OS stack area and then allocates world-save state, driver flags and display memory. Its default color VRAM is 177,408 bytes. These library allocations are outside the application's static object table and are one reason the ELF figures must not be presented as runtime high-water.
+
+## Stack frames and call depth
+
+Largest current application frames reported by SH GCC are:
+
+| Function | Bytes |
+|---|---:|
+| `ui_constants` | 1,924 |
+| `model_convert_system` | 1,752 |
+| `gsolve_run` | 1,648 |
+| `ui_table` | 1,520 |
+| `ui_number` | 1,160 |
+| equation acceptance/validation | 1,100 |
+| G-Solve search | 992 |
+| graph numeric edit helper | 948 |
+| form numeric helper | 944 |
+| equation inline numeric helper | 940 |
+| `storage_save` | 912 |
+| `ui_vwindow` | 700 |
+| `app_run` | 652 |
+| `ui_trace` | 632 |
+| `ui_parameters` | 616 |
+| `expr_eval` | 584 |
+| `ode_rk4` | 516 |
+| `ui_graph` | 440 |
+| `graph_render` | 380 |
+| `storage_load` | 300 |
+| native slot probe | 288 |
+
+These numbers exclude callees. The baseline `ui_graph` frame was 2,268 bytes; returning graph sub-screen transitions to the dispatcher reduced it to 440 bytes. The old UI was bounded and non-recursive, but it represented navigation with up to roughly seven simultaneous screen frames. The current fixed-state dispatcher represents parents in `AppNavigation`; repeating a screen path does not add C frames. Host stress checks 1,000 parent-graph cycles and 1,000 actual SET, 100 Graph/checkpoint and 100 equation-family dispatcher cycles.
+
+Parser nesting remains explicitly capped at 32. Expression parsing is complete before RK4 begins, so parser recursion and solver frames do not overlap. Table and CSV formatting occur only after the streaming integration callback has returned. G-Solve retains at most 32 result points.
+
+## Heap, buffers and resource ownership
+
+The application source has no direct `malloc`, `calloc`, `realloc`, `free` or `alloca` call. It stores no full trajectory and makes no framebuffer copy:
+
+- graph rendering retains only the previous streamed point for a clipped segment;
+- TRACE and G-Solve redraw the selected curve from the canonical model instead of cloning trajectory data;
+- Table computes one bounded page on demand;
+- STAT/CSV computes one page, returns from RK4, formats it into the static buffer, and then appends it;
+- session save streams the existing v3 header, Documents, padding and checksum without building a duplicate record;
+- session load stages two Documents in the union that otherwise holds the compiled model. Save/Load occur only after compiled graph work has ended, and every CALC recompiles the model.
+
+Gint and fxlibc can allocate internal state. Those resources are controlled as follows:
+
+- every session probe/read/write and CSV create/append/remove is a synchronous OS-world transaction;
+- each worker closes its descriptor on every path after a successful open;
+- no descriptor is retained across a key wait or screen transition;
+- a close failure is surfaced, and cleanup does not attempt to remove a path whose native handle might still be locked;
+- buffered `FILE` objects are no longer used by application persistence, avoiding their hidden stream buffer and lost `fclose()` errors;
+- TRACE and multi-curve G-Solve own at most one timer. The callback only sets a volatile flag; EXIT stops and frees it before return, and G-Solve EXE stops it before the selected numerical operation;
+- keyboard and drawing objects are not stored beyond their owning loop, and graph highlighting uses the live `Document` and `CompiledModel` only while both remain valid.
+
+## Remaining hardware measurements
+
+The linker map and host stress tests cannot measure the deepest combined gint/Fugue stack, allocator fragmentation, a failed OS close, physical timer cadence or native display-driver state. The P0 scenarios in [HARDWARE_RETEST.md](HARDWARE_RETEST.md) therefore require repeated calculator runs. A hardware stack-canary or allocator telemetry build would be appropriate only if those tests still reproduce a failure after the filesystem fix.

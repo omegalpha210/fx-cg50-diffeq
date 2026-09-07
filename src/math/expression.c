@@ -134,6 +134,12 @@ ExprError expr_compile(const char *text,ExprScope scope,ExprProgram *out)
     if(p.error.status!=EXPR_OK) out->length=0;
     return p.error;
 }
+bool expr_uses_x(const ExprProgram *p)
+{
+    if(!p || p->length>EXPR_CODE)return true;
+    for(unsigned i=0;i<p->length;i++)if(p->op[i]==OP_X)return true;
+    return false;
+}
 ExprStatus expr_eval(const ExprProgram *p,double x,const double *y,int n,double *out)
 {
     if(!p || !out || !p->length || p->length>EXPR_CODE || p->literals>EXPR_LITERALS)

@@ -8,9 +8,26 @@ void model_window_defaults(ViewWindow *v)
     *v=(ViewWindow){.xmin=-6.3,.xmax=6.3,.ymin=-3.1,.ymax=3.1,
         .xscale=1,.yscale=1,.grid=1,.labels=1,.phase=0,.phase_x=0,.phase_y=1};
 }
+void model_phase_window_defaults(ViewWindow *v)
+{
+    *v=(ViewWindow){.xmin=-3.1,.xmax=3.1,.ymin=-3.1,.ymax=3.1,
+        .xscale=1,.yscale=1,.grid=1,.labels=1,.phase=1,.phase_x=0,.phase_y=1};
+}
+bool model_phase_supported(const Document *d)
+{return d && d->kind==EQ_SYSTEM && d->dim==2;}
+ViewWindow *model_view(Document *d)
+{
+    if(!d)return NULL;
+    return model_phase_supported(d) && d->view.phase ? &d->phase_view:&d->view;
+}
+const ViewWindow *model_view_const(const Document *d)
+{
+    if(!d)return NULL;
+    return model_phase_supported(d) && d->view.phase ? &d->phase_view:&d->view;
+}
 void model_sync_solver_window(Document *d)
 {
-    if(!d || d->solver_custom)return;
+    if(!d || d->solver_custom || (model_phase_supported(d) && d->view.phase))return;
     double xmin=ceil(d->view.xmin),xmax=floor(d->view.xmax);
     if(xmin<xmax){d->solver.xmin=xmin;d->solver.xmax=xmax;}
 }
@@ -29,6 +46,8 @@ void model_defaults(Document *d,EquationKind kind,int dim)
     if(d->dim<1 || d->dim>9) d->dim=2;
     d->nic=1; d->power=2;
     model_window_defaults(&d->view);
+    model_phase_window_defaults(&d->phase_view);
+    d->phase_field=1;d->phase_nullclines=0;d->phase_ready=0;
     d->solver=(OdeSettings){0,1,.1,20000,1,12};
     d->solver_custom=0;model_sync_solver_window(d);
     model_output_defaults(d);model_field_appearance_defaults(d);
@@ -140,6 +159,14 @@ OdeStatus model_validate(const Document *d)
         || (v->phase && (d->dim<2 || v->phase_x<0 || v->phase_x>=d->dim
             || v->phase_y<0 || v->phase_y>=d->dim || v->phase_x==v->phase_y)))
         return ODE_BAD_INPUT;
+    v=&d->phase_view;
+    if(!isfinite(v->xmin) || !isfinite(v->xmax) || !isfinite(v->ymin)
+        || !isfinite(v->ymax) || !isfinite(v->xmax-v->xmin) || !isfinite(v->ymax-v->ymin)
+        || v->xmax<=v->xmin || v->ymax<=v->ymin || !isfinite(v->xscale)
+        || !isfinite(v->yscale) || v->xscale<=0 || v->yscale<=0 || v->phase!=1
+        || v->phase_x!=0 || v->phase_y!=1 || (v->grid!=0 && v->grid!=1)
+        || (v->labels!=0 && v->labels!=1) || d->phase_field>1
+        || d->phase_nullclines>1 || d->phase_ready>1)return ODE_BAD_INPUT;
     if(d->nic==0 && (d->kind>EQ_GENERAL || d->solver.sf==0)) return ODE_BAD_INPUT;
     if(d->enabled>>d->dim)return ODE_BAD_INPUT;
     for(int i=0;i<ODE_MAX_DIM;i++)if(!memchr(d->text[i],0,EXPR_TEXT))return ODE_BAD_INPUT;

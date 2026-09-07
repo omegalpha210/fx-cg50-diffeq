@@ -183,3 +183,26 @@ Host UI rendering does not emulate SH execution, LCD timing or OS lifecycle.
 Use one record per failure/pass: case number, device/OS, SHA256, complete inputs,
 key sequence, observed versus expected behavior, screenshot/video and repeat count.
 The 28 UI polish, 37 simplification and 49 solver/navigation cases may be marked PASS only after an actual device run. Identify the checklist section as well as its case number.
+
+## v0.10.0-beta.1: SYS 2D Phase (HARDWARE TEST REQUIRED)
+
+- [ ] SYS2 oscillator: GRAPH → VIEW → PHASE, clockwise closed trajectory; y1/y2 labels.
+- [ ] TIME ↔ PHASE retains both windows, equation, IC, solver settings and Output.
+- [ ] Phase V-WIN, arrows, IN/OUT/AUTO/ORIG affect only phase geometry.
+- [ ] Phase TRACE NORMAL/FAST/FASTER, held arrows, endpoint buttons and numeric x=;
+      x/y1/y2 progression, single-family UP/DOWN, immediate EXIT and MENU return.
+- [ ] Field OFF/ON, independent NULL OFF/ON; arrow directions under unequal spans;
+      visible pale field, red N1, blue N2, solution and black diamond on actual LCD.
+- [ ] Harmonic oscillator, saddle, nodes and spirals: EQPT and INFO match known
+      local linearizations. Center/Neutral is not nonlinear stability assurance.
+- [ ] Multiple fixed points: LEFT/RIGHT traversal; no roots, domain boundary and
+      near-degenerate Jacobian report bounded/Unavailable/Inconclusive results.
+- [ ] Non-autonomous x+y2,-y1: trajectory allowed, Field at x=IC x0, EQPT disabled.
+- [ ] Long valid expressions and rapidly oscillatory contours: measure full
+      preflight + bounded paint time; EXIT/MENU responsiveness, no damaged old plot.
+      Atomic paint retains keys for its completion; host timings are not SH timings.
+- [ ] SAVE v8 / cold RCL retains independent windows and toggles. Load actual
+      same-device v7 and older slots; old active SYS2 phase geometry migrates and
+      configured automatic/manual Solver endpoints remain unchanged.
+- [ ] Existing scalar slope field, 1–9-state modes, TIME G-Solve, ten-IC Table,
+      STAT export and repeated MENU/Fugue lifecycle remain stable.

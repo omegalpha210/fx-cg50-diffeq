@@ -1,5 +1,7 @@
 #include "graph.h"
 #include "ui.h"
+#include "trace.h"
+#include "phase_graph.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,6 +11,7 @@ bool graph_family_enabled(const Document *d,int family)
     if(family<0 || family>=d->nic)return false;
     unsigned mask=d->enabled;
     if(!d->view.phase)return mask!=0;
+    if(model_phase_supported(d))return true;
     unsigned axes=(1u<<d->view.phase_x)|(1u<<d->view.phase_y);
     return (mask&axes)==axes;
 }
@@ -40,7 +43,7 @@ static double tick_step(double requested,double span)
     double t=span/10/base;
     return (t<=1 ? 1:(t<=2 ? 2:(t<=5 ? 5:10)))*base;
 }
-static void axes(const ViewWindow *v)
+static void axes(const ViewWindow *v,bool phase)
 {
     ui_rect(PLOT_LEFT-1,PLOT_TOP-1,PLOT_RIGHT-PLOT_LEFT+3,PLOT_BOTTOM-PLOT_TOP+3,UI_LINE);
     ui_rect(PLOT_LEFT,PLOT_TOP,PLOT_RIGHT-PLOT_LEFT+1,PLOT_BOTTOM-PLOT_TOP+1,C_WHITE);
@@ -66,9 +69,9 @@ static void axes(const ViewWindow *v)
     if(v->labels) {
         int px,py;
         if(v->ymin<=0 && v->ymax>=0 && graph_point(v,v->xmax,0,&px,&py))
-            ui_text(PLOT_RIGHT-8,py>PLOT_BOTTOM-13 ? PLOT_BOTTOM-13:py+2,UI_MUTED,"x");
+            ui_text(PLOT_RIGHT-(phase ? 18:8),py>PLOT_BOTTOM-13 ? PLOT_BOTTOM-13:py+2,UI_MUTED,phase ? "y1":"x");
         if(v->xmin<=0 && v->xmax>=0 && graph_point(v,0,v->ymax,&px,&py))
-            ui_text(px<PLOT_LEFT+3 ? PLOT_LEFT+3:px+3,PLOT_TOP+2,UI_MUTED,"y");
+            ui_text(px<PLOT_LEFT+3 ? PLOT_LEFT+3:px+3,PLOT_TOP+2,UI_MUTED,phase ? "y2":"y");
     }
 }
 static void field_line(double x0,double y0,double x1,double y1,int color)
@@ -110,14 +113,14 @@ static bool slope_field(Document *d,CompiledModel *m,bool cancel)
 typedef struct {Document *d;int family,variable,stride,color;bool have;double x,y[9];} Curve;
 static bool curve_point(double x,const double *y,uint32_t step,void *ctx)
 {
-    Curve *c=ctx;Document *d=c->d;
+    Curve *c=ctx;Document *d=c->d;const ViewWindow *v=model_view_const(d);
     if(!y){c->have=false;return true;}
     if(c->have && step%(unsigned)c->stride && x!=d->solver.xmin && x!=d->solver.xmax) return true;
     if(c->have) {
         if(d->view.phase) {
-            if(graph_family_enabled(d,c->family)) graph_solution_segment(&d->view,
-                c->y[d->view.phase_x],c->y[d->view.phase_y],y[d->view.phase_x],y[d->view.phase_y],
-                c->color<0 ? graph_palette_color(model_color(d,c->family,d->view.phase_y)):c->color);
+            if(graph_family_enabled(d,c->family)) graph_solution_segment(v,
+                c->y[v->phase_x],c->y[v->phase_y],y[v->phase_x],y[v->phase_y],
+                c->color<0 ? graph_palette_color(model_color(d,c->family,v->phase_y)):c->color);
         } else for(int j=0;j<d->dim;j++) if((d->enabled&(1u<<j))
             && (c->variable<0 || c->variable==j))
             graph_solution_segment(&d->view,c->x,c->y[j],x,y[j],
@@ -128,23 +131,52 @@ static bool curve_point(double x,const double *y,uint32_t step,void *ctx)
 }
 void graph_backdrop(Document *d,CompiledModel *m)
 {
-    dclear(C_WHITE);axes(&d->view);
+    dclear(C_WHITE);axes(model_view_const(d),model_phase_supported(d) && d->view.phase);
     /* Bounded pixel/RHS pass after a successful transactional cache commit. */
     slope_field(d,m,false);
+    graph_phase_layers(d,m);
+}
+static void graph_status(GraphResult result)
+{
+    if(result.status!=ODE_OK) {
+        ui_rect(0,0,384,18,C_WHITE);
+        if(result.status==ODE_HAS_INVALID)
+            ui_text(7,4,C_RED,"ERROR: %s",ode_status_text(result.invalid));
+        else if(result.failed_family>=0)
+            ui_text(7,4,C_RED,"Partial: %s (IC %d)",ode_status_text(result.status),result.failed_family+1);
+        else ui_text(7,4,C_RED,"Partial: %s",ode_status_text(result.status));
+    }
+}
+static bool captured_point(double x,const double *y,uint32_t step,void *ctx)
+{
+    return trace_capture_point(x,y,step,NULL) && curve_point(x,y,step,ctx);
 }
 GraphResult graph_render(Document *d,CompiledModel *m,bool first)
 {
     ModelWork plan=model_preflight(d,&d->solver);
     if(plan.status!=ODE_OK)return (GraphResult){.status=plan.status,.failed_family=plan.family};
+    OdeStatus phase_status=graph_phase_preflight(d,m,ui_cancel,NULL);
+    if(phase_status!=ODE_OK)return (GraphResult){.status=phase_status,.failed_family=-1};
+    bool system=model_phase_supported(d);
+    if(system && trace_cache_matches(d)) {
+        graph_backdrop(d,m);trace_cache_render(d);graph_phase_markers(d,-1);
+        GraphResult cached=trace_cache_result();graph_status(cached);return cached;
+    }
+    if(system)graph_phase_reset();
+    bool capture=system && trace_capture_begin(d);
     dclear(C_WHITE);
-    axes(&d->view);
+    axes(model_view_const(d),system && d->view.phase);
+    graph_phase_layers(d,m);
     GraphResult result={.status=ODE_OK,.failed_family=-1};
     if(!slope_field(d,m,true)) result.status=ODE_CANCELLED;
     for(int i=0;i<d->nic && result.status!=ODE_CANCELLED;i++) {
-        if(!graph_family_enabled(d,i)) continue;
+        if(!system && !graph_family_enabled(d,i)) continue;
         for(int direction=-1;direction<=1;direction+=2) {
             Curve c={.d=d,.family=i,.variable=-1,.stride=first ? 1:d->solver.step,.color=-1};
-            ModelPathResult r=model_path_branch(d,m,i,direction,&d->solver,curve_point,&c,ui_cancel,NULL);
+            if(capture)trace_capture_branch_begin(d,i,direction<0 ? 0:1);
+            ModelPathResult r=model_path_branch(d,m,i,direction,&d->solver,
+                capture ? captured_point:curve_point,&c,ui_cancel,NULL);
+            if(capture)trace_capture_branch_end(r);
             result.steps+=r.steps;
             if(r.invalid!=ODE_OK)result.invalid=r.invalid;
             if(r.status!=ODE_OK && (result.status==ODE_OK ||
@@ -154,15 +186,10 @@ GraphResult graph_render(Document *d,CompiledModel *m,bool first)
             if(r.status==ODE_CANCELLED) {result.status=r.status;break;}
         }
     }
-    if(result.status!=ODE_OK) {
-        ui_rect(0,0,384,18,C_WHITE);
-        if(result.status==ODE_HAS_INVALID)
-            ui_text(7,4,C_RED,"ERROR: %s",ode_status_text(result.invalid));
-        else if(result.failed_family>=0)
-            ui_text(7,4,C_RED,"Partial: %s (IC %d)",ode_status_text(result.status),result.failed_family+1);
-        else ui_text(7,4,C_RED,"Partial: %s",ode_status_text(result.status));
-    }
-    ui_softkeys("TRACE","ZOOM","V-WIN","TABLE","G-SLV","PREV");
+    if(capture)trace_capture_end(result.status==ODE_OK || result.status==ODE_HAS_INVALID);
+    graph_phase_markers(d,-1);
+    graph_status(result);
+    ui_softkeys("TRACE","ZOOM","V-WIN",system ? "VIEW":"TABLE",system && d->view.phase ? "ANLYS":"G-SLV","PREV");
     return result;
 }
 OdeStatus graph_highlight_curve(Document *d,CompiledModel *m,int family,int variable)
@@ -195,13 +222,20 @@ static void bounds_add(Bounds *b,double x,double y)
 }
 static bool bound_point(double x,const double *y,uint32_t step,void *ctx)
 {
-    (void)step;Bounds *b=ctx;
+    (void)step;Bounds *b=ctx;if(!y)return true;
     if(b->d->view.phase) bounds_add(b,y[b->d->view.phase_x],y[b->d->view.phase_y]);
     else for(int i=0;i<b->d->dim;i++)if(b->d->enabled&(1u<<i))bounds_add(b,x,y[i]);
     return true;
 }
 OdeStatus graph_auto_window(Document *d,CompiledModel *m)
 {
+    if(model_phase_supported(d) && (d->view.phase || trace_cache_matches(d))) {
+        if(!trace_cache_matches(d))return ODE_BAD_INPUT;
+        bool ok=d->view.phase ? trace_cache_phase_window(d,&d->phase_view):
+            trace_cache_time_window(d,&d->view);
+        if(ok && d->view.phase)d->phase_ready=1;
+        return ok ? ODE_OK:ODE_BAD_INPUT;
+    }
     ModelWork plan=model_preflight(d,&d->solver);
     if(plan.status!=ODE_OK)return plan.status;
     Bounds b={.d=d};OdeStatus status=ODE_OK;

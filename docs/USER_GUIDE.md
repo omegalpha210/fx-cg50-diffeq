@@ -1,6 +1,9 @@
-# DIFF EQ 사용 설명서 — v0.9.0-beta.3
+# DIFF EQ 사용 설명서 — v0.10.0-beta.1
 
-안정 기준선 `0de88c7`을 보존하면서 TRACE X/Y 추적과 endpoint 이동, Graph Settings 조작, 1차 초기값 최대 10개를 추가했습니다. 이번 변경은 **HARDWARE TEST REQUIRED**이며 호스트 검증이 계산기 시험을 대신하지 않습니다. 실제 메뉴는 gint 기본 글꼴의 영어/ASCII를 사용합니다.
+기존 RK4·TRACE·G-Solve·10개 1차 초기값 기능을 보존하면서 SYS 2D Phase Portrait,
+벡터장, nullcline, 평형점과 국소 선형 분류를 추가했습니다. 이번 변경은
+**HARDWARE TEST REQUIRED**이며 host 검증이 계산기 시험을 대신하지 않습니다.
+실제 메뉴는 gint 기본 글꼴의 영어/ASCII를 사용합니다.
 
 ## 화면별 조작
 
@@ -17,6 +20,10 @@
 | FUNC 1쪽 | ABS | SINH | COSH | TANH | ASINH | 다음 |
 | FUNC 2쪽 | ACOSH | ATANH | — | — | — | 이전 |
 | 그래프 기본 화면 | TRACE | ZOOM | V-WIN | TABLE | G-SLV | PREV (magenta) |
+| SYS 2D TIME | TRACE | ZOOM | V-WIN | VIEW | G-SLV | PREV |
+| SYS 2D PHASE | TRACE | ZOOM | V-WIN | VIEW | ANLYS | PREV |
+| VIEW | TIME | PHASE | TABLE | — | — | — |
+| Phase ANLYS | FIELD | NULL | EQPT | INFO | — | — |
 | ZOOM 하위 메뉴 | IN | OUT | AUTO | ORIG | — | — |
 | G-Solve 1쪽 | ROOT | MAX | MIN | Y-ICPT | ICPT | 다음 |
 | G-Solve 2쪽 | Y-CAL | X-CAL | — | — | — | 이전 |
@@ -162,7 +169,7 @@ UP/DOWN, 편집 EXE의 다음 행, 선택 행 도움말도 표시되는 행만 �
 Parameter F2 INIT는 자동 범위 추종, h=.1, Step=1, Max Steps=20000을 복구합니다.
 1차에서는 SF도 12로 복구하며, 고차/SYS에서는 숨겨진 SF 값을 보존합니다.
 예를 들어 SF=20 → 2nd → INIT → 1st에서도 20입니다. SAVE/RCL도 숨겨진 SF를 보존하며
-새 저장은 v7이며 기존 v3~v6 세션의 읽기 호환성을 유지합니다. Field Style/Color는 모든 모드에서
+새 저장은 v8이며 기존 v3~v7 세션의 읽기 호환성을 유지합니다. Field Style/Color는 모든 모드에서
 보존합니다. Solver 수정은 V-Window를 역으로 변경하지 않습니다.
 Xdot은 `(Xmax-Xmin)/378`이며 Xdot 편집은 Xmax를 변경합니다.
 
@@ -172,7 +179,7 @@ x 행과 CSV X control은 없습니다. **LEFT/RIGHT는 선택 변수의 ON/OFF*
 생략해 마지막 행과 겹치지 않으며, F3 COLOR·INIT·DONE과 기존 EXE 동작은 유지됩니다.
 한 ON/OFF 값이 모든 IC에 공통으로 적용됩니다. ON은 Graph·TRACE·G-Solve·Table·CSV/STAT에 포함,
 OFF는 이 사용자 출력들에서 숨김입니다. 숨겨진 y' 같은 내부 state도 RK4에서 계속 계산합니다.
-Phase는 두 축의 state가 모두 ON일 때 표시합니다. 원래 독립 G/L 선택이 제공하던 차이와
+SYS 2D Phase는 Output ON/OFF와 무관하게 두 state를 사용합니다. 다른 모드의 기존 phase projection은 두 축 state가 모두 ON일 때 표시합니다. 원래 독립 G/L 선택이 제공하던 차이와
 이번 통합의 호환성 정책은 [OUTPUT audit](OUTPUT_LIST_AUDIT.md)에 기록했습니다.
 
 색은 선택 행에서 **F3 COLOR**로만 엽니다. 방향키로 고르고 EXE 적용, EXIT 취소입니다.
@@ -232,11 +239,11 @@ Field 팔레트는 기존 선명한 solution 팔레트와 별개입니다. 설�
 컬러 곡선은 양방향으로 적분한 IC family를 약 2 px 두께로 표시합니다. 색은 OUTPUT의 상태별 설정과 IC 순환 palette를 따릅니다. factory Grid와 Axis Label은 ON이며 저장된 OFF 값은 유지됩니다. 축·grid·slope field의 두께는 그대로입니다. 화면 밖 선분은 clipping하지만 적분은 계속합니다.
 
 - 방향키: 표시 창을 폭/높이의 20%만큼 pan.
-- `+`/`−` 또는 ZOOM: 중앙 기준 확대/축소. Solver range를 직접 override하지 않은 상태에서는 새 X window에 맞춰 적분 구간도 갱신됩니다.
+- `+`/`−` 또는 ZOOM: 중앙 기준 확대/축소. TIME에서 Solver range를 직접 override하지 않은 상태에서는 새 X window에 맞춰 적분 구간도 갱신됩니다.
 - ZOOM은 현재 그래프 위에서 F1 IN / F2 OUT / F3 AUTO / **F4 ORIG**를 표시합니다. 각 동작 후에도 ZOOM bar를 유지하며 **EXIT로만 닫습니다**. ZOOM 안에서도 방향키로 pan하며 메뉴가 유지됩니다. 메뉴를 열고 닫기만 하면 재적분·파일 I/O가 없습니다.
-- ORIG는 V-WIN INIT와 같은 기본 창으로 돌아갑니다. 식·IC·h는 유지하며 Solver AUTO만 새 창을 따릅니다. 수동 Solver 범위는 유지됩니다.
-- AUTO는 현재 X 범위를 유지하고, Solver와 X 창의 교집합에 있는 ON 상태의 곡선의 유한한 값으로 Y 범위를 맞춥니다. 현재 Y 창 밖의 값도 사용하며 상수 곡선에도 여백을 줍니다. 유효한 점이 없거나 계산이 중단되면 기존 창을 보존하고 하단에 안내합니다. Phase에서는 가로 상태 창을 유지하고 그 안의 세로 상태 값을 사용합니다.
-- OPTN 물리 키: phase 전환, 가로/세로 상태 선택, auto window, Grid/Axis Label 설정, 현재 범위/계산 상세.
+- ORIG는 V-WIN INIT와 같은 기본 창으로 돌아갑니다. 식·IC·h는 유지하며 TIME의 Solver AUTO만 새 창을 따릅니다. 수동 Solver 범위는 유지됩니다.
+- AUTO는 현재 X 범위를 유지하고, Solver와 X 창의 교집합에 있는 ON 상태의 곡선의 유한한 값으로 Y 범위를 맞춥니다. 현재 Y 창 밖의 값도 사용하며 상수 곡선에도 여백을 줍니다. 유효한 점이 없거나 계산이 중단되면 기존 창을 보존하고 하단에 안내합니다. SYS 2D PHASE AUTO는 보관된 원래 trajectory의 y1/y2 전체 유한 범위에 여백을 더해 두 축을 맞춥니다. TIME AUTO는 현재 X 창을 유지합니다.
+- OPTN 물리 키: SYS 2D에서는 Graph Settings와 계산 상세입니다. 다른 2-state 이상 모드는 기존 phase projection/축 선택을 유지합니다.
 - TRACE: **F2 NORMAL / F3 FAST / F4 FASTER**는 한 번의 유효 LEFT/RIGHT 이동을 각각
   **1× / 2× / 3× 실제 Xdot**으로 정합니다. `Xdot=(Xmax-Xmin)/378`이며 표시 문자열의 반올림값을 쓰지 않습니다.
   x=.6, Xdot=.025이면 다음 RIGHT는 .625/.65/.675입니다. NORMAL은 노랑, FAST는 Bright Green, FASTER는 Cyan 배경이며 모두 검정 글씨입니다. 선택 버튼의 검정 테두리로 현재 속도를 표시하고 배경색은 유지합니다.
@@ -244,8 +251,8 @@ Field 팔레트는 기존 선명한 solution 팔레트와 별개입니다. 설�
   새 TRACE는 NORMAL이며 속도는 저장하지 않습니다. 숫자 x= 편집 중에는 속도 버튼이 숨겨집니다.
   저장된 유효
   RK4 점 사이를 선형 보간합니다. 캐시 내부의 x 이동과 blink는 적분하지 않습니다. **표시되는 y는 보간 근사값**이며
-  정확한 지정 x의 RK4 결과가 필요하면 F1 x=를 사용합니다. 보간은 invalid gap을 건너지 않습니다.
-  UP/DOWN은 ON 곡선을 바꾸고 가능한 경우 같은 x를 유지합니다. Phase도 같은 독립변수 x 간격을 사용하되 자동 pan/범위 확장은 하지 않습니다.
+  TIME에서 정확한 지정 x의 RK4 결과가 필요하면 F1 x=를 사용합니다. SYS 2D PHASE의 x=는 보관된 trajectory를 보간하며 새 적분을 하지 않습니다. 보간은 invalid gap을 건너지 않습니다.
+  UP/DOWN은 ON 곡선을 바꾸고 가능한 경우 같은 x를 유지합니다. SYS 2D PHASE는 TIME 창의 Xdot으로 이동하고 필요하면 phase 창만 pan합니다. Phase zoom은 시간 진행 간격을 바꾸지 않으며 Phase에서 적분 범위를 확장하지 않습니다.
   **F5 LEFT / F6 RIGHT**는 현재 설정된 Solver Xrange min/max로 이동합니다. 캐시의 유효 endpoint/보간을
   우선하며 numerical-invalid endpoint에서는 가장 가까운 유효 점과 짧은 numerical-limit 안내를 사용합니다.
   현재 곡선·속도는 유지되고, runtime 계산 범위가 넓어져도 점프 기준은 설정 범위입니다.
@@ -254,10 +261,10 @@ Field 팔레트는 기존 선명한 solution 팔레트와 별개입니다. 설�
   NaN/Inf, 절댓값 1e100 초과, invalid gap의 가짜 값으로 창을 옮기지 않습니다.
   **설정 Solver Xrange / runtime 계산 범위 / 표시 V-Window는 별개**입니다.
   TRACE 이동은 자동/수동 Solver Xrange를 모두 보존합니다.
-  runtime [-6,6]에서 x=5.9, x=6, F6 RIGHT는 추가 적분하지 않습니다. 실제 요청 target이 범위를
+  TIME runtime [-6,6]에서 x=5.9, x=6, F6 RIGHT는 추가 적분하지 않습니다. 실제 요청 target이 범위를
   벗어날 때만 그 target까지 기존 preflight와 제한 아래 캐시를 재계산합니다. 여분 범위를 미리 계산하지 않습니다.
   예를 들어 x=5.95, Xdot=.1, FASTER RIGHT는 같은 입력에서 6.25까지 확장·이동합니다.
-  캐시 밖의 연속 이동은 매번 계산이 필요할 수 있으며 한 작업만 진행하고 repeat를 병합합니다.
+  TIME의 캐시 밖 연속 이동은 매번 계산이 필요할 수 있으며 한 작업만 진행하고 repeat를 병합합니다.
   취소·work-limit 실패 시 임시 결과를 버려 이전 캐시·커서·창·완성 그래프를 보존합니다.
   캐시는 표시 중인 모든 IC에 **총 258점**을 나누어 사용하므로, 긴 구간이나 많은 IC에서는
   TRACE 보간·pan 후 곡선의 해상도가 낮아질 수 있습니다. 보관량과 RK4 단계 수는 별개입니다.
@@ -272,7 +279,51 @@ Field 팔레트는 기존 선명한 solution 팔레트와 별개입니다. 설�
 
 G-SLV 메뉴를 열거나 페이지를 바꿨다가 EXIT만 하면 그래프와 계산 횟수가 유지됩니다. G-SLV의 수치 범위는 현재 V-Window X 범위와 Solver 범위의 교집합입니다. Ymin/Ymax는 그리기와 pointer clipping에만 사용됩니다. ROOT, MAX/MIN, Y-ICPT(x=0), Y-CAL, X-CAL과 두 보이는 곡선의 교점 ICPT는 화면 밖 y도 계산하고 좌표를 하단에 표시합니다. G-Solve menu에서 방향키는 pan이고, operation을 고른 뒤 현재 candidate가 깜빡이며 UP/DOWN은 blink 대상을 옮깁니다. EXE는 곡선을 확정하고 LEFT/RIGHT는 여러 결과를 이동합니다. 보이는 곡선이 정확히 둘이면 ICPT가 자동 선택하며 더 많으면 Curve A와 B를 각각 고릅니다. 결과 없음과 오류는 dialog 없이 같은 graph 하단에 표시됩니다. 접하는 근, h 사이의 매우 빠른 진동, 특이점과 불완전 trajectory는 놓칠 수 있습니다.
 
-Phase portrait는 두 상태 이상일 때 사용합니다. 가로·세로로 서로 다른 상태를 선택합니다. 원본은 STAT의 List plot으로 phase를 얻었으며 이 직접 화면은 **[EXTENSION]**입니다. 독립변수 x는 계속 적분 변수이고 Trace의 UP/DOWN은 표시 중인 trajectory family를 바꿉니다. 가로/세로 pixel scale이 다르면 oscillator의 원 궤적이 화면에서 타원처럼 보일 수 있습니다.
+### SYS 2D Phase Portrait와 분석
+
+**SYS → 2 → 식 → IC → Parameter → GRAPH → F4 VIEW → F2 PHASE**.
+가로는 y1, 세로는 y2입니다. F4 VIEW에서 F1 TIME 또는 F3 TABLE로 이동합니다.
+Table은 항상 독립변수 x와 종속변수의 time-domain 표입니다. SYS IC는 기존과 같이 완전 벡터 하나입니다.
+
+TIME과 PHASE의 V-Window는 별도로 보존됩니다. Phase V-WIN, 방향키 pan, ZOOM IN/OUT/AUTO/ORIG는
+TIME 창·식·IC·h·Step·Solver Xrange를 바꾸지 않습니다. 첫 Phase 창은 원래 RK4 스트림에서 얻은
+유한 y1/y2 범위에 12% 여백을 더합니다. 유효점이 부족하면 두 축 [-3.1,3.1]을 사용합니다.
+ORIG도 이 기본 창으로 돌아갑니다. 가로/세로 pixel scale이 다르면 원 궤적이 타원처럼 보입니다.
+
+Phase는 처음 TIME을 그릴 때 함께 보관한 기존 258점 TRACE 캐시를 projection합니다.
+Phase를 위한 별도 적분이나 trajectory 복제는 없습니다. 최초 TIME은 전체 스트림을 그리며,
+이후 캐시 재표시와 TRACE는 긴 구간·빠른 진동에서 해상도가 낮아질 수 있습니다.
+Phase AUTO의 범위는 decimation 전 전체 스트림에서 얻습니다. invalid gap은 연결하지 않습니다.
+Output OFF는 TIME/Table 표시를 제어하며 Phase에 필요한 y1/y2 계산과 projection은 유지됩니다.
+
+PHASE F5 **ANLYS**는 그래프 위 한 단계 메뉴입니다. EXIT로 기본 Graph bar에 돌아옵니다.
+
+- **F1 FIELD**: 20×11의 연한 파랑 화살표를 ON/OFF. (f1,f2)를 창 span과 pixel 비율에 맞춰
+  정규화합니다. 정확한 zero vector는 작은 점이며 정의역 오류가 있는 위치는 건너뜁니다.
+- **F2 NULL**: 두 nullcline을 함께 ON/OFF. 빨강 **N1: f1=0**, 파랑 **N2: f2=0**.
+  20×20 cell의 수치 contour이며 symbolic 식이 아닙니다. FIELD와 별도로 켜고 끕니다.
+- **F3 EQPT**: 현재 Phase 창 안에서 coarse grid 후보를 찾고 bounded Newton으로 정제합니다.
+  최대 16점, 중복 제거, 잘 보이는 diamond marker를 사용합니다. LEFT/RIGHT로 결과를 순회하며
+  아래에 y1/y2와 `Linearized:` 분류를 표시합니다. `+`는 결과 제한 도달입니다.
+  찾지 못했다고 평형점이 없다고 증명한 것은 아닙니다.
+- **F4 INFO**: 선택한 점의 numerical Jacobian과 근사 eigenvalues를 표시합니다.
+  Saddle, Stable/Unstable Node, Stable/Unstable Spiral, Center/Neutral, Inconclusive,
+  Unavailable은 **국소 선형화** 결과입니다. Center/Neutral 및 non-hyperbolic 결과로
+  비선형·전역 안정성을 확정하지 않습니다. 미분을 신뢰할 수 없으면 Unavailable입니다.
+
+RHS bytecode에서 실제 x instruction을 검사합니다. non-autonomous SYS도 Phase trajectory를
+그릴 수 있습니다. FIELD와 NULL은 **IC x0**에서 평가하며 `Field at x=...`를 표시합니다.
+이 경우 EQPT/stability는 `Autonomous systems only`로 제한합니다. 시간 애니메이션은 없습니다.
+
+수치 분석은 작업량 제한과 EXIT/MENU poll을 사용합니다. 취소/실패한 EQPT는 이전 결과를 유지합니다.
+FIELD/NULL은 먼저 화면을 바꾸지 않고 검증한 뒤 같은 bounded 연산으로 화면을 완성합니다.
+마지막 atomic paint 중 들어온 키는 다음 입력에서 처리합니다. 실제 긴 식의 반응 시간은
+**HARDWARE TEST REQUIRED**입니다. 유한 grid는 좁은 구조와 미검출 불연속을 모두 증명할 수 없습니다.
+알고리즘·허용오차·예산은 [Phase numerical notes](PHASE_NUMERICS.md)에 있습니다.
+
+Phase TRACE는 x, y1, y2를 표시하며 NORMAL/FAST/FASTER, LEFT/RIGHT, F5/F6 endpoint와 EXIT를
+유지합니다. SYS single trajectory에서 UP/DOWN은 불필요한 곡선 전환을 하지 않습니다.
+다른 모드의 기존 phase projection/축 선택은 OPTN에서 계속 사용할 수 있습니다.
 
 ### 수치 guard와 유효한 구간
 
@@ -369,8 +420,13 @@ current/recall과 설정을 모두 복원합니다. 진짜 새 실행은 default
 않습니다. MENU 왕복으로 같은 실행이 재개될 때는 이 초기화를 다시 하지 않습니다.
 
 계산기 root의 `DIFFEQ0.dat`와 `DIFFEQ1.dat`를 번갈아 씁니다. magic/version/size/checksum 및
-값을 검사하고 최신 slot이 손상되면 다른 정상 slot을 사용합니다. 새 저장은 **v7**이며
+값을 검사하고 최신 slot이 손상되면 다른 정상 slot을 사용합니다. 새 저장은 **v8**이며
 Private Constants, 개별 G/L mask, x export flag는 없습니다. 메모리에 별도의 private constant 배열도 없습니다.
+
+v8은 독립 Phase 창, FIELD/NULL 표시 설정과 첫 창 준비 상태를 current/recall에 저장합니다.
+큰 trajectory나 analysis result는 저장하지 않습니다. v7의 10개 IC layout은 고정 reader로 읽고
+Phase 설정을 초기화합니다. 옛 SYS 2D에서 phase가 켜져 있었다면 기존 shared 창을 Phase 창으로
+옮기고 TIME 기본 창을 만듭니다. 자동/수동 여부와 무관하게 Solver 설정은 그대로 보존합니다.
 
 v6의 9개 IC 저장 배열은 고정 layout으로 읽어 새 10개 배열에 복원합니다. current/recall과 설정·색을 보존하고 새 열은 초기화합니다.
 같은 계산기 ABI의 v3/v4/v5도 각 버전의 layout으로 읽습니다. 이전 x OFF는 무시하고,
@@ -381,7 +437,7 @@ v3/v4는 Arrow/Pale Blue, v5의 명시적 Segment/색은 유지합니다. v3 sol
 
 옛 고차/SYS 여러 IC는 첫 완전 벡터를, 1차의 서로 다른 x0는 첫 x0와 같은 IC만 복원합니다.
 값을 새 x0로 강제로 옮기지 않습니다. 이 적응이 필요하면 load 안내를 표시하며 **load는 원래 파일을
-변경하지 않습니다**. 이후 명시적 SAVE는 새 v7로 두 slot을 순환하므로, 여러 번 SAVE하면 옛
+변경하지 않습니다**. 이후 명시적 SAVE는 새 v8로 두 slot을 순환하므로, 여러 번 SAVE하면 옛
 slot은 교체될 수 있습니다. 원본 보존이 필요하면 기존 파일을 따로 보관하십시오.
 상세 mapping과 예외는 [OUTPUT/migration audit](OUTPUT_LIST_AUDIT.md)에 있습니다.
 
@@ -393,7 +449,7 @@ slot은 교체될 수 있습니다. 원본 보존이 필요하면 기존 파일�
 
 1. **1st → Separable**의 기본값 f=1, g=y²−1, IC (0,0)은 감소하는 곡선을 그립니다. IC 화면에서 `x0=0, y0={0,1}`로 입력하면 수평 y=1도 함께 표시됩니다. 각 set은 독립된 초기값 문제입니다.
 2. **2nd**의 기본값 f=0, g=1, h=0, 초기 y=1, y'=0은 cos(x)와 −sin(x)입니다.
-3. **SYS → 2**의 기본값 y1'=y2, y2'=−y1, (1,0)에서 NEXT → NEXT → GRAPH → OPTN → phase 전환 → ZOOM → AUTO로 oscillator phase를 봅니다.
+3. **SYS → 2**의 기본값 y1'=y2, y2'=−y1, (1,0)에서 NEXT → NEXT → GRAPH → F4 VIEW → F2 PHASE → F5 ANLYS → F2 NULL → F3 EQPT로 oscillator phase를 봅니다.
 4. **N-th → 3**에서 `sin(x)-y1-y2`를 입력하고 OPTN → Convert to system를 실행하면 `y1'=y2`, `y2'=y3`, `y3'=sin(x)-y2-y3`로 변환됩니다.
 
 오차 확인 예제: 일반 1차 `y`, y(0)=1, x=1에서 h=.1의 RK4 값은 약 2.718279744입니다. h=.05, .025로 줄이면 host global error가 각각 약 1/15.35, 1/15.67로 줄었습니다. 목표 하드웨어 수학 라이브러리에서의 실제 값은 따로 검증해야 합니다.

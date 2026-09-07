@@ -1,5 +1,6 @@
 #include "trace.h"
 #include "ui.h"
+#include "phase_graph.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,6 +17,27 @@ _Static_assert(sizeof(TraceSamples)<=384*198/8+384*19*2,"TRACE staging exceeds o
 static bool inverted,pointer;
 static int pointer_x,pointer_y;
 static uint16_t highlight_xor;
+static bool cache_ready;
+static uint64_t cache_key;
+static uint64_t hash_bytes(uint64_t hash,const void *data,size_t size)
+{
+    const unsigned char *bytes=data;
+    for(size_t i=0;i<size;i++){hash^=bytes[i];hash*=UINT64_C(1099511628211);}
+    return hash;
+}
+static uint64_t numerical_key(const Document *d)
+{
+    uint64_t hash=UINT64_C(14695981039346656037);
+#define KEY(field) hash=hash_bytes(hash,&d->field,sizeof(d->field))
+    KEY(kind);KEY(dim);KEY(nic);KEY(text);KEY(power);KEY(ic);
+    KEY(solver.xmin);KEY(solver.xmax);KEY(solver.h);KEY(solver.max_steps);KEY(solver.step);
+#undef KEY
+    return hash;
+}
+bool trace_cache_matches(const Document *d)
+{return d && model_phase_supported(d) && cache_ready && cache_key==numerical_key(d);}
+void trace_cache_invalidate(void){cache_ready=false;}
+GraphResult trace_cache_result(void){return samples.result;}
 static void mask_pixel(int x,int y)
 {
     if(x<0 || x>=384 || y<0 || y>=198)return;
@@ -43,6 +65,21 @@ typedef struct {
     unsigned stride,capacity;double target;
     bool have,linked;TracePoint previous;
 } Capture;
+static struct {
+    Capture capture;uint64_t key;unsigned capacity,slot,finished,branches;int family;
+    bool active,branch_active,failed;
+} graph_capture;
+static bool capture_family(const Document *d,int family)
+{return model_phase_supported(d) || graph_family_enabled(d,family);}
+static void phase_bound(TraceSamples *out,const double *y)
+{
+    if(ode_values_status(y,2)!=ODE_OK)return;
+    for(int k=0;k<2;k++) {
+        if(!out->phase_points || y[k]<out->phase_min[k])out->phase_min[k]=y[k];
+        if(!out->phase_points || y[k]>out->phase_max[k])out->phase_max[k]=y[k];
+    }
+    out->phase_points++;
+}
 static void retain(Capture *c,const TracePoint *p)
 {
     TraceBranch *b=c->branch;
@@ -56,24 +93,91 @@ static void retain(Capture *c,const TracePoint *p)
 static bool capture(double x,const double *y,uint32_t step,void *context)
 {
     Capture *c=context;
-    if(!y) {
+    if(!y || !isfinite(x) || fabs(x)>1e100 || ode_values_status(y,c->d->dim)!=ODE_OK) {
         if(c->have)retain(c,&c->previous);
         c->have=false;c->linked=false;return true;
     }
+    if(model_phase_supported(c->d))phase_bound(c->out,y);
     TracePoint p={.x=x};memcpy(p.y,y,(unsigned)c->d->dim*sizeof(double));
     if(!c->have || step%c->stride==0 || x==c->target)retain(c,&p);
     c->previous=p;c->have=true;return true;
+}
+static void record_result(TraceSamples *out,TraceBranch *branch,ModelPathResult result,int family)
+{
+    out->result.steps+=result.steps;
+    if(result.invalid!=ODE_OK)out->result.invalid=result.invalid;
+    if(result.status==ODE_HAS_INVALID){out->has_invalid=true;branch->invalid=true;}
+    if(result.status!=ODE_OK && (out->result.status==ODE_OK ||
+        (out->result.status==ODE_HAS_INVALID && result.status!=ODE_HAS_INVALID))) {
+        out->result.status=result.status;out->result.failed_family=family;
+    }
+}
+bool trace_capture_begin(const Document *d)
+{
+    graph_capture.active=false;
+    if(!d || !model_phase_supported(d) || d->nic<1 ||
+        model_preflight(d,&d->solver).status!=ODE_OK)return false;
+    memset(&graph_capture,0,sizeof(graph_capture));
+    memset(&scratch.staging,0,sizeof(scratch.staging));
+    scratch.staging.extent=d->solver;scratch.staging.dim=d->dim;
+    scratch.staging.result.failed_family=-1;
+    graph_capture.capture.d=d;graph_capture.key=numerical_key(d);
+    graph_capture.capacity=TRACE_POINTS/(2*(unsigned)d->nic);
+    graph_capture.active=true;return true;
+}
+bool trace_capture_branch_begin(const Document *d,int family,int side)
+{
+    if(!graph_capture.active || graph_capture.branch_active || d!=graph_capture.capture.d ||
+        family<0 || family>=d->nic || side<0 || side>1 || graph_capture.slot>=2*(unsigned)d->nic) {
+        graph_capture.failed=true;return false;
+    }
+    TraceBranch *b=&scratch.staging.branch[family][side];
+    unsigned bit=1u<<(2*family+side);
+    if(graph_capture.branches&bit){graph_capture.failed=true;return false;}
+    graph_capture.branches|=bit;graph_capture.family=family;
+    b->start=graph_capture.slot++*graph_capture.capacity;
+    double target=side ? d->solver.xmax:d->solver.xmin;
+    double steps=ceil(fabs(target-d->ic[family].x)/d->solver.h);
+    unsigned stride=(unsigned)fmax(1,fmin(100000,ceil(steps/(graph_capture.capacity-1))));
+    graph_capture.capture=(Capture){.d=d,.out=&scratch.staging,.branch=b,.stride=stride,
+        .capacity=graph_capture.capacity,.target=target};
+    graph_capture.branch_active=true;return true;
+}
+bool trace_capture_point(double x,const double *y,uint32_t step,void *unused)
+{
+    (void)unused;
+    if(!graph_capture.active || !graph_capture.branch_active)return true;
+    return capture(x,y,step,&graph_capture.capture);
+}
+void trace_capture_branch_end(ModelPathResult result)
+{
+    if(!graph_capture.active || !graph_capture.branch_active){graph_capture.failed=true;return;}
+    Capture *c=&graph_capture.capture;
+    if(c->have)retain(c,&c->previous);
+    record_result(&scratch.staging,c->branch,result,graph_capture.family);
+    if(result.status!=ODE_OK && result.status!=ODE_HAS_INVALID)graph_capture.failed=true;
+    graph_capture.finished++;graph_capture.branch_active=false;
+}
+void trace_capture_end(bool success)
+{
+    if(graph_capture.active && success && !graph_capture.failed && !graph_capture.branch_active &&
+        graph_capture.finished==2*(unsigned)graph_capture.capture.d->nic) {
+        scratch.staging.valid=scratch.staging.branch[0][0].count+scratch.staging.branch[0][1].count>0;
+        samples=scratch.staging;cache_key=graph_capture.key;cache_ready=true;
+    }
+    graph_capture.active=false;graph_capture.branch_active=false;
 }
 static OdeStatus prepare_range(const Document *d,CompiledModel *m,const OdeSettings *range,
     int family,int variable,TraceSamples *out)
 {
     ModelWork plan=model_preflight(d,range);if(plan.status!=ODE_OK)return plan.status;
     memset(out,0,sizeof(*out));out->extent=*range;out->family=family;out->variable=variable;out->dim=d->dim;
+    out->result.failed_family=-1;
     unsigned active=0,slot=0;
-    for(int f=0;f<d->nic;f++)if(graph_family_enabled(d,f))active++;
+    for(int f=0;f<d->nic;f++)if(capture_family(d,f))active++;
     if(!active)return ODE_BAD_INPUT;
     unsigned capacity=TRACE_POINTS/(2*active);
-    for(int f=0;f<d->nic;f++)if(graph_family_enabled(d,f))for(int side=0;side<2;side++) {
+    for(int f=0;f<d->nic;f++)if(capture_family(d,f))for(int side=0;side<2;side++) {
         TraceBranch *b=&out->branch[f][side];b->start=slot++*capacity;
         double target=side ? range->xmax:range->xmin;
         double steps=ceil(fabs(target-d->ic[f].x)/range->h);
@@ -82,8 +186,8 @@ static OdeStatus prepare_range(const Document *d,CompiledModel *m,const OdeSetti
         Capture c={.d=d,.out=out,.branch=b,.stride=stride,.capacity=capacity,.target=target};
         ModelPathResult r=model_path_branch(d,m,f,side ? 1:-1,range,capture,&c,ui_trace_cancel,NULL);
         if(c.have)retain(&c,&c.previous);
-        if(r.status==ODE_HAS_INVALID){out->has_invalid=true;b->invalid=true;}
-        else if(r.status!=ODE_OK)return r.status;
+        record_result(out,b,r,f);
+        if(r.status!=ODE_OK && r.status!=ODE_HAS_INVALID)return r.status;
     }
     out->valid=out->branch[family][0].count+out->branch[family][1].count>0;
     return ODE_OK;
@@ -91,15 +195,17 @@ static OdeStatus prepare_range(const Document *d,CompiledModel *m,const OdeSetti
 static void selected_mask(const Document *d)
 {
     memset(mask,0,sizeof(mask));
-    int base=graph_palette_color(model_color(d,samples.family,samples.variable));
+    const ViewWindow *view=model_view_const(d);
+    int variable=d->view.phase ? view->phase_y:samples.variable;
+    int base=graph_palette_color(model_color(d,samples.family,variable));
     highlight_xor=(uint16_t)(base^graph_highlight_color(base,true));
     for(int side=0;side<2;side++) {
         TraceBranch *b=&samples.branch[samples.family][side];
         for(unsigned j=1;j<b->count;j++) {
             unsigned i=b->start+j;if(!samples.link[i])continue;
             TracePoint *p=&samples.point[i-1],*q=&samples.point[i];
-            mask_segment(&d->view,d->view.phase ? p->y[d->view.phase_x]:p->x,p->y[samples.variable],
-                d->view.phase ? q->y[d->view.phase_x]:q->x,q->y[samples.variable]);
+            mask_segment(view,d->view.phase ? p->y[view->phase_x]:p->x,p->y[variable],
+                d->view.phase ? q->y[view->phase_x]:q->x,q->y[variable]);
         }
     }
     /* A decimated cache can differ from the full initial graph. Highlight only
@@ -110,9 +216,15 @@ static void selected_mask(const Document *d)
 
 bool trace_prepare(Document *d,CompiledModel *m,int family,int variable)
 {
-    if(d->nic<1 || family<0 || family>=d->nic)return false;
+    if(d->nic<1 || family<0 || family>=d->nic || variable<0 || variable>=d->dim)return false;
+    if(trace_cache_matches(d)) {
+        trace_overlay_begin();return trace_select(d,family,variable);
+    }
     OdeStatus status=prepare_range(d,m,&d->solver,family,variable,&scratch.staging);
-    if(status==ODE_OK)samples=scratch.staging;
+    if(status==ODE_OK) {
+        samples=scratch.staging;cache_ready=model_phase_supported(d);
+        if(cache_ready)cache_key=numerical_key(d);
+    }
     trace_overlay_begin();
     if(status==ODE_OK)selected_mask(d);else memset(mask,0,sizeof(mask));
     return status==ODE_OK && samples.valid;
@@ -120,6 +232,7 @@ bool trace_prepare(Document *d,CompiledModel *m,int family,int variable)
 const OdeSettings *trace_extent(void){return &samples.extent;}
 bool trace_select(const Document *d,int family,int variable)
 {
+    if(family<0 || family>=d->nic || variable<0 || variable>=d->dim)return false;
     samples.family=family;samples.variable=variable;
     samples.valid=samples.branch[family][0].count+samples.branch[family][1].count>0;
     selected_mask(d);return samples.valid;
@@ -180,29 +293,106 @@ bool trace_step(double x,int direction,double dx,TracePoint *point)
     if(interpolate(target,point))return true;
     return trace_move(x,direction,point);
 }
-static void cached_render(Document *d,CompiledModel *m)
+void trace_cache_render(const Document *d)
 {
-    graph_backdrop(d,m);
+    const ViewWindow *view=model_view_const(d);
     for(int f=0;f<d->nic;f++)if(graph_family_enabled(d,f))for(int side=0;side<2;side++) {
         TraceBranch *b=&samples.branch[f][side];
         for(unsigned j=1;j<b->count;j++) {
             unsigned i=b->start+j;if(!samples.link[i])continue;
             TracePoint *p=&samples.point[i-1],*q=&samples.point[i];
-            for(int k=0;k<d->dim;k++)if(d->enabled&(1u<<k))
-                graph_solution_segment(&d->view,p->x,p->y[k],q->x,q->y[k],graph_palette_color(model_color(d,f,k)));
+            if(d->view.phase) {
+                graph_solution_segment(view,p->y[view->phase_x],p->y[view->phase_y],
+                    q->y[view->phase_x],q->y[view->phase_y],
+                    graph_palette_color(model_color(d,f,view->phase_y)));
+            } else for(int k=0;k<d->dim;k++)if(d->enabled&(1u<<k))
+                graph_solution_segment(view,p->x,p->y[k],q->x,q->y[k],graph_palette_color(model_color(d,f,k)));
         }
     }
+}
+bool trace_cache_phase_window(const Document *d,ViewWindow *window)
+{
+    if(!window || !trace_cache_matches(d) || samples.phase_points<2)return false;
+    ViewWindow next=*model_view_const(d);
+    double lower[2],upper[2],scale[2];
+    for(int k=0;k<2;k++) {
+        double span=samples.phase_max[k]-samples.phase_min[k];
+        double margin=span>0 ? span*.12:fmax(1,fabs(samples.phase_min[k])*.1);
+        lower[k]=samples.phase_min[k]-margin;upper[k]=samples.phase_max[k]+margin;
+        if(!isfinite(lower[k]) || !isfinite(upper[k]) || lower[k]>=upper[k])return false;
+        scale[k]=pow(10,floor(log10((upper[k]-lower[k])/6)));
+        if(!isfinite(scale[k]) || scale[k]<=0)scale[k]=1;
+    }
+    next.xmin=lower[0];next.xmax=upper[0];next.xscale=scale[0];
+    next.ymin=lower[1];next.ymax=upper[1];next.yscale=scale[1];
+    next.phase=1;next.phase_x=0;next.phase_y=1;*window=next;return true;
+}
+static void time_bound(double y,double *minimum,double *maximum)
+{
+    if(!isfinite(y) || fabs(y)>1e100)return;
+    if(y<*minimum)*minimum=y;
+    if(y>*maximum)*maximum=y;
+}
+bool trace_cache_time_window(const Document *d,ViewWindow *window)
+{
+    if(!window || !trace_cache_matches(d))return false;
+    ViewWindow next=d->view;
+    double minimum=INFINITY,maximum=-INFINITY;
+    for(int f=0;f<d->nic;f++)for(int side=0;side<2;side++) {
+        const TraceBranch *branch=&samples.branch[f][side];
+        for(unsigned j=0;j<branch->count;j++) {
+            unsigned i=branch->start+j;const TracePoint *q=&samples.point[i];
+            for(int k=0;k<d->dim;k++)if(d->enabled&(1u<<k)) {
+                if(q->x>=next.xmin && q->x<=next.xmax)time_bound(q->y[k],&minimum,&maximum);
+                if(!j || !samples.link[i])continue;
+                const TracePoint *p=&samples.point[i-1];
+                if(p->x==q->x)continue;
+                for(int edge=0;edge<2;edge++) {
+                    double x=edge ? next.xmax:next.xmin;
+                    if(x<fmin(p->x,q->x) || x>fmax(p->x,q->x))continue;
+                    double t=(x-p->x)/(q->x-p->x);
+                    time_bound((1-t)*p->y[k]+t*q->y[k],&minimum,&maximum);
+                }
+            }
+        }
+    }
+    if(!isfinite(minimum) || !isfinite(maximum))return false;
+    double margin=maximum>minimum ? (maximum-minimum)*.12:fmax(1,fabs(minimum)*.1);
+    next.ymin=minimum-margin;next.ymax=maximum+margin;
+    if(!isfinite(next.ymin) || !isfinite(next.ymax) || next.ymin>=next.ymax)return false;
+    next.yscale=pow(10,floor(log10((next.ymax-next.ymin)/6)));
+    if(!isfinite(next.yscale) || next.yscale<=0)next.yscale=1;
+    *window=next;return true;
+}
+static void cached_render(Document *d,CompiledModel *m)
+{
+    graph_backdrop(d,m);trace_cache_render(d);graph_phase_markers(d,-1);
     if(samples.has_invalid)ui_text(7,4,C_RED,"ERROR: Numerical limit");
 }
-static void follow_point(Document *d,CompiledModel *m,const TracePoint *point,bool redraw)
+static OdeStatus follow_point(Document *d,CompiledModel *m,const TracePoint *point,bool redraw)
 {
-    if(ode_values_status(point->y,samples.dim)==ODE_OK
-        && graph_follow_window(&d->view,point->x,point->y[samples.variable]))redraw=true;
+    ViewWindow *view=model_view(d),before=*view,next=*view;
+    /* Geometry's ordinary follow helper rejects legacy phase views. Project
+       once here, then reuse its bounded two-axis follow on a temporary view. */
+    next.phase=0;
+    double x=d->view.phase ? point->y[view->phase_x]:point->x;
+    double y=point->y[d->view.phase ? view->phase_y:samples.variable];
+    if(isfinite(point->x) && fabs(point->x)<=1e100 &&
+        ode_values_status(point->y,samples.dim)==ODE_OK && graph_follow_window(&next,x,y)) {
+        next.phase=view->phase;*view=next;redraw=true;
+    }
     /* Configured solver range remains independent of runtime cache and view. */
-    if(redraw){cached_render(d,m);trace_overlay_begin();selected_mask(d);}
+    if(redraw) {
+        if(model_phase_supported(d) && d->view.phase) {
+            OdeStatus status=graph_phase_preflight(d,m,ui_trace_cancel,NULL);
+            if(status!=ODE_OK){*view=before;return status;}
+        }
+        cached_render(d,m);trace_overlay_begin();selected_mask(d);
+    }
+    return ODE_OK;
 }
 void trace_follow(Document *d,CompiledModel *m,const TracePoint *point)
-{follow_point(d,m,point,false);}
+{(void)follow_point(d,m,point,false);}
 OdeStatus trace_navigate(Document *d,CompiledModel *m,double target,bool jump,TracePoint *point)
 {
     if(!samples.valid || !isfinite(target) || fabs(target)>1e100)return ODE_BAD_INPUT;
@@ -212,7 +402,10 @@ OdeStatus trace_navigate(Document *d,CompiledModel *m,double target,bool jump,Tr
         extent.xmin=fmin(extent.xmin,target);extent.xmax=fmax(extent.xmax,target);
         trace_overlay_restore();
         OdeStatus status=prepare_range(d,m,&extent,samples.family,samples.variable,&scratch.staging);
-        if(status==ODE_OK){samples=scratch.staging;extended=true;}
+        if(status==ODE_OK) {
+            samples=scratch.staging;extended=true;cache_ready=model_phase_supported(d);
+            if(cache_ready)cache_key=numerical_key(d);
+        }
         /* Staging aliases overlay storage. Rebuild it even on cancellation;
            failed work has changed neither the view, cache, cursor nor VRAM. */
         trace_overlay_begin();selected_mask(d);
@@ -225,7 +418,9 @@ OdeStatus trace_navigate(Document *d,CompiledModel *m,double target,bool jump,Tr
         else trace_move(point->x,target>point->x ? 1:-1,&next);
     }
     if(ode_values_status(next.y,samples.dim)!=ODE_OK)return ODE_HAS_INVALID;
-    *point=next;follow_point(d,m,point,extended);
+    OdeStatus followed=follow_point(d,m,&next,extended);
+    if(followed!=ODE_OK)return followed;
+    *point=next;
     return exact ? ODE_OK:ODE_HAS_INVALID;
 }
 
@@ -254,6 +449,7 @@ void trace_overlay_restore(void)
 void trace_overlay_show(const Document *d,const TracePoint *point,int variable,bool highlight)
 {
     if(highlight){invert_mask();inverted=true;}
-    if(graph_point(&d->view,d->view.phase ? point->y[d->view.phase_x]:point->x,
-        point->y[variable],&pointer_x,&pointer_y)) {invert_pointer();pointer=true;}
+    const ViewWindow *view=model_view_const(d);
+    if(graph_point(view,d->view.phase ? point->y[view->phase_x]:point->x,
+        point->y[d->view.phase ? view->phase_y:variable],&pointer_x,&pointer_y)) {invert_pointer();pointer=true;}
 }
