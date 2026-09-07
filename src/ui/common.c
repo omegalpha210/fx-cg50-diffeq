@@ -17,7 +17,7 @@ static int trace_repeater(int key,int duration,int count)
 {(void)key;(void)duration;return count==0 ? 400000:125000;}
 #endif
 static key_event_t trace_pending;
-static bool trace_control(int key) {return key==KEY_EXIT || key==KEY_MENU || key==KEY_F6;}
+static bool trace_control(int key) {return key==KEY_EXIT || key==KEY_MENU;}
 static void trace_accept(key_event_t event)
 {
     if(event.type==KEYEV_NONE)return;
@@ -115,12 +115,15 @@ void ui_softkeys(const char *a,const char *b,const char *c,const char *d,const c
     for(int i=0;i<6;i++) {
         int background=UI_BLUE,foreground=C_WHITE;
         if(!strcmp(keys[i],"PREV")){background=0xf81f;foreground=C_BLACK;}
-        if(!strcmp(keys[i],"NEXT")){background=0x07ff;foreground=C_BLACK;}
+        if(!strcmp(keys[i],"NEXT")){background=UI_CYAN;foreground=C_BLACK;}
         if(!strcmp(keys[i],"V-WIN")){background=C_RGB(31,17,0);foreground=C_BLACK;}
-        if(!strcmp(keys[i],"SET")){background=0x37e6;foreground=C_BLACK;}
+        if(!strcmp(keys[i],"SET")){background=UI_BRIGHT_GREEN;foreground=C_BLACK;}
+        if(!strcmp(keys[i],"NORMAL")){background=UI_YELLOW;foreground=C_BLACK;}
+        if(!strcmp(keys[i],"FAST")){background=UI_BRIGHT_GREEN;foreground=C_BLACK;}
+        if(!strcmp(keys[i],"FASTER")){background=UI_CYAN;foreground=C_BLACK;}
         if(i==5 && !strcmp(keys[i],"GRAPH"))background=C_RED;
         if(!strcmp(keys[i],"COLOR")) {
-            static const int colors[]={0xf800,0xfc40,0x37e6,0x07ff,0xf81f};
+            static const int colors[]={0xf800,0xfc40,UI_BRIGHT_GREEN,UI_CYAN,0xf81f};
             ui_rect(i*64,198,63,18,C_WHITE);
             int width;dsize(keys[i],NULL,&width,NULL);int x=i*64+(63-width)/2;
             for(int j=0;j<5;j++) {
@@ -168,7 +171,7 @@ void ui_field(int row,const char *label,const char *value,bool selected)
 }
 void ui_form_hint(const UiInlineEdit *edit,const char *context)
 {
-    const char *text=edit && edit->active ? UI_EDIT_HINT:context;
+    const char *text=edit && edit->active ? (edit->limited ? UI_LIMIT_HINT:UI_EDIT_HINT):context;
     if(text && text[0])ui_text(8,184,UI_MUTED,"%s",text);
 }
 void ui_color_swatch(int x,int y,int color)

@@ -74,6 +74,19 @@ cases += [
     ('polish-prev','Graph / semantic PREV','2 F6 F6 F6'),
     ('polish-ic-full','SYS9 IC / seven rows clear of help','4 9 F6 F6'),
     ('polish-output-full','SYS9 OUTPUT / seven rows + one hint','4 9 F6 F6 F6 F4')]
+trace_ic_start=len(cases)
+ten='1 4 0 EXE F6 DOWN S:MUL 0 COMMA 1 COMMA 2 COMMA 3 COMMA 4 COMMA 5 COMMA 6 COMMA 7 COMMA 8 COMMA 9 S:DIV EXE '
+cases += [
+    ('trace-y-upper','TRACE / Y upper follow + RIGHT endpoint','1 4 1 EXE F6 F6 F6 F1 F6'),
+    ('trace-y-lower','TRACE / Y lower follow + LEFT endpoint','1 4 1 EXE F6 F6 F6 F1 F5'),
+    ('trace-speed-fast','TRACE / FAST selected','2 F6 F6 F6 F1 F3'),
+    ('trace-speed-faster','TRACE / FASTER selected','2 F6 F6 F6 F1 F4'),
+    ('settings-toggle','Graph Settings / arrows only','1 4 F6 F6 F5'),
+    ('ic-ten','First-order / ten initial values',ten),
+    ('table-ten','Table / tenth solution, frozen x',ten+'F6 F6 F4 '+'RIGHT '*10),
+    ('ic-count-limit','IC / separate ten-value limit',ten+'LEFT ACON S:MUL '+ '0 COMMA '*10+'0 S:DIV EXE'),
+    ('ic-length-limit','IC / bounded 191-character limit','1 4 F6 DOWN '+'0 '*192+'EXE')]
+assert len({name for name,_,_ in cases})==len(cases)
 sheet=Image.new('RGB',(816,8+264*((len(cases)+1)//2)),'#e8eef5')
 draw=ImageDraw.Draw(sheet)
 font=ImageFont.load_default()
@@ -89,7 +102,7 @@ for i,(name,label,keys) in enumerate(cases):
     draw.text((x,y),label,fill='#193857',font=font)
     sheet.paste(im,(x,y+25))
 sheet.save(output/'host-overview.png')
-for name,start in [('ux-field-overview',ux_start),('polish-overview',polish_start)]:
+for name,start in [('ux-field-overview',ux_start),('polish-overview',polish_start),('trace-ic-overview',trace_ic_start)]:
     sheet=Image.new('RGB',(816,8+264*((len(cases)-start+1)//2)),'#e8eef5')
     draw=ImageDraw.Draw(sheet)
     for i,(filename,label,_) in enumerate(cases[start:]):

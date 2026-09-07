@@ -45,7 +45,7 @@ base=run(trace)
 for key,multiple in [('F2',1),('F3',2),('F4',3)]:
     changed=run(trace+key)
     assert point(changed)==.6 and plot(changed)==plot(base) and solves(changed)==solves(base)
-    assert bar(changed)==['x=','NORMAL','FAST','FASTER','','BACK']
+    assert bar(changed)==['x=','NORMAL','FAST','FASTER','LEFT','RIGHT']
     for direction,sign in [('LEFT',-1),('RIGHT',1)]:
         out=run(trace+key+' '+direction)
         assert abs(point(out)-(.6+sign*multiple*.025))<1e-7 and solves(out)==solves(base)

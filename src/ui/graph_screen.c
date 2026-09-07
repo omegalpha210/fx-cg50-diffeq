@@ -84,7 +84,7 @@ void ui_trace(App *a)
                A cancelled preparation never replaces the complete plot. */
             valid=prepared<0 ? trace_prepare(d,&a->model,curve.family,curve.variable):
                 trace_select(d,curve.family,curve.variable);
-            if(valid)trace_point_near(point.x,&point);
+            if(valid && trace_point_near(point.x,&point))trace_follow(d,&a->model,&point);
             prepared=selected;
         }
         if(valid)trace_overlay_show(d,&point,curve.variable,blink.highlighted);
@@ -99,18 +99,18 @@ void ui_trace(App *a)
             ui_rect(0,179,384,19,C_WHITE);ui_text(8,184,UI_BLUE,follow_error==ODE_STEP_LIMIT || follow_error==ODE_WORK_LIMIT ?
                 "TRACE: too many steps; increase h":"TRACE: Numerical limit");
         }
-        if(input_error)ui_softkeys("Invalid x","","","","","OK");
-        else if(edit.active)ui_softkeys("x=","","","","","BACK");
+        if(input_error)ui_softkeys("Invalid x","","","","","");
+        else if(edit.active)ui_softkeys("x=","","","","","");
         else {
-            ui_softkeys("x=","NORMAL","FAST","FASTER","","BACK");
+            ui_softkeys("x=","NORMAL","FAST","FASTER","LEFT","RIGHT");
             int left=64*stride+1;
-            ui_line(left,199,left+61,199,C_WHITE);ui_line(left,215,left+61,215,C_WHITE);
-            ui_line(left,199,left,215,C_WHITE);ui_line(left+61,199,left+61,215,C_WHITE);
+            ui_line(left,199,left+61,199,C_BLACK);ui_line(left,215,left+61,215,C_BLACK);
+            ui_line(left,199,left,215,C_BLACK);ui_line(left+61,199,left+61,215,C_BLACK);
         }
         dupdate();
         key_event_t event=edit.active ? ui_getkey():ui_trace_key(&blink);int key=event.key;
         if(edit.active) {
-            if(key==KEY_EXE || key==KEY_EXIT || key==KEY_F6) {
+            if(key==KEY_EXE || key==KEY_EXIT) {
                 double value;
                 if(!trace_value(&edit,&value)){input_error=true;continue;}
                 input_error=false;
@@ -120,17 +120,18 @@ void ui_trace(App *a)
                     d->ic[curve.family].y,value,extent,NULL,NULL,ui_trace_cancel,NULL);
                 if(r.status==ODE_CANCELLED) {
                     int control=ui_trace_key(&blink).key;
-                    if(control==KEY_EXIT || control==KEY_F6)break;
+                    if(control==KEY_EXIT)break;
                     continue;
                 }
                 if(r.status!=ODE_OK){input_error=true;continue;}
                 if(r.status==ODE_OK){point.x=r.x;for(int j=0;j<d->dim;j++)point.y[j]=r.y[j];}
+                trace_follow(d,&a->model,&point);a->dirty=true;
                 edit.active=false;boundary=false;continue;
             }
             if((key<KEY_F1 || key>KEY_F6) && key!=KEY_OPTN)ui_inline_key(&edit,event);
             continue;
         }
-        if(key==KEY_EXIT || key==KEY_F6)break;
+        if(key==KEY_EXIT)break;
         if(key>=KEY_F2 && key<=KEY_F4){stride=key-KEY_F2+1;continue;}
         if(key==KEY_MENU && !valid)prepared=-1;
         if(key==KEY_F1 || ui_inline_input(event)) {
@@ -139,25 +140,23 @@ void ui_trace(App *a)
             ui_inline_begin(&edit,text,true);
             if(key!=KEY_F1)ui_inline_key(&edit,event);
         }
-        if(valid && (key==KEY_LEFT || key==KEY_RIGHT)) {
-            TracePoint next=point;trace_overlay_restore();
-            int direction=key==KEY_LEFT ? -1:1;
-            double dx=stride*model_xdot(&d->view),target=point.x+direction*dx;
-            if(!isfinite(target) || target==point.x){boundary=true;follow_error=ODE_BAD_STEP;continue;}
-            bool moved=trace_step(point.x,direction,dx,&next);
-            boundary=!moved && trace_direction_invalid(direction);follow_error=ODE_OK;
-            if(moved || (!d->view.phase && !boundary)) {
-                OdeStatus status=trace_follow(d,&a->model,moved ? next.x:target);
-                if(status==ODE_CANCELLED) {
-                    int control=ui_trace_key(&blink).key;
-                    if(control==KEY_EXIT || control==KEY_F6)break;
-                    continue;
-                }
-                if(status==ODE_OK){
-                    if(!moved)trace_step(point.x,direction,dx,&next);
-                    point=next;a->dirty=true;
-                } else {boundary=true;follow_error=status;}
+        if(valid && (key==KEY_LEFT || key==KEY_RIGHT || key==KEY_F5 || key==KEY_F6)) {
+            trace_overlay_restore();
+            bool jump=key==KEY_F5 || key==KEY_F6;
+            int direction=key==KEY_LEFT || key==KEY_F5 ? -1:1;
+            double target=jump ? (direction<0 ? d->solver.xmin:d->solver.xmax):
+                point.x+direction*stride*model_xdot(&d->view);
+            if(!isfinite(target) || (!jump && target==point.x)) {
+                boundary=true;follow_error=ODE_BAD_STEP;continue;
             }
+            OdeStatus status=trace_navigate(d,&a->model,target,jump,&point);
+            if(status==ODE_CANCELLED) {
+                int control=ui_trace_key(&blink).key;
+                if(control==KEY_EXIT)break;
+                continue;
+            }
+            boundary=status!=ODE_OK;follow_error=status;
+            if(status==ODE_OK || status==ODE_HAS_INVALID)a->dirty=true;
         }
         if(key==KEY_UP){selected=(selected+count-1)%count;boundary=false;}
         if(key==KEY_DOWN){selected=(selected+1)%count;boundary=false;}

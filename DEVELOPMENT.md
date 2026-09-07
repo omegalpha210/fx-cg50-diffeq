@@ -1,7 +1,7 @@
 # Building and developing DIFFEQ
 
 The runtime/numerical/UI source and all existing tests match the validated local
-milestone `0de88c7`. This beta updates the existing public snapshot history; private
+milestone `0fbe0de`. This beta updates the existing public snapshot history; private
 development branches and manuals are not imported. Public-only changes cover
 release metadata, documentation and the host-only README image helper.
 
@@ -73,7 +73,7 @@ python3 tools/capture_ui.py
 python3 tools/capture_readme.py
 ```
 
-The script configures `tests/`, builds and runs all 28 CTest groups with strict
+The script configures `tests/`, builds and runs all 29 CTest groups with strict
 warnings, assertions and UBSan by default. The drawing/key adapter executes the
 actual application sources, with deterministic counters and temporary test files.
 It is not a SuperH/OS emulator. Physical timing, Fugue behavior and stack/allocator
@@ -89,7 +89,7 @@ redistributed with the add-in. Normal builds/tests do not need it.
 
 `VERSION` is the public prerelease string. CMake's project version and numeric G3A
 metadata use its numeric base (`0.9.0`, `00.09.0000`); the container cannot express
-`-beta.2`. The Git tag and Release make the beta designation explicit.
+`-beta.3`. The Git tag and Release make the beta designation explicit.
 
 Release from a clean tagged commit: clean target build, host tests, package check,
 then calculate SHA256. Attach `DIFFEQ.g3a`, `SHA256SUMS.txt` and the assembled

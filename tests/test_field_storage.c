@@ -14,6 +14,22 @@ typedef struct {
 } OldDocument;
 typedef struct {uint32_t magic,version,size,generation,has_recall;OldDocument current,recall;uint32_t checksum;} OldRecord;
 typedef struct {uint32_t magic,version,size,generation,has_recall;Document current,recall;uint32_t checksum;} NewRecord;
+typedef struct {
+    int kind,dim,nic;char text[9][192];double power;
+    InitialCondition ic[9];OdeSettings solver;int solver_custom;ViewWindow view;
+    uint16_t enabled;uint8_t color[9][9];uint8_t field_style,field_color;
+} V6Document;
+typedef struct {uint32_t magic,version,size,generation,has_recall;V6Document current,recall;uint32_t checksum;} V6Record;
+static V6Record six;
+static void from_six(V6Document *o,const Document *d)
+{
+    memset(o,0xa5,sizeof(*o));
+#define COPY(member) memcpy(&o->member,&d->member,sizeof(o->member))
+    COPY(kind);COPY(dim);COPY(nic);COPY(text);COPY(power);COPY(ic);COPY(solver);COPY(solver_custom);COPY(view);
+    COPY(enabled);COPY(color);COPY(field_style);COPY(field_color);
+#undef COPY
+}
+
 static App a,b;static OldDocument old[2];static unsigned char bytes[sizeof(OldRecord)];static NewRecord record;
 static size_t aligned(size_t n,size_t a){return (n+a-1)/a*a;}
 static void write_bytes(const char *path,void *data,size_t size,size_t checksum)
@@ -91,7 +107,23 @@ int main(void)
     strcpy(old[0].text[0],long_text);old[0].constants[0]=1.2345678901234567;
     write_old(paths[0],3);assert(storage_load(&b,directory) && !strcmp(b.doc.text[0],long_text));
     assert(b.migration_warnings&STORAGE_EXPRESSION_REVIEW);
-    /* v6 contains no constant array or separate G/L/x flags. */
+    /* Frozen nine-IC v6 streams into expanded current/recall without offset drift. */
+    model_defaults(&a.doc,EQ_GENERAL,1);a.doc.nic=9;
+    for(int i=0;i<9;i++){a.doc.ic[i].y[0]=i;a.doc.color[i][0]=(uint8_t)(i%6);}
+    a.doc.solver.xmin=-2;a.doc.solver.xmax=3;a.doc.solver_custom=1;
+    a.doc.view.ymin=-7;a.doc.view.ymax=11;a.doc.field_style=FIELD_SEGMENT;a.doc.field_color=5;
+    six.magic=0x44455131;six.version=6;six.size=sizeof(six);six.generation=20;six.has_recall=1;
+    from_six(&six.current,&a.doc);a.doc.ic[8].y[0]=88;from_six(&six.recall,&a.doc);
+    write_bytes(paths[0],&six,sizeof(six),offsetof(V6Record,checksum));
+    assert(storage_load(&b,directory) && b.doc.nic==9 && b.recall.nic==9 && !b.migration_warnings);
+    assert(b.doc.ic[8].y[0]==8 && b.recall.ic[8].y[0]==88 && b.doc.ic[9].y[0]==0);
+    assert(b.doc.color[8][0]==2 && b.doc.solver_custom && b.doc.solver.xmin==-2 && b.doc.solver.xmax==3);
+    assert(b.doc.view.ymin==-7 && b.doc.view.ymax==11 && b.doc.field_color==5 && b.doc.field_style==FIELD_SEGMENT);
+    assert(model_compile(&b.doc,&b.model).expression.status==EXPR_OK);
+    six.has_recall=0;memset(&six.recall,0,sizeof(six.recall));
+    write_bytes(paths[0],&six,sizeof(six),offsetof(V6Record,checksum));
+    assert(storage_load(&b,directory) && !b.has_recall && b.doc.nic==9);
+    /* Current v7 contains ten IC slots; appearance sanitation still applies. */
     model_defaults(&a.doc,EQ_GENERAL,1);a.recall=a.doc;a.has_recall=true;
     for(unsigned c=0;c<FIELD_COLORS;c++) {
         a.doc.field_style=FIELD_SEGMENT;a.doc.field_color=(uint8_t)c;
@@ -101,15 +133,15 @@ int main(void)
         assert(b.doc.enabled==1 && b.recall.enabled==0 && !b.migration_warnings);
     }
     from_new(&old[0],&a.doc);from_new(&old[1],&a.recall);write_old(paths[0],5);
-    memset(&record,0,sizeof(record));record.magic=0x44455131;record.version=6;record.size=sizeof(record);record.generation=100;record.has_recall=1;
+    memset(&record,0,sizeof(record));record.magic=0x44455131;record.version=7;record.size=sizeof(record);record.generation=100;record.has_recall=1;
     record.current=a.doc;record.recall=a.recall;record.current.field_style=255;record.current.field_color=255;
     write_bytes(paths[1],&record,sizeof(record),offsetof(NewRecord,checksum));
     assert(storage_load(&b,directory) && b.doc.field_style==FIELD_ARROW && b.doc.field_color==0);
-    record.version=7;write_bytes(paths[1],&record,sizeof(record),offsetof(NewRecord,checksum));
+    record.version=8;write_bytes(paths[1],&record,sizeof(record),offsetof(NewRecord,checksum));
     assert(storage_load(&b,directory) && b.doc.field_style==FIELD_SEGMENT);
     assert(truncate(paths[1],25)==0);assert(storage_load(&b,directory) && b.doc.field_style==FIELD_SEGMENT);
     FILE *f=fopen(paths[0],"rb");assert(f);unsigned char check[sizeof(bytes)];size_t n=fread(check,1,sizeof(check),f);fclose(f);
     assert(n>0 && !memcmp(check,bytes,n));
     for(int i=0;i<2;i++)assert(remove(paths[i])==0);assert(rmdir(directory)==0);
-    printf("v3/v4/v5 streaming migration, constants/masks/IC policy, v6 roundtrip/defaults and two-slot recovery passed. New record %zu, old %zu bytes.\n",sizeof(record),sizeof(OldRecord));
+    printf("v3/v4/v5 streaming migration, constants/masks/IC policy, frozen v6 migration, v7 roundtrip/defaults and two-slot recovery passed. New record %zu, old %zu bytes.\n",sizeof(record),sizeof(OldRecord));
 }

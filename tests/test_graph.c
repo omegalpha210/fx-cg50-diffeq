@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
 int main(void)
 {
     assert(graph_color(0,0,3)==C_RGB(31,0,31));
@@ -32,6 +33,23 @@ int main(void)
     assert(graph_zoom(&v,.5,0,0) && fabs(v.xmax-v.xmin-span*.5)<1e-12);
     ViewWindow before=v;assert(!graph_zoom(&v,0,0,0) && v.xmin==before.xmin);
     assert(graph_zoom(&v,1,.2,0) && v.xmin>before.xmin);
+    v=(ViewWindow){.xmin=-6,.xmax=6,.ymin=-3,.ymax=3,.xscale=1,.yscale=.5};
+    before=v;assert(!graph_follow_window(&v,0,0) && !memcmp(&v,&before,sizeof(v)));
+    const double follows[][2]={{6,0},{0,4},{0,-4},{9,7},{-9,-7}};
+    for(unsigned i=0;i<sizeof(follows)/sizeof(*follows);i++) {
+        v=before;double tx=follows[i][0],ty=follows[i][1];
+        assert(graph_follow_window(&v,tx,ty) && graph_point(&v,tx,ty,&x,&y));
+        assert(fabs((v.xmax-v.xmin)-12)<1e-12 && fabs((v.ymax-v.ymin)-6)<1e-12);
+        assert(v.xscale==1 && v.yscale==.5);
+        ViewWindow landed=v;assert(!graph_follow_window(&v,tx,ty));
+        assert(!memcmp(&landed,&v,sizeof(v))); /* no jitter at the landing point */
+        assert(!graph_follow_window(&v,tx+.01,ty+.01));
+    }
+    double invalid[]={NAN,INFINITY,-INFINITY,1e101,-1e101};
+    for(unsigned i=0;i<sizeof(invalid)/sizeof(*invalid);i++) {
+        v=before;assert(!graph_follow_window(&v,7,invalid[i]) && !memcmp(&v,&before,sizeof(v)));
+    }
+    v=before;v.phase=1;assert(!graph_follow_window(&v,9,7));
     puts("Graph clipping, extreme endpoints, coordinate mapping, pan/zoom passed.");
     return 0;
 }

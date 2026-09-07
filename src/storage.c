@@ -16,13 +16,13 @@
 #endif
 
 #define RECORD_MAGIC 0x44455131u
-#define RECORD_VERSION 6u
+#define RECORD_VERSION 7u
 
 typedef struct {
     uint32_t magic,version,size,generation,has_recall;
 } RecordHeader;
 
-/* This type describes the version-6 byte layout. No object of this
+/* This type describes the version-7 byte layout. No object of this
    type is allocated; session data is streamed directly from App documents. */
 typedef struct {
     uint32_t magic,version,size,generation,has_recall;
@@ -36,14 +36,27 @@ typedef struct {
     int kind,dim,nic;
     char text[ODE_MAX_DIM][EXPR_TEXT];
     double power,constants[28];
-    InitialCondition ic[ODE_MAX_IC];
+    InitialCondition ic[9];
     OdeSettings solver;
     int solver_custom;
     ViewWindow view;
-    uint16_t graph_mask[ODE_MAX_IC],list_mask[ODE_MAX_IC];
-    uint8_t color[ODE_MAX_IC][ODE_MAX_DIM];
+    uint16_t graph_mask[9],list_mask[9];
+    uint8_t color[9][9];
     uint8_t field_style,field_color;
 } LegacyDocument;
+/* v6 removed constants/masks but still had exactly nine initial conditions. */
+typedef struct {
+    int kind,dim,nic;
+    char text[9][192];
+    double power;
+    InitialCondition ic[9];
+    OdeSettings solver;
+    int solver_custom;
+    ViewWindow view;
+    uint16_t enabled;
+    uint8_t color[9][9];
+    uint8_t field_style,field_color;
+} Version6Document;
 typedef struct {
     char path[256];
     RecordHeader header;
@@ -127,6 +140,7 @@ static size_t document_size(uint32_t version)
     if(version==3)return aligned_size(offsetof(LegacyDocument,color),_Alignof(LegacyDocument));
     if(version==4)return aligned_size(offsetof(LegacyDocument,field_style),_Alignof(LegacyDocument));
     if(version==5)return sizeof(LegacyDocument);
+    if(version==6)return sizeof(Version6Document);
     return sizeof(Document);
 }
 static size_t checksum_offset(uint32_t version)
@@ -232,12 +246,23 @@ static bool migrate_expression(char text[EXPR_TEXT],const double constants[28])
 static bool read_document(int fd,Document *d,uint32_t version,bool present,uint32_t *hash,unsigned *warnings)
 {
     memset(d,0,sizeof(*d));
-    if(version==6) {
+    if(version==RECORD_VERSION) {
         if(!native_read_hashed(fd,d,sizeof(*d),hash))return false;
         model_sanitize_colors(d);model_sanitize_field(d);return true;
     }
-    size_t position=0;double constants[28];uint16_t graph[ODE_MAX_IC],list[ODE_MAX_IC];
-#define FIELD(member) do {if(!legacy_field(fd,&d->member,sizeof(d->member),offsetof(LegacyDocument,member),&position,hash))return false;} while(0)
+    if(version==6) {
+        size_t position=0;
+#define V6_FIELD(member) do {if(!legacy_field(fd,&d->member,sizeof(((Version6Document *)0)->member),offsetof(Version6Document,member),&position,hash))return false;} while(0)
+        V6_FIELD(kind);V6_FIELD(dim);V6_FIELD(nic);V6_FIELD(text);V6_FIELD(power);
+        V6_FIELD(ic);V6_FIELD(solver);V6_FIELD(solver_custom);V6_FIELD(view);
+        V6_FIELD(enabled);V6_FIELD(color);V6_FIELD(field_style);V6_FIELD(field_color);
+#undef V6_FIELD
+        if(!skip_hashed(fd,document_size(version)-position,hash))return false;
+        if(present && (d->nic<0 || d->nic>9))return false;
+        model_sanitize_colors(d);model_sanitize_field(d);return true;
+    }
+    size_t position=0;double constants[28];uint16_t graph[9],list[9];
+#define FIELD(member) do {if(!legacy_field(fd,&d->member,sizeof(((LegacyDocument *)0)->member),offsetof(LegacyDocument,member),&position,hash))return false;} while(0)
     FIELD(kind);FIELD(dim);FIELD(nic);FIELD(text);FIELD(power);
     if(!legacy_field(fd,constants,sizeof(constants),offsetof(LegacyDocument,constants),&position,hash))return false;
     FIELD(ic);FIELD(solver);FIELD(solver_custom);FIELD(view);
@@ -248,7 +273,7 @@ static bool read_document(int fd,Document *d,uint32_t version,bool present,uint3
 #undef FIELD
     if(!skip_hashed(fd,document_size(version)-position,hash))return false;
     if(!present)return true; /* Unused recall bytes need only checksum validation. */
-    if(d->dim<1 || d->dim>ODE_MAX_DIM || d->nic<0 || d->nic>ODE_MAX_IC)return false;
+    if(d->dim<1 || d->dim>ODE_MAX_DIM || d->nic<0 || d->nic>9)return false;
     *warnings|=STORAGE_LEGACY;
     unsigned allowed=(1u<<d->dim)-1;
     for(int i=0;i<d->nic;i++)d->enabled|=(uint16_t)((graph[i]|(list[i]>>1))&allowed);

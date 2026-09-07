@@ -10,9 +10,9 @@ Solve, graph, and explore ordinary differential equations on your calculator.
 DIFFEQ is a native **fx-CG50 add-in** with colorful solution curves, slope fields,
 TRACE, G-Solve, and numerical tables.
 
-**Public Beta · v0.9.0-beta.2 · [MIT License](LICENSE)**
+**Public Beta · v0.9.0-beta.3 · [MIT License](LICENSE)**
 
-**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.9.0-beta.2)**
+**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.9.0-beta.3)**
 · [All releases](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [Report a bug](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -60,17 +60,27 @@ unedited ordinary field, **EXE** performs the same primary action from any row.
   linear second-order; general N-th order; systems of ODEs. Orders and systems
   support **1–9 states**, with N-th-to-system conversion and two-state phase portraits.
 - **Classical RK4**, integrated in both directions from the initial condition.
-  First-order `y0` accepts up to **9 values** at a common `x0`; higher-order and
+  First-order `y0` accepts up to **10 values** at a common `x0`; higher-order and
   system input uses one complete initial-state vector.
 - **Slope fields** for the four scalar first-order modes: SF density 0–100,
   Segment/Arrow styles and six pale colors. Default: Arrow / Pale Blue.
 - **V-Window, pan and zoom**, six solution colors and dependent-output ON/OFF.
 - **TRACE:** NORMAL / FAST / FASTER movement, curve switching, x queries and
-  automatic viewport following.
+  X/Y viewport following, and jumps to configured solver endpoints.
 - **G-Solve:** ROOT, MAX, MIN, Y-ICPT, ICPT, X-CAL and Y-CAL.
 - **Table:** ascending x, TOP / BTM / MID, a fixed x column and horizontally
   scrollable solution columns. **STAT-compatible CSV** exports up to 998 data rows.
 - **Explicit SAVE / RCL** with recoverable session slots and older-session migration.
+
+TRACE speed buttons are **yellow / bright green / cyan**, with black text and a
+border on the active mode: NORMAL=1×Xdot, FAST=2×, FASTER=3×. F5 LEFT and F6 RIGHT
+jump to configured Solver Xrange endpoints without changing curve or speed.
+Reaching an endpoint does not prefetch; a move beyond the calculated range extends
+in that input. X/Y follow pans the view while preserving spans and solver settings.
+
+Graph Settings toggles Grid/Axis Label with LEFT/RIGHT; their F1/F2 are blank.
+First-order lists keep the **191-character** editor limit, with separate count
+and length messages. Up to ten solution columns can be explored with x frozen.
 
 ## Try the pictured example
 
@@ -95,7 +105,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 ## Install on your calculator
 
-1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.9.0-beta.2).
+1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.9.0-beta.3).
 2. Download **DIFFEQ.g3a**. `SHA256SUMS.txt` is available to check your download.
 3. Connect the fx-CG50 by USB, select USB Flash mode, and open its storage drive.
 4. Copy `DIFFEQ.g3a` to the drive's **root directory**, outside `@MainMem`.
@@ -104,7 +114,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 These steps follow [CASIO's add-in installation guide](https://edu.casio.com/content/dam/casio/global/edu-casio-com/download/files/fx-cg50-series/Inst_Users_Guide.pdf).
 You only need the `.g3a` on the calculator. Keep a backup of existing session files
-when upgrading: this beta writes format v6 and can read same-device v3/v4/v5 files.
+when upgrading: this beta writes format v7 and can read same-device v3/v4/v5/v6 files.
 Older add-ins may reject new saves; adaptations are explained in the
 [upgrade notes](docs/release/RELEASE_NOTES.md).
 
@@ -119,7 +129,7 @@ Older add-ins may reject new saves; adaptations are explained in the
 | OUTPUT | LEFT/RIGHT toggles ON/OFF; F3 COLOR, F4 INIT, F6 DONE. EXE follows the output rows |
 | Parameters | F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
 | Graph | Arrows pan; F1 TRACE, F2 ZOOM, F3 V-WIN, F4 TABLE, F5 G-SLV, F6 magenta PREV |
-| TRACE | LEFT/RIGHT moves, UP/DOWN switches curves; F1 x=, F2–F4 speed, EXIT returns |
+| TRACE | LEFT/RIGHT moves, UP/DOWN switches curves; F1 x=, F2–F4 speed, F5/F6 configured endpoints, EXIT returns |
 | Table | UP/DOWN pages, LEFT/RIGHT scrolls columns; TOP/BTM/MID, F5 STAT |
 | Session | SAVE is explicit; RCL offers last calculation or saved load. MENU returns to the calculator OS |
 

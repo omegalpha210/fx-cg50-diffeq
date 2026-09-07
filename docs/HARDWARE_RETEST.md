@@ -1,11 +1,46 @@
-# fx-CG50 hardware retest — contextual hints, PREV, color swatches and SF
+# fx-CG50 hardware retest — TRACE X/Y, endpoints and ten initial values
 
-**HARDWARE RETEST REQUIRED — every case below is pending on a physical calculator.**
-Baseline `79e5d9d` and all earlier history are preserved. Final binary/commit:
-[ACCEPTANCE.md](ACCEPTANCE.md). Record device/OS, SHA256, complete inputs and
-key sequence. Host UI rendering is not SH/OS emulation.
+**HARDWARE TEST REQUIRED — every case below is pending on a physical calculator.**
+Baseline `0de88c7` is preserved. See [ACCEPTANCE](ACCEPTANCE.md) for the validated
+source and binary. Record device/OS, binary SHA256, inputs and exact key sequence.
+Host UI rendering does not emulate SH execution, LCD timing or OS lifecycle.
 
-## First priority — UI polish (28 cases, all pending)
+## First priority — TRACE/IC polish (32 cases, all pending)
+
+1. TRACE Y upper auto-follow: y exceeds the upper 10% margin and remains visible.
+2. TRACE Y lower auto-follow: y exceeds the lower margin and remains visible.
+3. TRACE X/Y simultaneous auto-follow: one combined pan, without two redraw flashes.
+4. Y span and Yscale unchanged; also retain X span, h and Step. No jitter after landing.
+5. TRACE F6 BACK absent; EXIT alone closes TRACE and restores the graph base bar.
+6. NORMAL has a yellow background, including when selected.
+7. FAST has the existing Bright Green background, including when selected.
+8. FASTER has a cyan background, including when selected.
+9. All speed text is black and readable; selected speed has a visible black border.
+10. F5 LEFT jumps to configured Solver Xrange min, preserving curve and speed.
+11. F6 RIGHT jumps to configured Solver Xrange max, preserving curve and speed.
+12. Endpoint jump is exact when valid; invalid endpoints stop at a real nearest valid point with a warning.
+13. No prefetch near endpoint: runtime [-6,6], x=5.9 then x=6 then F6 RIGHT perform no extra solve.
+14. Only a beyond-runtime-edge movement extends; test both directions, EXIT during work, Max Steps and total-work rejection. Keep prior complete graph on cancellation.
+15. FAST/FASTER crossing extends in the same input: x=5.95, Xdot=.1, FASTER RIGHT -> 6.25. Solver endpoints remain -6/6; F5/F6 still jump there.
+16. Graph Settings has no fixed Density SF: Parameters help.
+17. Grid selected: LEFT/RIGHT: ON/OFF toggle fits one line and arrows toggle.
+18. Axis Label selected: same exact toggle hint and arrow behavior.
+19. Grid F1/F2 are blank and inert; EXE keeps its screen completion action.
+20. Axis Label F1/F2 are blank and inert; EXE keeps its screen completion action.
+21. Style SEG/ARROW softkeys and left/right controls still work.
+22. Color chooser, swatch, all six presets, cancel and INIT still work.
+23. y0 accepts {0,1,2,3,4,5,6,7,8,9}; hint says at most 10. Higher/SYS retain one complete vector.
+24. 11 y0 values are rejected with Too many initial values / Max: 10; retain draft and prior values.
+25. 191-character boundary is separate: overflow is blocked before writing; show Input too long / Max: 191 characters, then DEL/AC and retry.
+26. Ten solution curves render with the existing six-color cycle; TRACE/G-Solve reach family 10.
+27. Ten-column Table: x frozen, horizontal navigation reaches y9/y10; TOP/BTM/MID and STAT remain correct.
+28. Ten-IC workload guard: h=.0005 and range [-6,6] reject 240,000 total steps before calculation.
+29. Main bottom hint is MENU: return to MAIN MENU and fits one line.
+30. MENU actual behavior still returns to calculator Main Menu; EXIT navigation unchanged.
+31. SAVE/RCL: ten values and colors roundtrip; load old v3/v4/v5/v6 and fallback after a damaged slot. Load never rewrites old files.
+32. MENU/reentry from TRACE, repeat/extension, EDIT, palettes and Table: retain state, no reboot/stuck keys/unintended write. Also test a true cold launch.
+
+## Retained contextual UI polish (28 cases, all pending)
 
 1. OUTPUT shows exactly `LEFT/RIGHT: ON/OFF toggle`, fully visible on one line. LEFT/RIGHT, F3 COLOR, INIT and DONE retain their actions.
 2. Equation SELECT has contextual help and no commit/next or EXIT-commit hint.
@@ -16,10 +51,10 @@ key sequence. Host UI rendering is not SH/OS emulation.
 7. EXE/EXIT commit returns to SELECT context. Invalid draft popup owns its message; dismissing restores EDIT. FUNC/VAR and numeric function picker retain their controls and restore the underlying edit state.
 8. All bottom hints fit one line without clipping or softkey overlap. Check the longest V-WIN context, all Parameters rows, and full seven-row SYS9 IC/OUTPUT pages.
 9. Linear second-order IC and other ordinary forms have no generic `UP/DOWN: select`. Table/G-Solve/TRACE retain their special arrow interactions.
-10. First-order IC has no SHIFT/braces shortcut hint; the `y0: scalar or {values}; at most 9` description remains. Physical SHIFT+multiply/divide still inserts braces.
+10. First-order IC has no SHIFT/braces shortcut hint; the `y0: scalar or {values}; at most 10` description remains. Physical SHIFT+multiply/divide still inserts braces.
 11. First-order IC SELECT retains `Comma: separator`; physical comma inserts list separators and EDIT uses the shared commit hint.
 12. Graph base F6 reads PREV, including initial render and redraw after calculation.
-13. Graph PREV matches the existing magenta PREV buttons. TRACE BACK and ZOOM/G-Solve bars retain their own labels; EXIT restores base PREV and its color.
+13. Graph PREV matches the existing magenta PREV buttons. TRACE LEFT/RIGHT and ZOOM/G-Solve bars retain their own labels; EXIT restores base PREV and its color.
 14. Graph F6 PREV returns to Solver Parameters with the existing navigation state.
 15. First-order Graph Settings Color has a clearly visible Pale Blue rectangular swatch at factory defaults; compare its frame with OUTPUT.
 16. Select all six pale colors: Blue/Red/Cyan/Magenta/Gold/Gray. Swatch updates on selection, cancel preserves it, SAVE/RCL restores it, and Graph Settings INIT restores Arrow/Pale Blue.

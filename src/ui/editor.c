@@ -40,7 +40,7 @@ static const char *physical_token(key_event_t event)
 void ui_inline_begin(UiInlineEdit *edit,const char *text,bool replace)
 {
     snprintf(edit->text,sizeof(edit->text),"%s",text);
-    edit->cursor=(int)strlen(edit->text);edit->active=true;edit->replace=replace;
+    edit->cursor=(int)strlen(edit->text);edit->active=true;edit->replace=replace;edit->limited=false;
 }
 bool ui_inline_input(key_event_t event) {return physical_token(event)[0]!=0;}
 int ui_list_complete(int key,bool committed,int *selected,int count)
@@ -79,7 +79,8 @@ void ui_inline_insert(UiInlineEdit *edit,const char *token)
     unsigned n=(unsigned)strlen(token),len=(unsigned)strlen(edit->text);
     if(!n)return;
     if(edit->replace){edit->text[0]=0;edit->cursor=0;len=0;edit->replace=false;}
-    if(len+n>=sizeof(edit->text))return;
+    if(len+n>=sizeof(edit->text)){edit->limited=true;return;}
+    edit->limited=false;
     memmove(edit->text+edit->cursor+n,edit->text+edit->cursor,len-(unsigned)edit->cursor+1);
     memcpy(edit->text+edit->cursor,token,n);edit->cursor+=(int)n;
 }
@@ -93,9 +94,9 @@ int ui_inline_key(UiInlineEdit *edit,key_event_t event)
     if((key==KEY_DEL || key==KEY_F5) && edit->cursor>0) {
         edit->replace=false;
         memmove(edit->text+edit->cursor-1,edit->text+edit->cursor,strlen(edit->text+edit->cursor)+1);
-        edit->cursor--;
+        edit->cursor--;edit->limited=false;
     }
-    if(key==KEY_F4 || key==KEY_ACON){edit->text[0]=0;edit->cursor=0;edit->replace=false;}
+    if(key==KEY_F4 || key==KEY_ACON){edit->text[0]=0;edit->cursor=0;edit->replace=false;edit->limited=false;}
     const char *token=physical_token(event);
     if(key==KEY_F1)token=select_token(0);
     if(key==KEY_F2)token=select_token(1);

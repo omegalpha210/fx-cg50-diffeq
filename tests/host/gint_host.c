@@ -6,13 +6,14 @@
 #include "font_data.h"
 static uint16_t pixels[DWIDTH*DHEIGHT];
 uint16_t *gint_vram=pixels;
-static unsigned frame;
+static unsigned frame,clears;
+unsigned host_clear_count(void){return clears;}
 static char title[128];
 void host_metrics_print(void);
 void dsetvram(uint16_t *main,uint16_t *secondary) {(void)main;(void)secondary;}
 void dpixel(int x,int y,int color)
 {if(x>=0 && x<DWIDTH && y>=0 && y<DHEIGHT && color>=0) pixels[y*DWIDTH+x]=(uint16_t)color;}
-void dclear(color_t color) {for(int i=0;i<DWIDTH*DHEIGHT;i++) pixels[i]=color;}
+void dclear(color_t color) {clears++;for(int i=0;i<DWIDTH*DHEIGHT;i++) pixels[i]=color;}
 void drect(int x1,int y1,int x2,int y2,int color)
 {
     if(x1<0)x1=0;if(y1<0)y1=0;if(x2>=DWIDTH)x2=DWIDTH-1;if(y2>=DHEIGHT)y2=DHEIGHT-1;

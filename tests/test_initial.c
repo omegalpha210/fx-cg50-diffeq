@@ -18,12 +18,23 @@ int main(void)
         InitialValues before=v;assert(initial_values_parse(bad[i],&v)!=IC_LIST_OK);
         assert(!memcmp(&v,&before,sizeof(v)));
     }
-    assert(initial_values_parse("{0,1,2,3,4,5,6,7,8,9}",&v)==IC_LIST_LIMIT);
+    assert(initial_values_parse("{0,1,2,3,4,5,6,7,8,9,10}",&v)==IC_LIST_LIMIT);
     assert(initial_values_parse("{0,1,2,3,4,5,6,7,8}",&v)==IC_LIST_OK);
+    assert(v.count==9);
+    assert(initial_values_parse("{0,1,2,3,4,5,6,7,8,9}",&v)==IC_LIST_OK && v.count==10);
+    char long_values[EXPR_TEXT]="{";
+    for(int i=0;i<10;i++)strcat(long_values,i ? ",1.23456789012345":"1.23456789012345");
+    strcat(long_values,"}");assert(strlen(long_values)<192);
+    assert(initial_values_parse(long_values,&v)==IC_LIST_OK && v.count==10);
+    char too_long[EXPR_TEXT+1];memset(too_long,'1',EXPR_TEXT);too_long[EXPR_TEXT]=0;
+    InitialValues before=v;assert(initial_values_parse(too_long,&v)==IC_LIST_LENGTH);
+    assert(!memcmp(&v,&before,sizeof(v)));
+    assert(strcmp(initial_values_error(IC_LIST_LENGTH),initial_values_error(IC_LIST_LIMIT)));
+    assert(initial_values_parse("{0,1,2,3,4,5,6,7,8,9}",&v)==IC_LIST_OK);
     model_defaults(&d,EQ_SEPARABLE,1);d.ic[0].x=0;initial_values_apply(&d,&v);
-    assert(d.nic==9 && d.ic[8].x==0 && d.ic[8].y[0]==8);
+    assert(d.nic==10 && d.ic[9].x==0 && d.ic[9].y[0]==9);
     OdeSettings range=d.solver;range.h=.0005;
-    assert(model_preflight(&d,&range).status==ODE_WORK_LIMIT); /* 9 * 2 * 12000 */
+    assert(model_preflight(&d,&range).status==ODE_WORK_LIMIT); /* 10 * 2 * 12000 */
     assert(initial_values_parse("{0,1}",&v)==IC_LIST_OK);initial_values_apply(&d,&v);
     assert(model_compile(&d,&m).expression.status==EXPR_OK);
     assert(model_color(&d,0,0)!=model_color(&d,1,0));
@@ -37,5 +48,5 @@ int main(void)
         for(int j=0;j<d.dim;j++)d.ic[0].y[j]=j+1;
         assert(model_validate(&d)==ODE_OK && model_compile(&d,&m).expression.status==EXPR_OK);
     }
-    puts("IC scalar/lists/numeric expressions/duplicates/transactional errors/9-item bound/work budget/manual two solutions/full higher-state vectors passed.");
+    puts("IC scalar/lists/numeric expressions/duplicates/transactional errors/10-item bound and separate 191-character limit/work budget/manual two solutions/full higher-state vectors passed.");
 }

@@ -10,9 +10,9 @@
 DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식의 수치해를
 컬러 그래프·기울기장·TRACE·G-Solve·표로 살펴볼 수 있습니다.
 
-**공개 베타 · v0.9.0-beta.2 · [MIT 라이선스](LICENSE)**
+**공개 베타 · v0.9.0-beta.3 · [MIT 라이선스](LICENSE)**
 
-**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.9.0-beta.2)**
+**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.9.0-beta.3)**
 · [전체 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [버그 신고](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -57,15 +57,24 @@ DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식�
 
 - **7가지 방정식 유형:** 변수분리형·선형·Bernoulli·일반 1차, 선형 2차, 일반 N차,
   연립 미분방정식. 차수와 시스템 크기는 **1~9**이며 N차→시스템 변환과 두 상태의 위상 궤적을 지원합니다.
-- 초기조건에서 양방향으로 적분하는 **고전적 RK4**. 1차는 공통 x0에서 **최대 9개 y0**를
+- 초기조건에서 양방향으로 적분하는 **고전적 RK4**. 1차는 공통 x0에서 **최대 10개 y0**를
   입력할 수 있습니다. 고차·시스템 UI는 모든 상태 초기값을 갖춘 하나의 벡터를 입력합니다.
 - **1차 기울기장:** SF 0~100, Segment/Arrow와 옅은 색 6종. 기본은 Arrow / Pale Blue입니다.
 - **V-Window·이동·확대**, 해 색상 6종과 종속변수별 공통 ON/OFF.
-- **TRACE:** NORMAL / FAST / FASTER 이동, 곡선 전환, x 지정과 화면 자동 추종.
+- **TRACE:** NORMAL / FAST / FASTER 이동, 곡선 전환, x 지정, X/Y 화면 자동 추종과 설정된 적분 구간 양끝 이동.
 - **G-Solve:** ROOT, MAX, MIN, Y-ICPT, ICPT, X-CAL, Y-CAL.
 - **Table:** x 오름차순, TOP / BTM / MID, 고정 x 열과 해 열 가로 이동.
   **STAT 호환 CSV**로 최대 998개 데이터 행을 내보냅니다.
 - 명시적 **SAVE / RCL**, 복구 가능한 저장 슬롯과 이전 세션 변환.
+
+TRACE 속도 버튼은 **노랑 / Bright Green / Cyan** 배경과 검정 글씨이며 선택한 모드에
+테두리가 생깁니다. NORMAL=1×Xdot, FAST=2×, FASTER=3×입니다. F5 LEFT/F6 RIGHT는 곡선과
+속도를 유지하며 설정된 Solver Xrange 양끝으로 이동합니다. 끝점에 도달하는 것만으로 미리
+적분하지 않고 실제 계산 범위 밖 이동 요청에서 확장합니다. X/Y 추적은 폭·높이와 solver 설정을 유지합니다.
+
+Graph Settings의 Grid/Axis Label은 LEFT/RIGHT로 토글하고 F1/F2는 비어 있습니다.
+1차 목록은 **191자** 입력 한도를 유지하며 개수·길이 오류를 구분합니다. Table은 x를 고정한 채
+최대 10개 해 열을 탐색할 수 있습니다.
 
 ## 화면 속 예제 실행하기
 
@@ -90,7 +99,7 @@ V-WIN은 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`, Yscale `0.5`�
 
 ## 계산기에 설치하기
 
-1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.9.0-beta.2)를 엽니다.
+1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.9.0-beta.3)를 엽니다.
 2. **DIFFEQ.g3a**를 받습니다. 다운로드 확인용 `SHA256SUMS.txt`도 제공됩니다.
 3. fx-CG50을 USB로 연결하고 USB Flash 모드를 선택한 뒤 컴퓨터에서 계산기 드라이브를 엽니다.
 4. `DIFFEQ.g3a`를 드라이브 **최상위**에 복사합니다. `@MainMem` 폴더 안에 넣지 않습니다.
@@ -99,7 +108,7 @@ V-WIN은 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`, Yscale `0.5`�
 
 [CASIO 공식 애드인 설치 안내](https://edu.casio.com/content/dam/casio/global/edu-casio-com/download/files/fx-cg50-series/Inst_Users_Guide.pdf)에 따른 절차입니다.
 계산기에는 `.g3a`만 있으면 됩니다. 업데이트 전에 기존 세션 파일을 백업하세요.
-이번 버전은 v6 형식으로 저장하며 같은 기기의 v3/v4/v5 파일을 읽습니다. 구버전 앱은
+이번 버전은 v7 형식으로 저장하며 같은 기기의 v3/v4/v5/v6 파일을 읽습니다. 구버전 앱은
 새 저장 파일을 거부할 수 있고, 일부 이전 설정은 변환됩니다. [업그레이드 안내](docs/release/RELEASE_NOTES.md)를 확인하세요.
 
 ## 핵심 조작
@@ -113,7 +122,7 @@ V-WIN은 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`, Yscale `0.5`�
 | OUTPUT | LEFT/RIGHT ON/OFF, F3 COLOR, F4 INIT, F6 DONE. EXE는 출력 행 순서로 이동 |
 | Parameters | F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
 | Graph | 방향키 이동, F1 TRACE, F2 ZOOM, F3 V-WIN, F4 TABLE, F5 G-SLV, F6 magenta PREV |
-| TRACE | LEFT/RIGHT 이동, UP/DOWN 곡선 전환, F1 x=, F2~F4 속도, EXIT 복귀 |
+| TRACE | LEFT/RIGHT 이동, UP/DOWN 곡선 전환, F1 x=, F2~F4 속도, F5/F6 설정 구간 양끝, EXIT 복귀 |
 | Table | UP/DOWN 페이지, LEFT/RIGHT 열 이동, TOP/BTM/MID, F5 STAT |
 | 세션 | SAVE는 명시적 저장, RCL은 마지막 계산 또는 저장 파일 복원, MENU는 계산기 OS 복귀 |
 

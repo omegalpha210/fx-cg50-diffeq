@@ -16,7 +16,10 @@ typedef struct {
 const OdeSettings *trace_extent(void);
 bool trace_select(const Document *d,int family,int variable);
 bool trace_step(double x,int direction,double dx,TracePoint *point);
-OdeStatus trace_follow(Document *d,CompiledModel *m,double x);
+/* Follow a known valid point without integrating or changing solver settings. */
+void trace_follow(Document *d,CompiledModel *m,const TracePoint *point);
+/* One transaction: extend only for an actual out-of-cache target, resolve, pan. */
+OdeStatus trace_navigate(Document *d,CompiledModel *m,double target,bool jump,TracePoint *point);
 bool trace_prepare(Document *d,CompiledModel *m,int family,int variable);
 bool trace_point_near(double x,TracePoint *point);
 bool trace_move(double x,int direction,TracePoint *point);

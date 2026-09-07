@@ -1,17 +1,17 @@
-# Public beta.2 source and publication audit
+# Public beta.3 source and publication audit
 
 ## Source and history
 
 The source baseline is development commit
-`0de88c7e0382bc2717db4b2fc9b2036582e38ca3`, whose strict SH build, package checks
-and 28 host/UBSan groups passed. The public update descends directly from the
-existing `main`/`v0.9.0-beta.1` snapshot `699dbb5`. Development history is not merged,
+`0fbe0de864204754659c3a3f2e5478efb4832149`, whose strict SH build, package checks
+and 29 host/UBSan groups passed. The public update descends directly from the
+existing `main`/`v0.9.0-beta.2` snapshot `6405296`. Development history is not merged,
 rewritten or pushed; public history remains a sequence of safe snapshots.
 
-93 existing source/header/test/tool/icon files are copied byte-for-byte from that
+94 existing source/header/test/tool/icon files are copied byte-for-byte from that
 commit. The extra tool is host-only `tools/capture_readme.py`. CMake differences
 from development are the existing public numeric version (`0.9.0`, `00.09.0000`)
-and creation of dist/ for source-only builds. VERSION/tag identify `0.9.0-beta.2`;
+and creation of dist/ for source-only builds. VERSION/tag identify `0.9.0-beta.3`;
 the numeric container format cannot express a beta suffix. No numerical or UI
 feature is added solely for this publication.
 
@@ -31,13 +31,13 @@ feature is added solely for this publication.
 - MIT LICENSE, THIRD_PARTY_NOTICES.md and every docs/licenses/ notice are unchanged
   from beta.1. Linked library notices accompany the release binary.
 - The verified repository is `omegalpha210/fx-cg50-diffeq`; authentication, owner,
-  main ancestry and existing beta.1 tag/release match the prior public snapshot.
+  main ancestry and existing beta.1/beta.2 tags/releases match the prior public snapshot.
   Existing description/topics are already appropriate and are retained.
 
 ## Release gates
 
-A beta.2 prerelease is published only after committing and tagging this public
-candidate, building from that exact clean tag, running all 28 host/UBSan groups,
+A beta.3 prerelease is published only after committing and tagging this public
+candidate, building from that exact clean tag, running all 29 host/UBSan groups,
 performing a full strict SH compile/link, and passing all 13 G3A checks. The release
 assets include the binary, SHA256SUMS, dependency notices and a validation record.
 Raw logs stay local. Only main and the new tag are pushed, without force.

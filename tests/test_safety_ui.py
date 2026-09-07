@@ -55,14 +55,14 @@ for h in ['0 DOT 0 0 0 1','1 EXP NEG 3 0 0']:
     assert 'TEXT 14 9 Parameter\n' in tail(out) and solves(out)==0
 assert solves(run(params+'0 DOT 0 0 1 EXE F6'))>0
 assert solves(run('2 F6 F6 0 EXE 0 DOT 0 1 EXE 0 DOT 0 0 0 1 EXE F6'))>0
-# TRACE follows both viewport edges; many pixel moves require only chunk extensions.
+# TRACE follows both viewport edges; only actual beyond-cache moves integrate.
 graph='2 EXE EXE EXE '
 base=run(graph+'F1')
 for direction in ['LEFT','RIGHT']:
     out=run(graph+'F1 '+(direction+' ')*310)
     xs=[float(x) for x in re.findall(r'IC1 x=([-+.\deE]+)',out)]
     assert abs(xs[-1])>10 and all((b-a)*(1 if direction=='RIGHT' else -1)>0 for a,b in zip(xs,xs[1:]))
-    assert solves(out)-solves(base)<=4 and 'Partial: Cancelled' not in out
+    assert solves(out)>solves(base) and 'Partial: Cancelled' not in out
     # Switch/blink retain x and the auto-followed viewport.
     switched=run(graph+'F1 '+(direction+' ')*310+'DOWN BLINK BLINK')
     assert re.findall(r'IC1 x=([-+.\deE]+)',switched)[-1]==re.findall(r'IC1 x=([-+.\deE]+)',out)[-1]

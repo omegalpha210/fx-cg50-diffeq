@@ -26,15 +26,15 @@ for value,canonical in [('0','0'),('{1}','1'),('{0,1}','{0,1}'),('{0,1,-1}','{0,
     assert plot(run(entered+'F4 F5'))==plot(run(entered))
     assert plot(run(entered+'F3 EXIT'))==plot(run(entered))
     assert plot(run(entered+'F6 F1'))==plot(run(entered))
-for value in ['{}','{0,}','{,1}','{0,,1}','{0,1','{0,{1}}','0,1','{1/0}','{0,1,2,3,4,5,6,7,8,9}']:
+for value in ['{}','{0,}','{,1}','{0,,1}','{0,1','{0,{1}}','0,1','{1/0}','{0,1,2,3,4,5,6,7,8,9,10}']:
     out=run('1 1 F6 DOWN '+keys(value)+'F6')
     assert 'Initial values' in tail(out) and 'TEXT 14 9 Parameter\n' not in out
-    if value.endswith('8,9}'):assert 'Too many initial values' in out
+    if value.endswith('9,10}'):assert 'Too many initial values' in out
     # Dismiss, clear only the draft, and retry. A rejected list never advances.
     fixed=run('1 1 F6 DOWN '+keys(value)+'F6 EXE ACON '+keys('{0,1}')+'EXE F6')
     assert 'TEXT 14 9 Parameter\n' in tail(fixed)
-# All nine values enter the existing total-work preflight (216,000 > 200,000).
-many=ic('{0,1,2,3,4,5,6,7,8}')
+# All ten values enter the existing total-work preflight (240,000 > 200,000).
+many=ic('{0,1,2,3,4,5,6,7,8,9}')
 out=run(many+'F6 DOWN DOWN 0 DOT 0 0 0 5 EXE F6')
 assert 'Total calculation too large.' in out
 assert re.findall(r'solves=(\d+)',out)[-1]=='0'
@@ -65,7 +65,7 @@ for key in ['F1','F2','F3','UP','DOWN']:
     assert headers(run(table+key))==['x','y4','y5']
 assert 'Left/Right: columns' in tail(run(table))
 assert 'Left/Right: columns' not in tail(run(manual))
-# A first-order OUTPUT is still one dependent row despite nine ICs.
+# A first-order OUTPUT is still one dependent row despite ten ICs.
 out=run(many+'F6 F4')
 assert re.findall(r'TEXT 20 \d+ ([^\n]+)',tail(out))==['y']
 out=run(many+'F6 F4 RIGHT EXIT F6 F1')

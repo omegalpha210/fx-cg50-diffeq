@@ -1,6 +1,6 @@
-# DIFF EQ 사용 설명서 — v0.9.0-beta.2
+# DIFF EQ 사용 설명서 — v0.9.0-beta.3
 
-안정 기준선 `79e5d9d`의 수치·저장·navigation 동작을 보존하고 입력 안내, Graph PREV, 색 견본과 모드별 SF 표시를 정리했습니다. 이번 변경은 **HARDWARE TEST REQUIRED**이며, 호스트 검증이 계산기 시험을 대신하지 않습니다. 앱의 실제 메뉴는 gint 기본 글꼴로 표시할 수 있는 영어/ASCII를 사용합니다.
+안정 기준선 `0de88c7`을 보존하면서 TRACE X/Y 추적과 endpoint 이동, Graph Settings 조작, 1차 초기값 최대 10개를 추가했습니다. 이번 변경은 **HARDWARE TEST REQUIRED**이며 호스트 검증이 계산기 시험을 대신하지 않습니다. 실제 메뉴는 gint 기본 글꼴의 영어/ASCII를 사용합니다.
 
 ## 화면별 조작
 
@@ -11,7 +11,7 @@
 | Initial Conditions | PREV | — | V-WIN | — | — | NEXT |
 | Solver Parameters | PREV | INIT | V-WIN | OUTPUT | SET | GRAPH (빨강) |
 | Output 종속변수 | — | — | COLOR | INIT | — | DONE |
-| Graph Settings: Grid/Label | ON | OFF | — | INIT | — | DONE |
+| Graph Settings: Grid/Label | — | — | — | INIT | — | DONE |
 | Graph Settings: Style | SEG | ARROW | — | INIT | — | DONE |
 | Graph Settings: Color | — | — | COLOR | INIT | — | DONE |
 | FUNC 1쪽 | ABS | SINH | COSH | TANH | ASINH | 다음 |
@@ -20,7 +20,7 @@
 | ZOOM 하위 메뉴 | IN | OUT | AUTO | ORIG | — | — |
 | G-Solve 1쪽 | ROOT | MAX | MIN | Y-ICPT | ICPT | 다음 |
 | G-Solve 2쪽 | Y-CAL | X-CAL | — | — | — | 이전 |
-| Trace | x= | NORMAL | FAST | FASTER | — | BACK |
+| Trace | x= | NORMAL | FAST | FASTER | LEFT | RIGHT |
 | X-CAL / Y-CAL 숫자 입력 | — | — | — | — | — | RUN |
 | Table | TOP | BTM | MID | — | STAT | GRAPH |
 
@@ -51,7 +51,8 @@ PREV는 magenta, NEXT는 cyan, V-WIN은 orange, SET은 bright green입니다.
 실제 계산을 실행하는 F6 GRAPH는 red입니다.
 
 Graph 기본 F6 PREV는 기존 magenta 스타일이며 Solver Parameters로 돌아갑니다.
-TRACE의 BACK과 ZOOM/G-Solve 하위 bar는 유지됩니다. 하위 메뉴를 EXIT로 닫으면 PREV가 복원됩니다.
+TRACE는 별도 BACK 없이 EXIT로 닫습니다. ZOOM/G-Solve의 기존 bar를 유지하며, 하위 메뉴를 EXIT로 닫으면 PREV가 복원됩니다.
+Main 하단은 `MENU: return to MAIN MENU`이며 MENU의 실제 계산기 Main Menu 복귀 동작은 동일합니다.
 EXIT 순서는 Graph → Parameters → IC → Equation → subtype/order → Main입니다.
 2nd 및 Main에서 RCL로 연 Equation은 Main으로 돌아갑니다. Main의 EXIT는 Main에 머뭅니다.
 계산기 메뉴에는 **MENU**로 이동합니다. 같은 실행으로 복귀하면 현재 입력을 유지합니다.
@@ -134,13 +135,17 @@ x 전용 계수 행은 상태 변수가 없습니다. 물리 키의 x/y는 중�
 **1차 네 모드**는 공통 `x0`와 `y0` 두 행입니다. `y0=0`, `{1}`, `{0,1}`, `{0,1,-1}`을
 입력할 수 있습니다. 예를 들어 `x0=0, y0={0,1}`은 (0,0), (0,1)에서 출발하는 별도 두 해입니다.
 중괄호는 SHIFT+× / SHIFT+÷, 구분자는 물리 comma 키입니다. 각 항목은 `1/4`, `sqrt(2)`,
-`pi` 같은 숫자식이며 최대 **9개 / 전체 191자**입니다. 빈 목록, 비대칭 괄호, 빈 항목,
+`pi` 같은 숫자식이며 최대 **10개 / 전체 191자**입니다. 빈 목록, 비대칭 괄호, 빈 항목,
 잘못된 변수, undefined/NaN/Inf, 절댓값 1e100 초과를 거부합니다. 실패하면 기존 값과 draft를 보존합니다.
 중복 값은 허용하며 별도 해로 계산하므로 같은 곡선이 겹칠 수 있습니다. 저장되는 것은 계산된 숫자값이며
 목록은 그 값으로 다시 표시합니다. x0를 바꾸면 모든 해의 공통 시작 x가 바뀝니다.
-화면에는 `y0: scalar or {values}; at most 9` 설명과 SELECT 상태의 `Comma: separator`를
+화면에는 `y0: scalar or {values}; at most 10` 설명과 SELECT 상태의 `Comma: separator`를
 표시합니다. 중괄호 shortcut의 화면 안내는 제거했으며 물리 키 입력은 그대로 지원합니다.
-EDIT 상태의 하단은 공통 확정 안내로 바뀝니다.
+EDIT 상태의 하단은 공통 확정 안내로 바뀝니다. 11번째 값은 `Too many initial values / Max: 10`,
+191자를 넘는 입력 시도는 `Input too long / Max: 191 characters`로 구분합니다.
+초과 문자는 버퍼에 쓰지 않으며 길이 안내가 표시되면 DEL/AC로 수정한 후 확정합니다.
+`{0,1,2,3,4,5,6,7,8,9}`의 10개 해 모두 Graph/TRACE/G-Solve와 Table/STAT에 포함되며,
+Table은 x를 고정한 채 좌우로 y1~y10 열을 이동합니다. 기존 총 계산량 한도는 늘리지 않습니다.
 
 **2차는 x0/y0/y'0**, **N-th는 x0와 n개 state 초기값**, **SYS는 x0와 m개 state 초기값**을
 입력합니다. 이 여러 숫자는 **한 해를 정의하는 하나의 완전한 초기 벡터**입니다. 독립적인 여러
@@ -149,7 +154,7 @@ IC set을 뜻하지 않습니다. 고차/SYS의 새 UI는 한 벡터만 받으�
 모든 IC 화면의 F4/F5는 비어 있고 동작하지 않습니다. F3 V-WIN, F6 NEXT는 유지됩니다.
 
 **Solver Parameters**의 x min/max는 적분 구간입니다. 처음에는 `ceil(V-Window Xmin)`과
-`floor(V-Window Xmax)`이며 V-Window, pan, zoom을 따라갑니다. 직접 편집한 범위는 user override로
+`floor(V-Window Xmax)`이며 사용자가 V-Window/Graph pan/zoom을 조작하면 따라갑니다. TRACE runtime 추적은 이 자동 범위도 변경하지 않습니다. 직접 편집한 범위는 user override로
 유지됩니다. **SF(0~100, 기본값 12)는 scalar 1차 네 모드에서만 Parameters에 표시합니다.**
 Separable/Linear/Bernoulli/General은 Step → SF → Max steps 순서입니다.
 2nd/N-th/SYS는 차수·변수 개수 1을 포함하여 SF 행이 없으며 Step → Max steps로 이동합니다.
@@ -157,7 +162,7 @@ UP/DOWN, 편집 EXE의 다음 행, 선택 행 도움말도 표시되는 행만 �
 Parameter F2 INIT는 자동 범위 추종, h=.1, Step=1, Max Steps=20000을 복구합니다.
 1차에서는 SF도 12로 복구하며, 고차/SYS에서는 숨겨진 SF 값을 보존합니다.
 예를 들어 SF=20 → 2nd → INIT → 1st에서도 20입니다. SAVE/RCL도 숨겨진 SF를 보존하며
-기존 v6 저장 형식과 이전 세션 migration은 유지됩니다. Field Style/Color는 모든 모드에서
+새 저장은 v7이며 기존 v3~v6 세션의 읽기 호환성을 유지합니다. Field Style/Color는 모든 모드에서
 보존합니다. Solver 수정은 V-Window를 역으로 변경하지 않습니다.
 Xdot은 `(Xmax-Xmin)/378`이며 Xdot 편집은 Xmax를 변경합니다.
 
@@ -189,6 +194,9 @@ EXIT는 정확한 이전 Parameters 선택 행으로 돌아갑니다.
 SF100은 100×52점입니다. SF는 h/Step/적분 구간/IC/TRACE 이동 간격을 바꾸지 않습니다.
 
 Graph Settings는 Grid / Axis Label와 간격을 둔 Slope Field heading 아래 Style / Color만 둡니다.
+Grid/Axis Label은 LEFT/RIGHT로만 토글하며 F1/F2는 비어 있고 동작하지 않습니다.
+이 두 행에서만 `LEFT/RIGHT: ON/OFF toggle` 도움말을 표시합니다. EXE의 완료 동작은 동일합니다.
+고정 `Density SF: Parameters` 안내는 없으며 Style/Color에서는 불필요한 하단 안내를 표시하지 않습니다.
 Style은 F1 SEG/F2 ARROW 또는 좌우, Color는 좌우/F3로 선택합니다. 기본은 **Arrow / Pale Blue**입니다.
 Color 행은 이름 옆에 실제 선택색의 직사각형 견본을 표시합니다. OUTPUT과 같은 테두리·크기를
 사용하며 Pale Blue/Red/Cyan/Magenta/Gold/Gray의 기존 색상표와 선택·취소 동작을 유지합니다.
@@ -231,16 +239,26 @@ Field 팔레트는 기존 선명한 solution 팔레트와 별개입니다. 설�
 - OPTN 물리 키: phase 전환, 가로/세로 상태 선택, auto window, Grid/Axis Label 설정, 현재 범위/계산 상세.
 - TRACE: **F2 NORMAL / F3 FAST / F4 FASTER**는 한 번의 유효 LEFT/RIGHT 이동을 각각
   **1× / 2× / 3× 실제 Xdot**으로 정합니다. `Xdot=(Xmax-Xmin)/378`이며 표시 문자열의 반올림값을 쓰지 않습니다.
-  x=.6, Xdot=.025이면 다음 RIGHT는 .625/.65/.675입니다. 선택 버튼에 테두리가 생깁니다.
+  x=.6, Xdot=.025이면 다음 RIGHT는 .625/.65/.675입니다. NORMAL은 노랑, FAST는 Bright Green, FASTER는 Cyan 배경이며 모두 검정 글씨입니다. 선택 버튼의 검정 테두리로 현재 속도를 표시하고 배경색은 유지합니다.
   모드 버튼 자체는 현재 x·곡선·blink·창·h·Step을 바꾸거나 solver를 실행하지 않습니다.
   새 TRACE는 NORMAL이며 속도는 저장하지 않습니다. 숫자 x= 편집 중에는 속도 버튼이 숨겨집니다.
   저장된 유효
   RK4 점 사이를 선형 보간합니다. 캐시 내부의 x 이동과 blink는 적분하지 않습니다. **표시되는 y는 보간 근사값**이며
   정확한 지정 x의 RK4 결과가 필요하면 F1 x=를 사용합니다. 보간은 invalid gap을 건너지 않습니다.
   UP/DOWN은 ON 곡선을 바꾸고 가능한 경우 같은 x를 유지합니다. Phase도 같은 독립변수 x 간격을 사용하되 자동 pan/범위 확장은 하지 않습니다.
-  좌우 여백 10%에 진입하면 창을 폭의 20%만큼 옮깁니다. 이미 계산한 영역은 캐시로 다시 그리며,
-  영역 밖으로 이동할 때만 추가 범위를 계산합니다. 수동 Solver 범위가 창보다 좁아도 TRACE용 범위만 확장합니다.
-  h·Step·수동 Solver 범위는 바뀌지 않고 AUTO 범위만 새 창을 따릅니다.
+  **F5 LEFT / F6 RIGHT**는 현재 설정된 Solver Xrange min/max로 이동합니다. 캐시의 유효 endpoint/보간을
+  우선하며 numerical-invalid endpoint에서는 가장 가까운 유효 점과 짧은 numerical-limit 안내를 사용합니다.
+  현재 곡선·속도는 유지되고, runtime 계산 범위가 넓어져도 점프 기준은 설정 범위입니다.
+  유효한 커서가 X 또는 Y 여백 10%를 넘으면 해당 축을 평행 이동하여 30% 내부에 둡니다.
+  두 축이 동시에 필요하면 한 번에 갱신하고 한 번만 다시 그립니다. X/Y span·scale·h·Step은 유지합니다.
+  NaN/Inf, 절댓값 1e100 초과, invalid gap의 가짜 값으로 창을 옮기지 않습니다.
+  **설정 Solver Xrange / runtime 계산 범위 / 표시 V-Window는 별개**입니다.
+  TRACE 이동은 자동/수동 Solver Xrange를 모두 보존합니다.
+  runtime [-6,6]에서 x=5.9, x=6, F6 RIGHT는 추가 적분하지 않습니다. 실제 요청 target이 범위를
+  벗어날 때만 그 target까지 기존 preflight와 제한 아래 캐시를 재계산합니다. 여분 범위를 미리 계산하지 않습니다.
+  예를 들어 x=5.95, Xdot=.1, FASTER RIGHT는 같은 입력에서 6.25까지 확장·이동합니다.
+  캐시 밖의 연속 이동은 매번 계산이 필요할 수 있으며 한 작업만 진행하고 repeat를 병합합니다.
+  취소·work-limit 실패 시 임시 결과를 버려 이전 캐시·커서·창·완성 그래프를 보존합니다.
   캐시는 표시 중인 모든 IC에 **총 258점**을 나누어 사용하므로, 긴 구간이나 많은 IC에서는
   TRACE 보간·pan 후 곡선의 해상도가 낮아질 수 있습니다. 보관량과 RK4 단계 수는 별개입니다.
   선택 곡선은 250 ms timer로 강조/해제됩니다. Black은 **Black↔Blue**이며 G-Solve도 같은 정책입니다.
@@ -351,10 +369,11 @@ current/recall과 설정을 모두 복원합니다. 진짜 새 실행은 default
 않습니다. MENU 왕복으로 같은 실행이 재개될 때는 이 초기화를 다시 하지 않습니다.
 
 계산기 root의 `DIFFEQ0.dat`와 `DIFFEQ1.dat`를 번갈아 씁니다. magic/version/size/checksum 및
-값을 검사하고 최신 slot이 손상되면 다른 정상 slot을 사용합니다. 새 저장은 **v6**이며
+값을 검사하고 최신 slot이 손상되면 다른 정상 slot을 사용합니다. 새 저장은 **v7**이며
 Private Constants, 개별 G/L mask, x export flag는 없습니다. 메모리에 별도의 private constant 배열도 없습니다.
 
-같은 계산기 ABI의 v3/v4/v5를 각 버전의 layout으로 읽습니다. 이전 x OFF는 무시하고,
+v6의 9개 IC 저장 배열은 고정 layout으로 읽어 새 10개 배열에 복원합니다. current/recall과 설정·색을 보존하고 새 열은 초기화합니다.
+같은 계산기 ABI의 v3/v4/v5도 각 버전의 layout으로 읽습니다. 이전 x OFF는 무시하고,
 기존 G 또는 L에서 한 번이라도 ON인 dependent state는 모든 해에 ON으로 통합합니다.
 v3/v4는 Arrow/Pale Blue, v5의 명시적 Segment/색은 유지합니다. v3 solution 색만 기본값을 부여합니다.
 옛 상수 참조는 가능한 경우 괄호로 감싼 숫자식으로 치환합니다. 비유한 상수나 길이 초과면
@@ -362,7 +381,7 @@ v3/v4는 Arrow/Pale Blue, v5의 명시적 Segment/색은 유지합니다. v3 sol
 
 옛 고차/SYS 여러 IC는 첫 완전 벡터를, 1차의 서로 다른 x0는 첫 x0와 같은 IC만 복원합니다.
 값을 새 x0로 강제로 옮기지 않습니다. 이 적응이 필요하면 load 안내를 표시하며 **load는 원래 파일을
-변경하지 않습니다**. 이후 명시적 SAVE는 새 v6로 두 slot을 순환하므로, 여러 번 SAVE하면 옛
+변경하지 않습니다**. 이후 명시적 SAVE는 새 v7로 두 slot을 순환하므로, 여러 번 SAVE하면 옛
 slot은 교체될 수 있습니다. 원본 보존이 필요하면 기존 파일을 따로 보관하십시오.
 상세 mapping과 예외는 [OUTPUT/migration audit](OUTPUT_LIST_AUDIT.md)에 있습니다.
 

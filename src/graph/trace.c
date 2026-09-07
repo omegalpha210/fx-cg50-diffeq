@@ -194,28 +194,41 @@ static void cached_render(Document *d,CompiledModel *m)
     }
     if(samples.has_invalid)ui_text(7,4,C_RED,"ERROR: Numerical limit");
 }
-OdeStatus trace_follow(Document *d,CompiledModel *m,double x)
+static void follow_point(Document *d,CompiledModel *m,const TracePoint *point,bool redraw)
 {
-    if(d->view.phase)return ODE_OK;
-    ViewWindow next=d->view;
-    bool follow=graph_follow_window(&next,x);
-    if(!follow && x>=samples.extent.xmin && x<=samples.extent.xmax)return ODE_OK;
-    OdeSettings extent=samples.extent;
-    if(next.xmin<extent.xmin || next.xmax>extent.xmax || x<extent.xmin || x>extent.xmax) {
-        double margin=(next.xmax-next.xmin)*.5;
-        if(next.xmin<extent.xmin || x<extent.xmin)extent.xmin=fmin(next.xmin,x)-margin;
-        if(next.xmax>extent.xmax || x>extent.xmax)extent.xmax=fmax(next.xmax,x)+margin;
-        /* Overlay pixels were restored before this operation. Only staging is
-           mutated until all IVPs complete; cancellation retains cache + VRAM. */
+    if(ode_values_status(point->y,samples.dim)==ODE_OK
+        && graph_follow_window(&d->view,point->x,point->y[samples.variable]))redraw=true;
+    /* Configured solver range remains independent of runtime cache and view. */
+    if(redraw){cached_render(d,m);trace_overlay_begin();selected_mask(d);}
+}
+void trace_follow(Document *d,CompiledModel *m,const TracePoint *point)
+{follow_point(d,m,point,false);}
+OdeStatus trace_navigate(Document *d,CompiledModel *m,double target,bool jump,TracePoint *point)
+{
+    if(!samples.valid || !isfinite(target) || fabs(target)>1e100)return ODE_BAD_INPUT;
+    bool extended=false;
+    if(!d->view.phase && (target<samples.extent.xmin || target>samples.extent.xmax)) {
+        OdeSettings extent=samples.extent;
+        extent.xmin=fmin(extent.xmin,target);extent.xmax=fmax(extent.xmax,target);
+        trace_overlay_restore();
         OdeStatus status=prepare_range(d,m,&extent,samples.family,samples.variable,&scratch.staging);
-        if(status==ODE_OK)samples=scratch.staging;
+        if(status==ODE_OK){samples=scratch.staging;extended=true;}
+        /* Staging aliases overlay storage. Rebuild it even on cancellation;
+           failed work has changed neither the view, cache, cursor nor VRAM. */
         trace_overlay_begin();selected_mask(d);
         if(status!=ODE_OK)return status;
     }
-    d->view=next;model_sync_solver_window(d); /* manual solver range is preserved */
-    cached_render(d,m);trace_overlay_begin();selected_mask(d);
-    return ODE_OK;
+    TracePoint next=*point;
+    bool exact=interpolate(target,&next);
+    if(!exact) {
+        if(jump)trace_point_near(target,&next);
+        else trace_move(point->x,target>point->x ? 1:-1,&next);
+    }
+    if(ode_values_status(next.y,samples.dim)!=ODE_OK)return ODE_HAS_INVALID;
+    *point=next;follow_point(d,m,point,extended);
+    return exact ? ODE_OK:ODE_HAS_INVALID;
 }
+
 static void invert_mask(void)
 {
     for(unsigned p=0;p<384*198;p++)if(mask[p/8]&(1u<<(p%8)))

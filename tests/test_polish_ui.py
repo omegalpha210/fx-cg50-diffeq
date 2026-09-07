@@ -56,7 +56,7 @@ out,rgb=run(graph,image=True);assert bar(out)==BASE
 _,prev=run('2 F6',image=True)
 assert pixel(rgb,327,203)==pixel(prev,7,203)==rgb565(0xf81f)
 assert 'TEXT 14 9 Parameter\n' in tail(run(graph+'F6'))
-assert bar(run(graph+'F1'))==['x=','NORMAL','FAST','FASTER','','BACK']
+assert bar(run(graph+'F1'))==['x=','NORMAL','FAST','FASTER','LEFT','RIGHT']
 assert bar(run(graph+'F2'))==['IN','OUT','AUTO','ORIG','','']
 assert bar(run(graph+'F5'))==['ROOT','MAX','MIN','Y-ICPT','ICPT','>']
 for menu in ['F1','F2','F5']:
@@ -101,7 +101,7 @@ for entry in first+higher:
         assert 'TEXT 144 123 50000\n' in tail(run(last))
         assert 'Max RK4 steps' in tail(run(last))
         assert bar(run(last+'EXE'))==BASE
-        assert 'Field: first-order only; preference kept' in tail(run(params+'F5'))
+        assert 'LEFT/RIGHT: ON/OFF toggle' in tail(run(params+'F5'))
 
 sf20='1 4 F6 F6 DOWN DOWN DOWN DOWN 2 0 EXIT '
 for entry in higher:

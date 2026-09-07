@@ -32,10 +32,8 @@ void model_defaults(Document *d,EquationKind kind,int dim)
     d->solver=(OdeSettings){0,1,.1,20000,1,12};
     d->solver_custom=0;model_sync_solver_window(d);
     model_output_defaults(d);model_field_appearance_defaults(d);
-    for(int i=0;i<9;i++) {
-        d->ic[i].y[0]=1;
-        strcpy(d->text[i],"0");
-    }
+    for(int i=0;i<ODE_MAX_IC;i++)d->ic[i].y[0]=1;
+    for(int i=0;i<ODE_MAX_DIM;i++)strcpy(d->text[i],"0");
     switch(kind) {
         case EQ_SEPARABLE:
             strcpy(d->text[0],"1");strcpy(d->text[1],"y^2-1");
@@ -126,7 +124,7 @@ void model_equation_label(const Document *d,int eq,char *out,unsigned size)
 OdeStatus model_validate(const Document *d)
 {
     if(!d || d->kind<0 || d->kind>EQ_SYSTEM || d->dim<1 || d->dim>9
-        || d->nic<0 || d->nic>9 || (d->kind<=EQ_GENERAL && d->dim!=1)
+        || d->nic<0 || d->nic>ODE_MAX_IC || (d->kind<=EQ_GENERAL && d->dim!=1)
         || (d->kind==EQ_SECOND && d->dim!=2) || !isfinite(d->power)
         || d->field_style>FIELD_ARROW || d->field_color>=FIELD_COLORS
         || (d->solver_custom!=0 && d->solver_custom!=1)) return ODE_BAD_INPUT;
@@ -144,8 +142,8 @@ OdeStatus model_validate(const Document *d)
         return ODE_BAD_INPUT;
     if(d->nic==0 && (d->kind>EQ_GENERAL || d->solver.sf==0)) return ODE_BAD_INPUT;
     if(d->enabled>>d->dim)return ODE_BAD_INPUT;
-    for(int i=0;i<9;i++) {
-        if(!memchr(d->text[i],0,EXPR_TEXT)) return ODE_BAD_INPUT;
+    for(int i=0;i<ODE_MAX_DIM;i++)if(!memchr(d->text[i],0,EXPR_TEXT))return ODE_BAD_INPUT;
+    for(int i=0;i<ODE_MAX_IC;i++) {
         /* Validate inactive slots too: they can be re-enabled without parsing. */
         if(!isfinite(d->ic[i].x) || fabs(d->ic[i].x)>1e100) return ODE_BAD_INPUT;
         for(int j=0;j<9;j++) if(!isfinite(d->ic[i].y[j]) || fabs(d->ic[i].y[j])>1e100)

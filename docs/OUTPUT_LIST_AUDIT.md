@@ -45,7 +45,20 @@ hidden SF preference. Existing SAVE/RCL stores it in every mode. The Color row
 shares OUTPUT's swatch frame/geometry and retains its own pale palette. Field
 rendering remains once per background, independent of output bits and IC count.
 
-## Versioned storage: v6 and frozen old layouts
+## Current capacity and version 7
+
+First-order IC capacity is 10; higher-order/SYS dimension remains 9 and their UI
+still uses one vector. Model validation checks every IC slot. Table index/row
+capacity is max(IC capacity, state dimension), hence ten solution columns plus
+frozen x. TRACE retains its total 258-point budget: ten families share 12 slots
+per branch. Existing total-step/work limits include all ten families.
+
+New SAVE uses v7. v6 is frozen at nine IC/color slots and streamed member by
+member into the expanded current and recall documents, without allocating an
+old full record. v3/v4/v5 IC/mask/color extents are also frozen at nine. Tests
+cover old checksums/padding, no-recall, constants, colors and two-slot fallback.
+
+## Earlier version 6 format and legacy mappings
 
 v6 removes the 28-double private constant array, nine graph masks and nine list
 masks from the live/new serialized Document, replacing the masks with one
@@ -83,7 +96,7 @@ migration result. Under ordinary migration it reports combined outputs and
 converted constants. The record itself need not compile merely to load/edit it;
 calculation performs the existing expression validation.
 
-Load never changes the old files. Explicit SAVE writes a verified v6 slot using
+Load never changes the old files. Explicit SAVE writes a verified v7 slot using
 the existing generation/recovery strategy. Repeated SAVE can eventually replace
 both old slots, so an archival copy is needed to retain the original indefinitely.
 World-switch ownership, close-before-return and close-failure cleanup policy are

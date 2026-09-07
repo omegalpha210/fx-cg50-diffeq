@@ -127,3 +127,5 @@ foreach(output_test test_field_storage test_list test_initial test_table_unified
 endforeach()
 add_test(NAME contextual_ui_polish COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_polish_ui.py $<TARGET_FILE:host_app>)
 set_tests_properties(contextual_ui_polish PROPERTIES TIMEOUT 60)
+add_test(NAME trace_ic_polish COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_trace_polish.py $<TARGET_FILE:host_app>)
+set_tests_properties(trace_ic_polish PROPERTIES TIMEOUT 60)

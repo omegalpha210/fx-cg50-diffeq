@@ -5,7 +5,7 @@
 int graph_palette_color(unsigned color)
 {
     /* RGB565, including the nearest representable #33ff33 (green=63). */
-    static const uint16_t palette[]={0x001f,0xf800,0xf81f,0x0000,0x07ff,0x37e6};
+    static const uint16_t palette[]={0x001f,0xf800,0xf81f,0x0000,UI_CYAN,UI_BRIGHT_GREEN};
     return palette[color<6 ? color:2];
 }
 int graph_color(int family,int variable,int dimension)
@@ -61,13 +61,28 @@ bool graph_zoom(ViewWindow *v,double factor,double dx,double dy)
     *v=next;return true;
 }
 
-bool graph_follow_window(ViewWindow *v,double x)
+/* Trigger at 10%, land at 30%: hysteresis avoids edge jitter. Translate both
+   axes atomically; reject a pan if its span cannot be represented safely. */
+static bool follow_axis(double low,double high,double value,double *a,double *b)
 {
-    double span=v->xmax-v->xmin;
-    if(v->phase || !isfinite(x))return false;
-    if(x>v->xmax-.1*span)return graph_zoom(v,1,.2,0);
-    if(x<v->xmin+.1*span)return graph_zoom(v,1,-.2,0);
-    return false;
+    double span=high-low;
+    if(!isfinite(span) || span<=0)return false;
+    *a=low;*b=high;
+    if(value>high-.1*span){*b=value+.3*span;*a=*b-span;}
+    else if(value<low+.1*span){*a=value-.3*span;*b=*a+span;}
+    return isfinite(*a) && isfinite(*b) && *a<*b
+        && fabs((*b-*a)-span)<=1e-12*span;
+}
+bool graph_follow_window(ViewWindow *v,double x,double y)
+{
+    if(v->phase || !isfinite(x) || !isfinite(y) || fabs(x)>1e100 || fabs(y)>1e100)return false;
+    ViewWindow next=*v;
+    if(!follow_axis(v->xmin,v->xmax,x,&next.xmin,&next.xmax)
+        || !follow_axis(v->ymin,v->ymax,y,&next.ymin,&next.ymax))return false;
+    bool changed=next.xmin!=v->xmin || next.xmax!=v->xmax
+        || next.ymin!=v->ymin || next.ymax!=v->ymax;
+    if(changed)*v=next;
+    return changed;
 }
 
 int graph_field_color(unsigned color)

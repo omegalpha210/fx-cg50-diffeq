@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #define ODE_MAX_DIM 9
-#define ODE_MAX_IC 9
+#define ODE_MAX_IC 10
 
 typedef enum {
     ODE_OK, ODE_CANCELLED, ODE_SAMPLE_STOP, ODE_BAD_INPUT,

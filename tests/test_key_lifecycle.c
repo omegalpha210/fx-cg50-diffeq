@@ -76,6 +76,10 @@ int main(void)
     next=0;length=15;held=0;
     assert(!ui_trace_cancel(NULL));
     assert(ui_trace_key(&trace_blink).type==KEYEV_NONE); /* released HOLD is stale */
+    next=0;length=1;events[0]=event(KEY_F6);held=1;
+    assert(!ui_trace_cancel(NULL) && ui_trace_key(&trace_blink).key==KEY_F6);
+    next=0;length=2;events[0]=event(KEY_F6);events[1]=event(KEY_EXIT);
+    assert(ui_trace_cancel(NULL) && ui_trace_key(&trace_blink).key==KEY_EXIT);
     ui_trace_input(false);assert(transform.repeater==NULL);
     puts("Target-branch key policy: retained events, one MENU, bounded saturation, 100 timer lifetimes passed.");
     return 0;

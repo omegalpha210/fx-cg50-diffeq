@@ -188,7 +188,7 @@ static ScreenTransition screen_main(App *a,AppUi *ui)
         "Recall saved session","Save current session"};
     ui_frame("Differential Equation",NULL);
     for(int i=0;i<6;i++)ui_field(i,labels[i],descriptions[i],i==ui->main_selected);
-    ui_text(8,174,UI_MUTED,"1-4: equation type   MENU: calculator menu");
+    ui_text(8,174,UI_MUTED,"MENU: return to MAIN MENU");
     ui_softkeys("","","","","RCL","SAVE");dupdate();
     int key=ui_getkey().key,choice=-1;
     if(key==KEY_EXIT)return stay();

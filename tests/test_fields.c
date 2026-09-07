@@ -31,15 +31,23 @@ int main(void)
     ui_inline_key(&edit,key(KEY_DEL));assert(!strcmp(edit.text,"123.4"));
     edit.active=false;ui_field_select(&edit,key(KEY_2),"123.45",&selected,2);
     assert(edit.active && !strcmp(edit.text,"2") && edit.cursor==1);
+    ui_inline_begin(&edit,"",false);
+    for(int i=0;i<191;i++)ui_inline_insert(&edit,"1");
+    assert(strlen(edit.text)==191 && edit.cursor==191 && !edit.limited);
+    ui_inline_insert(&edit,"22");assert(strlen(edit.text)==191 && edit.cursor==191 && edit.limited);
+    ui_inline_key(&edit,key(KEY_DEL));assert(strlen(edit.text)==190 && !edit.limited);
+    ui_inline_insert(&edit,"2");assert(strlen(edit.text)==191 && !edit.limited);
+    ui_inline_key(&edit,key(KEY_ACON));assert(!edit.text[0] && !edit.limited);
     int width;dsize("Recall saved session",NULL,&width,NULL);assert(width<=226);
     printf("Recall saved session target-font width=%d / 226 pixels\n",width);
-    const char *hints[]={UI_EDIT_HINT,"LEFT/RIGHT: ON/OFF toggle","Comma: separator",
+    const char *hints[]={UI_EDIT_HINT,UI_LIMIT_HINT,"LEFT/RIGHT: ON/OFF toggle","Comma: separator",
         "Integration start","Integration end","RK4 h > 0; smaller means more work",
         "Output spacing only; h is unchanged","Slope-field columns (0-100); 0 = Off",
         "Max RK4 steps per IC / direction","Xdot edits Xmax; Xmin/Xmax recalculate Xdot",
         "Enter an integer from 1 to 9","EXE: NEXT   LEFT/RIGHT: edit","EXE: open",
-        "Density SF: Parameters   EXE: DONE","Field: first-order only; preference kept",
-        "One solution: x0 plus all state values","y0: scalar or {values}; at most 9"};
+        "MENU: return to MAIN MENU",
+        "Too many initial values","Max: 10","Input too long","Max: 191 characters",
+        "One solution: x0 plus all state values","y0: scalar or {values}; at most 10"};
     for(unsigned i=0;i<sizeof(hints)/sizeof(*hints);i++) {
         int height;dsize(hints[i],NULL,&width,&height);
         assert(width<=UI_W-16 && height<=14 && !strchr(hints[i],'\n'));

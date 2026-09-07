@@ -15,7 +15,7 @@ typedef enum {
 } UiGraphAction;
 bool graph_clip(const ViewWindow *v,double *x0,double *y0,double *x1,double *y1);
 bool graph_point(const ViewWindow *v,double x,double y,int *px,int *py);
-bool graph_follow_window(ViewWindow *v,double x);
+bool graph_follow_window(ViewWindow *v,double x,double y);
 void graph_backdrop(Document *d,CompiledModel *m);
 void graph_solution_segment(const ViewWindow *v,double x0,double y0,double x1,double y1,int color);
 bool graph_zoom(ViewWindow *v,double factor,double dx,double dy);

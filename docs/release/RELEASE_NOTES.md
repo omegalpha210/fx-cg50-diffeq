@@ -1,68 +1,45 @@
-# DIFFEQ v0.9.0-beta.2
+# DIFFEQ v0.9.0-beta.3
 
-A public beta update for the **CASIO fx-CG50**, with a clearer input workflow,
-richer graph exploration, simpler outputs and visual English/Korean documentation.
+This fx-CG50 beta improves TRACE navigation and first-order initial-value input.
 
-## Changes since beta.1
+- TRACE follows valid solutions vertically and horizontally while preserving
+  window spans and configured Solver Xrange. Both axes pan in one redraw.
+- NORMAL/FAST/FASTER use yellow/bright-green/cyan backgrounds, black text and a
+  selected border. F5 LEFT/F6 RIGHT jump to configured solver endpoints while
+  retaining curve and speed. EXIT returns to Graph.
+- Reaching a calculated endpoint does not prefetch. Only a requested move beyond
+  the runtime range starts controlled extension, including a FAST/FASTER crossing
+  in the same input. Cancelled work preserves the completed graph.
+- Graph Settings uses LEFT/RIGHT for Grid/Axis Label; redundant ON/OFF softkeys
+  and the fixed density hint are removed. Style/Color controls are retained.
+- First-order y0 lists accept ten values, including ten Table solution columns
+  with frozen x. The editor stays at 191 characters, with separate count/length
+  errors. Higher-order/SYS still takes one complete vector with at most nine states.
+- Main Menu help and renderer-based English/Korean README images are updated.
 
-- Ordinary SELECT EXE now runs NEXT/GRAPH/DONE from any row. EDIT EXE commits and
-  selects the next visible field; EXIT commits/stays. FUNC is shown in EDIT,
-  VAR only in relevant modes, and Main uses digits1–4 or arrow selection.
-- First-order initial values use one common x0 and `y0={...}` for up to nine
-  solutions. Higher-order/SYS input shows one complete initial-state vector.
-- OUTPUT now has a single dependent-state ON/OFF setting shared by graph, TRACE,
-  G-Solve, Table and CSV. x is always the first Table/CSV column. The existing six
-  solution colors are retained; F3 opens the color chooser.
-- Slope fields have Segment/Arrow styles and six pale colors, with Arrow/Pale Blue
-  defaults. Graph Settings shows a real color swatch. SF density appears only in
-  scalar first-order Parameters; unsupported modes and their INIT preserve it.
-- TRACE adds NORMAL/FAST/FASTER, interpolated movement and viewport following,
-  retaining cancellation and bounded-cache behavior during extension.
-- Table combines both integration directions in ascending x. TOP/BTM/MID jump to
-  reachable ends or the center, while horizontal scrolling keeps x fixed. Valid
-  terminal samples remain visible and numerical ends use inline notices.
-- Preflight checks reject excessive RK4 work before calculation, with guidance
-  for h and Max steps. Numerical failures preserve valid computed regions.
-- Shared EDIT hints, clearer IC/OUTPUT help and magenta Graph PREV complete the
-  calculator UI polish. Graph PREV returns to Parameters; submenus keep their controls.
-- New visual README in English and Korean, using original icons and eight
-  reproducible captures from the app renderer.
+## Saved sessions
 
-RK4, G-Solve/ICPT, the existing device crash/lifecycle fixes and explicit SAVE/RCL
-remain part of the app. This release imports a validated development milestone;
-it is not a claim that all the retained functionality is newly added in beta.2.
+New saves use **v7**, with ten initial-condition slots. Same-device v3/v4/v5/v6
+records are read through frozen layouts and the existing two-slot recovery path.
+Back up existing sessions before upgrading; older add-ins may reject v7 saves.
+LOAD preserves the old files. Later explicit SAVE rotates the two slots.
+Earlier constants/mask/vector adaptations are described in the
+[migration audit](../OUTPUT_LIST_AUDIT.md).
 
-## Upgrading saved sessions
+## Download and verification
 
-Back up your DIFFEQ session files before upgrading. New saves use **v6** and can
-load same-device v3/v4/v5 records through the existing two-slot recovery path.
-Old graph/list flags are combined with ON if either was enabled. Private Constants
-are removed; old references are converted to numeric literals where possible,
-otherwise the retained expression needs review. Built-in pi/e remain.
+Copy **DIFFEQ.g3a** to the calculator USB drive root, safely disconnect, and launch
+DIFF EQ. **SHA256SUMS.txt** identifies the download. **THIRD_PARTY_NOTICES.txt**
+retains the dependency licenses; **VALIDATION.md** records the exact public source,
+tests, link/package checks and binary hash.
 
-Legacy scalar ICs at the first common x0 are retained; higher-order records retain
-the first complete vector. The app reports adaptations and leaves source files
-unchanged on LOAD; subsequent explicit SAVE can rotate over old slots. Older
-add-ins may reject new saves. See [migration details](../OUTPUT_LIST_AUDIT.md).
+**HARDWARE TEST REQUIRED.** Host/UBSan and renderer checks do not verify LCD
+contrast, real repeat/cancellation timing, MENU/Fugue reentry or on-device
+SAVE/RCL/STAT. The [32 priority cases](../HARDWARE_RETEST.md) remain pending.
+RK4/parser, G-Solve/ICPT, segmented validity, work caps and the existing lifecycle
+and navigation protections are retained. TRACE shares a fixed 258-point budget;
+many curves or long domains can reduce interpolation detail. Out-of-cache
+movement may need a calculation per input.
 
-## Download and install
-
-Copy **DIFFEQ.g3a** from this release to the fx-CG50 USB drive root, safely disconnect,
-and launch **DIFF EQ** from Main Menu. Check the file with **SHA256SUMS.txt**.
-**THIRD_PARTY_NOTICES.txt** accompanies the linked libraries and copied materials.
-**VALIDATION.md** records the exact public commit, build/test results and artifact.
-
-## Public beta status
-
-Core first/second-order workflows have been tested on real fx-CG50 hardware by the
-project owner. **HARDWARE TEST REQUIRED** for the newest UI, LCD contrast/colors,
-held-key/blink timing, MENU/Fugue reentry, native SAVE/RCL and STAT interactions.
-Host/UBSan PASS is not a physical-device pass. Other calculator models are untested.
-
-Fixed-step RK4 has no adaptive error estimate or stiff-equation handling. G-Solve
-can miss unsampled features, TRACE uses bounded retained samples, and CSV needs
-manual STAT import. Read the README numerical notes and hardware checklist.
-
-Report calculator/OS and beta version, equation, IC, solver/window settings,
-exact keys and expected/actual results. Project code is MIT; dependencies retain
-their notices. Unofficial community project, not affiliated with or endorsed by CASIO.
+Project code uses MIT; dependencies retain their original notices. This is an
+unofficial community project, not affiliated with or endorsed by CASIO.

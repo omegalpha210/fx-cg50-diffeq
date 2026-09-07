@@ -8,7 +8,7 @@ IcListStatus initial_values_parse(const char *text,InitialValues *out)
 {
     if(!text || !out)return IC_LIST_SYNTAX;
     size_t length=0;while(length<EXPR_TEXT && text[length])length++;
-    if(length==EXPR_TEXT)return IC_LIST_LIMIT;
+    if(length==EXPR_TEXT)return IC_LIST_LENGTH;
     const char *begin=text,*end=text+length;
     while(begin<end && isspace((unsigned char)*begin))begin++;
     while(end>begin && isspace((unsigned char)end[-1]))end--;
@@ -58,7 +58,8 @@ void initial_values_apply(Document *d,const InitialValues *values)
 const char *initial_values_error(IcListStatus status)
 {
     switch(status) {
-        case IC_LIST_LIMIT:return "Too many initial values (max 9), or input exceeds 191 characters.";
+        case IC_LIST_LIMIT:return "Too many initial values\nMax: 10";
+        case IC_LIST_LENGTH:return "Input too long\nMax: 191 characters";
         case IC_LIST_EXPRESSION:return "Use numeric expressions separated by commas.";
         case IC_LIST_VALUE:return "Each value must be finite, defined and at most 1e100 in magnitude.";
         default:return "Enter one value or a nonempty list, such as {0,1}.";

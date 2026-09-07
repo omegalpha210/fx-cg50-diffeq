@@ -1,4 +1,4 @@
-# Input workflow and lifecycle — v0.9.0-beta.2
+# Input workflow and lifecycle — v0.9.0-beta.3
 
 Equation → Initial Conditions → Solver Parameters → Graph is the common path.
 Main digits1–4 or UP/DOWN+EXE choose the equation type; F1–F4 are blank/inert.
@@ -10,7 +10,7 @@ Main digits1–4 or UP/DOWN+EXE choose the equation type; F1–F4 are blank/iner
 | Parameters | PREV | INIT | V-WIN | OUTPUT | SET | GRAPH |
 | OUTPUT | | | COLOR | INIT | | DONE |
 | Graph base | TRACE | ZOOM | V-WIN | TABLE | G-SLV | PREV |
-| TRACE | x= | NORMAL | FAST | FASTER | | BACK |
+| TRACE | x= | NORMAL | FAST | FASTER | LEFT | RIGHT |
 | Table | TOP | BTM | MID | | STAT | GRAPH |
 | Main | | | | | RCL | SAVE |
 

@@ -172,9 +172,8 @@ void ui_graph_settings(Document *d)
             ui_field(5,"Color",field_names[d->field_color<FIELD_COLORS ? d->field_color:0],selected==3);
             ui_color_swatch(326,142,graph_field_color(d->field_color));
         }
-        ui_form_hint(NULL,supported ? "Density SF: Parameters   EXE: DONE":
-            "Field: first-order only; preference kept");
-        if(selected<2)ui_softkeys("ON","OFF","","INIT","","DONE");
+        ui_form_hint(NULL,selected<2 ? "LEFT/RIGHT: ON/OFF toggle":NULL);
+        if(selected<2)ui_softkeys("","","","INIT","","DONE");
         else if(selected==2)ui_softkeys("SEG","ARROW","","INIT","","DONE");
         else ui_softkeys("","","COLOR","INIT","","DONE");
         dupdate();int key=ui_getkey().key;
@@ -187,8 +186,6 @@ void ui_graph_settings(Document *d)
         }
         if(selected<2) {
             int *value=selected ? &d->view.labels:&d->view.grid;
-            if(key==KEY_F1)*value=1;
-            if(key==KEY_F2)*value=0;
             if(key==KEY_LEFT || key==KEY_RIGHT)*value=!*value;
         } else if(selected==2) {
             if(key==KEY_F1)d->field_style=FIELD_SEGMENT;
@@ -218,7 +215,7 @@ UiStageAction ui_initial_conditions(Document *d,UiStageState *state)
             ui_field(row,label,edit.active && field==selected ? edit.text:value,field==selected);
             if(field==selected){snprintf(current,sizeof(current),"%s",value);if(edit.active)number_cursor(&edit,row);}
         }
-        if(scalar)ui_text(10,170,UI_MUTED,"y0: scalar or {values}; at most 9");
+        if(scalar)ui_text(10,170,UI_MUTED,"y0: scalar or {values}; at most 10");
         ui_form_hint(&edit,scalar ? "Comma: separator":"One solution: x0 plus all state values");
         ui_softkeys("PREV","","V-WIN","","","NEXT");dupdate();
         key_event_t event=ui_getkey();int key=event.key;
@@ -226,6 +223,7 @@ UiStageAction ui_initial_conditions(Document *d,UiStageState *state)
         if(edit.active) {
             int action=stage_leave(key) || key==KEY_UP || key==KEY_DOWN ? 1:number_key(&edit,event);
             if(!action)continue;
+            if(edit.limited){ui_message("Initial values",initial_values_error(IC_LIST_LENGTH));continue;}
             if(scalar && selected==1) {
                 InitialValues values;IcListStatus status=initial_values_parse(edit.text,&values);
                 if(status!=IC_LIST_OK){ui_message("Initial values",initial_values_error(status));continue;}

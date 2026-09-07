@@ -13,8 +13,12 @@
 #define UI_MUTED C_RGB(12,14,17)
 #define UI_PALE C_RGB(28,29,31)
 #define UI_LINE C_RGB(24,26,28)
+#define UI_BRIGHT_GREEN 0x37e6
+#define UI_YELLOW 0xffe0
+#define UI_CYAN 0x07ff
+#define UI_LIMIT_HINT "Input too long; Max: 191 characters"
 #define UI_EDIT_HINT "EXE: commit / next   EXIT: commit"
-typedef struct {char text[EXPR_TEXT];int cursor;bool active,replace;} UiInlineEdit;
+typedef struct {char text[EXPR_TEXT];int cursor;bool active,replace,limited;} UiInlineEdit;
 typedef struct {int selected,top;UiInlineEdit edit;} UiStageState;
 typedef enum {UI_STAGE_BACK,UI_STAGE_NEXT,UI_STAGE_VWINDOW,UI_STAGE_OUTPUT,UI_STAGE_SETTINGS} UiStageAction;
 typedef struct {int timer;volatile int timeout;bool highlighted;} UiBlink;
