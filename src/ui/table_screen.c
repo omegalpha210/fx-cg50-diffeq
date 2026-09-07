@@ -30,7 +30,9 @@ void ui_table(App *a)
                 else ui_text(10+j*125,y,UI_MUTED,"--");
             }
         }
-        if((!start && ode_invalid_region(index.low))
+        if((!start && index.low==ODE_EVENT_STOP) || (start==table_bottom(&index) && index.high==ODE_EVENT_STOP))
+            ui_text(8,184,UI_INK,"END: Event");
+        else if((!start && ode_invalid_region(index.low))
             || (start==table_bottom(&index) && ode_invalid_region(index.high)))
             ui_text(8,184,C_RED,"END: Numerical limit");
         else if(page.result.status!=ODE_OK)ui_text(8,184,C_RED,"Partial: %s",ode_status_text(page.result.status));

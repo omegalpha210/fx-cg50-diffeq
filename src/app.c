@@ -60,6 +60,7 @@ static uint32_t input_fingerprint(const Document *document)
     uint32_t hash=2166136261u;
     for(size_t i=0;i<offsetof(Document,solver);i++){hash^=bytes[i];hash*=16777619u;}
     for(size_t i=offsetof(Document,enabled);i<offsetof(Document,field_style);i++){hash^=bytes[i];hash*=16777619u;}
+    for(size_t i=offsetof(Document,event);i<offsetof(Document,event)+sizeof(document->event);i++){hash^=bytes[i];hash*=16777619u;}
     return hash;
 }
 
@@ -72,7 +73,8 @@ bool app_compile(App *a)
     }
     if(error.expression.status!=EXPR_OK) {
         char message[128],label[24];
-        model_equation_label(&a->doc,error.equation,label,sizeof(label));
+        if(error.equation==ODE_MAX_DIM)snprintf(label,sizeof(label),"Event E (including IC)");
+        else model_equation_label(&a->doc,error.equation,label,sizeof(label));
         snprintf(message,sizeof(message),"%s: %s at character %d.",label,
             expr_status_text(error.expression.status),error.expression.position+1);
         ui_message("Check equation",message);
@@ -85,6 +87,7 @@ bool app_compile(App *a)
 
 static void new_document(App *a,EquationKind kind,int dimension)
 {
+    solver_report_reset();
     OdeSettings solver=a->doc.solver;ViewWindow view=a->doc.view;OdeAdaptive adaptive=a->doc.adaptive;
     int solver_custom=a->doc.solver_custom;
     ViewWindow phase_view=a->doc.phase_view;
@@ -102,6 +105,7 @@ static void new_document(App *a,EquationKind kind,int dimension)
 
 static void use_recall(App *a)
 {
+    solver_report_reset();
     bool was_phase_system=model_phase_supported(&a->doc);
     OdeSettings solver=a->doc.solver;ViewWindow view=a->doc.view;OdeAdaptive adaptive=a->doc.adaptive;
     int solver_custom=a->doc.solver_custom;
@@ -377,6 +381,7 @@ static ScreenTransition screen_calculate(App *a,AppUi *ui)
 {
     ModelWork plan=model_preflight(&a->doc,&a->doc.solver);
     if(plan.status!=ODE_OK) {
+        solver_report_begin(&a->doc,&a->model);solver_report_end(&a->model,plan.status);
         ui->parameters.selected=3;ui->parameters.edit.active=false; /* h / Initial h */
         ui_message("Calculation not started",plan.status==ODE_STEP_LIMIT ?
             "Too many integration steps.\nIncrease h or Max Steps.":
@@ -384,7 +389,8 @@ static ScreenTransition screen_calculate(App *a,AppUi *ui)
         return back_screen();
     }
     if(!app_compile(a)) {
-        if(compile_error_equation>=0) {
+        solver_report_reset();
+        if(compile_error_equation>=0 && compile_error_equation<ODE_MAX_DIM) {
             ui->equation_selected=compile_error_equation;
             ui_inline_begin(&ui->equation_edit,a->doc.text[compile_error_equation],false);
             ui->equation_edit.cursor=compile_error_position;
@@ -413,6 +419,8 @@ static ScreenTransition stage_transition(UiStageAction action,AppScreen next)
     if(action==UI_STAGE_VWINDOW)return open_screen(APP_SCREEN_VWINDOW);
     if(action==UI_STAGE_OUTPUT)return open_screen(APP_SCREEN_OUTPUT);
     if(action==UI_STAGE_SETTINGS)return open_screen(APP_SCREEN_GRAPH_SETTINGS);
+    if(action==UI_STAGE_EVENT)return open_screen(APP_SCREEN_EVENT);
+    if(action==UI_STAGE_INFO)return open_screen(APP_SCREEN_SOLVER_INFO);
     return back_screen();
 }
 
@@ -455,6 +463,12 @@ int app_run(void)
                 before=document_fingerprint(&app.doc);ui_vwindow(&app.doc);
                 if(document_fingerprint(&app.doc)!=before)app.dirty=true;
                 transition=back_screen();break;
+            case APP_SCREEN_EVENT:
+                before=document_fingerprint(&app.doc);ui_event(&app.doc);
+                if(document_fingerprint(&app.doc)!=before)app.dirty=true;
+                transition=back_screen();break;
+            case APP_SCREEN_SOLVER_INFO:
+                ui_solver_info();transition=back_screen();break;
             case APP_SCREEN_GRAPH_SETTINGS:
                 before=document_fingerprint(&app.doc);ui_graph_settings(&app.doc);
                 if(document_fingerprint(&app.doc)!=before)app.dirty=true;
@@ -487,7 +501,7 @@ int app_run(void)
                             (app.migration_warnings&STORAGE_IC_ADAPTED ?
                             "IC policy changed: kept first vector / common-x values. Original files retained.":
                             "Outputs combined; x always included. Private constants converted to numbers."));
-                        app.dirty=false;ui.has_session=true;ui.equation_selected=0;
+                        solver_report_reset();app.dirty=false;ui.has_session=true;ui.equation_selected=0;
                         pristine_input=0;
                         ui.equation_edit=(UiInlineEdit){0};
                         ui.ic=(UiStageState){0};ui.parameters=(UiStageState){0};

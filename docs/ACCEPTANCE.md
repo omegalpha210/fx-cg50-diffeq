@@ -1,3 +1,38 @@
+# Event / Solver Diagnostics acceptance — v0.12.0-beta.1
+
+Baseline development e885230; public v0.11.0-beta.1 / 3892707. Existing installed
+fxSDK/gint/SH tools reused, RK4/RK45 arithmetic and all prior features preserved.
+
+- **39/39 host/UBSan groups pass**, 24.52s local full run, including all previous36.
+- One compiled Event expression, ANY/RISING/FALLING (always increasing x), MARK
+  and per-IC/per-direction STOP; accepted numerical steps only, no rejected RK45 hit.
+- Bounded48-iteration secant/bisection with selected-method scratch landing,
+  cancellation/shared budgets, no canonical overshoot or invalid-gap root.
+- Initial-zero and zero-plateau policy, repeated/32-marker cap, ten ICs, SYS9,
+  N-th→SYS conversion, domain/pole/singularity cases and mixed-family status tested.
+- TIME/Phase squares, STOP Table root state, TRACE no-extension bounds,
+  transactional marker preservation and valid-prefix G-Solve are covered.
+- Actual RHS instrumentation agrees with report counters. INFO/menu stress has no
+  solver calls or file I/O. Graph cancellation and numerical-limit status persist.
+- SAVE v10 current/recall Event roundtrip and independent frozen v3–v9 fixtures pass.
+- **27 target C units**, strict clean SH compile/link, zero warnings; 13/13 G3A
+  checks. Development package234320 B; release hash is from the exact public tag.
+- Target text204936/data704/BSS71952. BSS+7056, data unchanged, maxframe2572 B.
+- Existing Parameters captures refreshed; two new production-rendered Event/Info
+  images. Host captures are not calculator photographs or an SH emulator.
+
+[Event algorithms, benchmark and limits](EVENTS.md), [memory](MEMORY_AUDIT.md),
+[29 physical retests](HARDWARE_RETEST.md). Exact public-source validation, artifact
+hash and timing are recorded in the Release's VALIDATION.md/SHA256SUMS.txt.
+**HARDWARE TEST REQUIRED:** every new Event/Diagnostics device path, target numeric
+accuracy, key timing, stack high-water, LCD, MENU/Fugue and native SAVE migration.
+Multiple Event definitions, FSAL, sweeps, Poincaré/bifurcation, new/stiff/implicit
+solvers, CAS, Laplace and special functions are deliberately deferred.
+
+---
+
+The following is the retained v0.11 RK45 milestone record.
+
 # RK45 acceptance — v0.11.0-beta.1
 
 2026-09-08. Baseline development 6bc10c9, public v0.10.0-beta.1 / 713ddc2.

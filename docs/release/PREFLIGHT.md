@@ -1,3 +1,20 @@
+# v0.12.0-beta.1 preflight
+
+Development12877bc (hardware-crash-fix), public parent3892707 (v0.11.0-beta.1).
+Preserve public ancestry, all existing tags and private development history.
+Required gates:39 host/UBSan groups, clean strict SH compile/link,13 package checks,
+Event numerical/memory audit, no-work/no-I/O INFO and navigation, SAVE v10/v3–v9
+migration, README EN/KO and two production-rendered images, unchanged MIT/third-party
+notices, common private-path/secret scan of candidate and reachable public history.
+Repeat all build/test/package gates from exact public source; create a new tag,
+publish the prerelease, download assets and verify bytes/SHA256. No dev history,
+manuals, toolchains, raw logs or generated binaries belong in the public tree.
+Exact identifiers and results are in the Release VALIDATION.md/SHA256SUMS.txt.
+
+The following records are historical.
+
+---
+
 # v0.11.0-beta.1 preflight
 
 Development source e885230 (hardware-crash-fix), public parent713ddc2. Preserve

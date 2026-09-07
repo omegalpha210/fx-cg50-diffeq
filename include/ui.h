@@ -20,7 +20,7 @@
 #define UI_EDIT_HINT "EXE: commit / next   EXIT: commit"
 typedef struct {char text[EXPR_TEXT];int cursor;bool active,replace,limited;} UiInlineEdit;
 typedef struct {int selected,top;UiInlineEdit edit;} UiStageState;
-typedef enum {UI_STAGE_BACK,UI_STAGE_NEXT,UI_STAGE_VWINDOW,UI_STAGE_OUTPUT,UI_STAGE_SETTINGS} UiStageAction;
+typedef enum {UI_STAGE_BACK,UI_STAGE_NEXT,UI_STAGE_VWINDOW,UI_STAGE_OUTPUT,UI_STAGE_SETTINGS,UI_STAGE_EVENT,UI_STAGE_INFO} UiStageAction;
 typedef struct {int timer;volatile int timeout;bool highlighted;} UiBlink;
 void ui_frame(const char *title,const char *subtitle);
 void ui_text(int x,int y,int color,const char *format,...);
@@ -62,6 +62,8 @@ void ui_inline_draw_cursor(const UiInlineEdit *edit,int x,int y,int width,int fo
 bool ui_edit(const char *title,char *text,unsigned capacity,int position);
 bool ui_number(const char *title,double *value);
 UiStageAction ui_parameters(Document *d,UiStageState *state);
+void ui_event(Document *d);
+void ui_solver_info(void);
 void ui_vwindow(Document *d);
 void ui_graph_settings(Document *d);
 UiStageAction ui_initial_conditions(Document *d,UiStageState *state);

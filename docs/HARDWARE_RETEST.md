@@ -1,3 +1,46 @@
+# Event / Solver Diagnostics priority retest — v0.12.0-beta.1
+
+**HARDWARE TEST REQUIRED — all 29 new cases are pending.** Record release SHA256,
+calculator OS, method/settings, observed x/state, elapsed time and exact keys.
+
+1. Parameters F2 SOLVE shows EVENT/INFO/blank/INIT/blank/blank; main bar unchanged.
+2. SOLVE EXIT closes only the submenu and retains selector and values; F4 INIT works.
+3. EVENT rows/editor/FUNC/VAR in first/second/N-th9/SYS9; invalid draft preserves input.
+4. Event OFF with blank or preserved draft calculates normally; toggles do no work.
+5. y'=y, y(0)=1, E=y-10 RISING STOP at x≈ln(10), FALLING does not stop.
+6. MARK continues the same equation to the requested end.
+7. y'=-y, E=y-.5 FALLING at x≈ln(2).
+8. IC E=0: ANY immediate; directed first nonzero policy, constant zero and zero plateau.
+9. Harmonic oscillator repeated MARK roots, no duplicate root; >32 keeps counting.
+10. TIME Event squares use first visible output, remain clipped during pan/zoom.
+11. SYS2 TIME/PHASE shows the same Event state and distinct equilibrium diamonds.
+12. STOP curve ends at the refined root, including Step>1 and redraw.
+13. STOP Table BTM/TOP exact terminal x/state and inline END: Event; no modal end screen.
+14. TRACE cannot pass STOP by arrows, fast movement, endpoint jumps or x= input.
+15. Ten first-order ICs stop independently; other branches continue; Table blanks beyond each STOP.
+16. Backward Event accuracy and increasing-x RISING/FALLING meaning.
+17. RK4 h=.1/.05 comparison including y'=y², E=y-10 before its singularity.
+18. RK45 tolerance comparison, large initial h and rejected attempts; no rejected-state marker.
+19. EXIT/AC cancellation during trajectory/refinement; actual CANCELLED report; no false marker.
+20. RK4 INFO Steps/RHS, no adaptive rejection/tolerance rows.
+21. RK45 INFO settings/status/Accepted/Rejected/Attempts/RHS, scrolling and blank softkeys.
+22. Accepted/Rejected work includes scratch; rejection can be normal; counters do not wrap.
+23. h min/max finite and ordered, magnitudes including scratch steps.
+24. Hits versus Stored/32, initial-hit dedup and single-hit Stopped x.
+25. Repeated INFO/SOLVE enter/exit performs no recalculation, file write or reset.
+26. SAVE v10 current/recall Event settings; same-device v3–v9 load OFF, v9 RK45 retained.
+27. MENU/reentry from Event EDIT/INFO/Graph/Table; fresh launch/load No solver run yet.
+28. Physical LCD marker contrast/shape, labels and scroll hint; no overlap or color artifacts.
+29. Key repeat/cancel responsiveness, cancelled TRACE-extension preservation and long SYS9/10-IC
+    stack high-water with gint/OS interrupts; no reboot or unintended I/O.
+
+Event math-domain gaps, G-Solve's STOP bounds and mixed-family numerical-limit
+status should also be checked with the recorded host cases in [EVENTS](EVENTS.md).
+The earlier feature checks below remain applicable; their old version labels are
+historical. Parameters INIT now lives at F2 SOLVE → F4 INIT.
+
+---
+
 # RK45 priority retest — v0.11.0-beta.1
 
 **HARDWARE TEST REQUIRED — all new RK45 cases remain pending.**

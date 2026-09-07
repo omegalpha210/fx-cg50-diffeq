@@ -2,11 +2,24 @@
 
 The application is native C11. The numerical engine, expression compiler, equation model, graph geometry and UI are independent modules. The target links against installed gint headers and `Gint::Gint`; host tests link the same mathematical core against the host C library.
 
-## RK45 dispatch and output (v0.11)
+## Events and runtime report (v0.12)
+
+Document appends EventConfig to its frozen v9 prefix. v10 saves current/recall
+preferences; all v3–v9 readers default Event OFF. CompiledModel owns one compiled
+Event program and shared work counters. events.c dispatches RK4/RK45 and installs
+an accepted-state hook before canonical commit. Safeguarded scratch target landing
+uses the selected solver without nested Event detection. A directed initial-zero
+STOP probes before publishing samples. Runtime SolverReport contains the bounded
+32 markers and aggregate counters; a second 32-marker list stages TRACE updates.
+No new trajectory/framebuffer allocation or parser is introduced. Event STOP is
+valid terminal state in Graph/TRACE/Table/G-Solve; Phase reuses the same marker
+states. INFO is read-only and excludes Phase analysis. See [EVENTS](EVENTS.md).
+
+## RK45 dispatch and output (v0.11 baseline)
 
 Document appends OdeAdaptive without changing the old OdeSettings ABI. Frozen
 v3–v8 readers set RK4 defaults; v9 stores the new preferences. CompiledModel
-owns operation-local work counters. solver.c dispatches to the unchanged RK4
+owns operation-local work counters. events.c now dispatches to the unchanged RK4
 driver or rk45.c, a generic Dormand–Prince 5(4) implementation with a 652-byte
 fixed workspace. Adaptive internal steps and the Xdot-based output grid are
 separate. Streaming consumers retain their bounded allocations. Table/G-Solve

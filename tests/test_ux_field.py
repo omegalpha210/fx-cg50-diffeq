@@ -83,8 +83,8 @@ assert plot(run(changed+'F4'))==plot(run(settings))
 # Direct return restores the SF selector; appearance INIT preserves SF=24.
 assert plot(run(changed+'F4 EXIT'))==plot(run(sf+'2 4 EXIT'))
 assert 'TEXT 144 145 24\n' in tail(run(changed+'EXIT'))
-assert 'TEXT 144 145 12\n' in tail(run(changed+'EXIT F2'))
-assert all(s in tail(run(changed+'EXIT F2 F5')) for s in ['Segment','Pale Red'])
+assert 'TEXT 144 145 12\n' in tail(run(changed+'EXIT F2 F4'))
+assert all(s in tail(run(changed+'EXIT F2 F4 F5')) for s in ['Segment','Pale Red'])
 assert all(s in tail(run(changed+'EXIT F4 F4 EXIT F5')) for s in ['Segment','Pale Red'])
 for invalid in ['NEG 1','1 0 1','1 DOT 5']:
     assert 'Invalid ' in run(sf+invalid+' EXE')

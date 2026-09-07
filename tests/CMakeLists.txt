@@ -8,7 +8,7 @@ if(SANITIZE AND CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
   add_compile_options(-fsanitize=undefined -fno-omit-frame-pointer)
   add_link_options(-fsanitize=undefined)
 endif()
-add_library(core STATIC ../src/ode/rk45.c ../src/ode/solver.c ../src/ode/phase.c ../src/ode/initial.c ../src/ode/validity.c ../src/ode/ode.c ../src/ode/rk4.c ../src/ode/gsolve.c ../src/math/expression.c ../src/ode/model.c ../src/app_state.c ../src/storage.c ../src/ode/table.c ../src/ode/sampling.c ../src/graph/geometry.c)
+add_library(core STATIC ../src/ode/events.c ../src/ode/rk45.c ../src/ode/solver.c ../src/ode/phase.c ../src/ode/initial.c ../src/ode/validity.c ../src/ode/ode.c ../src/ode/rk4.c ../src/ode/gsolve.c ../src/math/expression.c ../src/ode/model.c ../src/app_state.c ../src/storage.c ../src/ode/table.c ../src/ode/sampling.c ../src/graph/geometry.c)
 target_include_directories(core PUBLIC ../include host)
 # Host-only function entry counters and syscall wrappers; target sources/build
 # receive none of these options. Counts are printed beside framebuffer hashes.
@@ -34,7 +34,7 @@ set_tests_properties(equation_models PROPERTIES TIMEOUT 30)
 
 # The actual UI/app code against a small drawing/key adapter, not a CPU emulator.
 set(HOST_APP_SOURCES ../src/graph/trace.c ../src/main.c ../src/app.c ../src/ui/common.c
-  ../src/ui/editor.c ../src/ui/forms.c ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/graph_screen.c
+  ../src/ui/editor.c ../src/ui/forms.c ../src/ui/solver.c ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/graph_screen.c
   ../src/ui/table_screen.c host/gint_host.c)
 add_executable(host_app ${HOST_APP_SOURCES})
 target_include_directories(host_app PRIVATE host)
@@ -157,3 +157,13 @@ add_test(NAME rk45_ui COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/
 set_tests_properties(rk45_ui PROPERTIES TIMEOUT 60)
 add_executable(benchmark_rk45 benchmark_rk45.c)
 target_link_libraries(benchmark_rk45 core m)
+
+add_executable(test_events test_events.c)
+target_link_libraries(test_events core m)
+add_test(NAME event_numerics COMMAND test_events)
+add_executable(test_event_consumers test_event_consumers.c ../src/graph/trace.c ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/common.c host/gint_host.c)
+target_include_directories(test_event_consumers PRIVATE host)
+target_link_libraries(test_event_consumers core m)
+add_test(NAME event_consumers COMMAND test_event_consumers)
+add_test(NAME event_ui COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_events_ui.py $<TARGET_FILE:host_app>)
+set_tests_properties(event_ui PROPERTIES TIMEOUT 60)

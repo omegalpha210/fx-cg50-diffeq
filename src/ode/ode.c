@@ -13,9 +13,19 @@ OdeStatus ode_validate(const OdeSettings *s)
     return ODE_OK;
 }
 
-OdeResult ode_integrate(OdeRhs rhs, void *ctx, int n, double x0,
+typedef struct {OdeRhs rhs;void *ctx;OdeWork *work;int n;} CountedRhs;
+static OdeStatus counted_rhs(double x,const double *y,double *dy,void *context)
+{
+    CountedRhs *c=context;
+    if(c->work->rhs>=ODE_RHS_BUDGET || c->work->work>ODE_RHS_WORK_BUDGET-(unsigned)c->n)
+        return ODE_WORK_LIMIT;
+    c->work->rhs++;c->work->work+=(unsigned)c->n;
+    return c->rhs(x,y,dy,c->ctx);
+}
+OdeResult ode_integrate_control(OdeRhs rhs, void *ctx, int n, double x0,
     const double *y0, double target, const OdeSettings *s,
-    OdeSample sample, void *sample_ctx, OdeCancel cancel, void *cancel_ctx)
+    OdeSample sample, void *sample_ctx, OdeCancel cancel, void *cancel_ctx,
+    OdeWork *work,OdeAccepted accepted,void *accepted_ctx)
 {
     OdeResult r={.status=ODE_BAD_INPUT,.x=x0};
     if(!rhs || !y0 || n<1 || n>ODE_MAX_DIM || !isfinite(x0)
@@ -28,14 +38,21 @@ OdeResult ode_integrate(OdeRhs rhs, void *ctx, int n, double x0,
         r.y[i]=y0[i];
     }
     if(cancel && cancel(cancel_ctx)) { r.status=ODE_CANCELLED; return r; }
+    if(accepted) {
+        r.status=accepted(x0,r.y,&r.x,r.y,accepted_ctx);
+        if(r.status!=ODE_OK && r.status!=ODE_EVENT_STOP)return r;
+    }
     if(sample && x0>=s->xmin && x0<=s->xmax
         && !sample(x0,r.y,0,sample_ctx)) {
         r.status=ODE_SAMPLE_STOP; return r;
     }
+    if(r.status==ODE_EVENT_STOP)return r;
+    CountedRhs counter={rhs,ctx,work,n};
     double direction=target>=x0 ? 1 : -1;
     while(direction*(target-r.x)>0) {
         if(cancel && cancel(cancel_ctx)) { r.status=ODE_CANCELLED; break; }
         if(r.steps>=s->max_steps) { r.status=ODE_STEP_LIMIT; break; }
+        if(work && work->accepted+work->rejected>=ODE_ATTEMPT_BUDGET){r.status=ODE_WORK_LIMIT;break;}
         double remaining=fabs(target-r.x);
         if(r.x+direction*s->h==r.x) { r.status=ODE_BAD_STEP; break; }
         double rounding=8*DBL_EPSILON*fmax(fabs(target),fabs(r.x));
@@ -43,25 +60,39 @@ OdeResult ode_integrate(OdeRhs rhs, void *ctx, int n, double x0,
         double h=direction*(last ? remaining : s->h);
         if(r.x+h==r.x) { r.status=ODE_BAD_STEP; break; }
         double next[ODE_MAX_DIM];
-        r.status=ode_rk4(rhs,ctx,n,r.x,r.y,h,next);
-        if(r.status!=ODE_OK) break;
-        r.x=last ? target : r.x+h;
+        r.status=ode_rk4(work ? counted_rhs:rhs,work ? &counter:ctx,n,r.x,r.y,h,next);
+        if(r.status!=ODE_OK){if(work)work->rejected++;break;}
+        if(work) {
+            work->accepted++;
+            if(!work->min_h || fabs(h)<work->min_h)work->min_h=fabs(h);
+            work->max_h=fmax(work->max_h,fabs(h));
+        }
+        double at=last ? target:r.x+h;
+        if(accepted) {
+            r.status=accepted(r.x,r.y,&at,next,accepted_ctx);
+            if(r.status!=ODE_OK && r.status!=ODE_EVENT_STOP)break;
+        }
+        r.x=at;
         memcpy(r.y,next,(unsigned)n*sizeof(double));
         r.steps++;
         if(sample && r.x>=s->xmin && r.x<=s->xmax
-            && !sample(r.x,r.y,r.steps,sample_ctx)) {
+            && !sample(r.x,r.y,r.status==ODE_EVENT_STOP ? 0:r.steps,sample_ctx)) {
             r.status=ODE_SAMPLE_STOP; break;
         }
+        if(r.status==ODE_EVENT_STOP)break;
     }
     return r;
 }
+OdeResult ode_integrate(OdeRhs rhs,void *ctx,int n,double x0,const double *y0,
+    double target,const OdeSettings *s,OdeSample sample,void *sample_ctx,OdeCancel cancel,void *cancel_ctx)
+{return ode_integrate_control(rhs,ctx,n,x0,y0,target,s,sample,sample_ctx,cancel,cancel_ctx,NULL,NULL,NULL);}
 
 const char *ode_status_text(OdeStatus s)
 {
     static const char *const text[]={"Complete","Cancelled","Page complete",
         "Invalid values/range","h too small for x","Step limit reached",
         "NaN or infinity","Magnitude > 1e100","Math domain / singularity","Storage I/O error",
-        "Valid regions / gaps","Total calculation too large","Step underflow","Tolerance too small"};
+        "Valid regions / gaps","Total calculation too large","Step underflow","Tolerance too small","Event"};
     return (unsigned)s<sizeof(text)/sizeof(text[0]) ? text[s] : "Unknown error";
 }
 bool ode_invalid_region(OdeStatus status)

@@ -1,7 +1,7 @@
 # Building and developing DIFFEQ
 
 The runtime/numerical/UI source and all existing tests match the validated local
-milestone `6bc10c9`. This beta updates the existing public snapshot history; private
+milestone `12877bc`. This beta updates the existing public snapshot history; private
 development branches and manuals are not imported. Public-only changes cover
 release metadata, documentation and the host-only README image helper.
 
@@ -73,7 +73,7 @@ python3 tools/capture_ui.py
 python3 tools/capture_readme.py
 ```
 
-The script configures `tests/`, builds and runs all 33 CTest groups with strict
+The script configures `tests/`, builds and runs all 39 CTest groups with strict
 warnings, assertions and UBSan by default. The drawing/key adapter executes the
 actual application sources, with deterministic counters and temporary test files.
 It is not a SuperH/OS emulator. Physical timing, Fugue behavior and stack/allocator
@@ -88,7 +88,7 @@ redistributed with the add-in. Normal builds/tests do not need it.
 ## Releases
 
 `VERSION` is the public prerelease string. CMake's project version and numeric G3A
-metadata use its numeric base (`0.10.0`, `00.10.0000`); the container cannot express
+metadata use its numeric base (`0.12.0`, `00.12.0000`); the container cannot express
 `-beta.3`. The Git tag and Release make the beta designation explicit.
 
 Release from a clean tagged commit: clean target build, host tests, package check,
@@ -98,3 +98,5 @@ hashes can differ across builds even with unchanged source. Do not commit binari
 manuals, local toolchains, private paths or raw diagnostic logs.
 
 Phase renderer screenshots: `python3 tools/capture_phase.py`. Bounded analysis benchmark: `build-host/benchmark_phase`. Algorithm limits are in [PHASE_NUMERICS.md](docs/PHASE_NUMERICS.md).
+
+Event/Diagnostics screenshots: `python3 tools/capture_events.py`. Event benchmark: `build-host/test_events`. SAVE format v10; frozen v3–v9 readers retained. See [EVENTS](docs/EVENTS.md).

@@ -66,9 +66,10 @@ static double error_norm(const OdeAdaptive *a,int n,const double *old,const OdeD
     }
     return norm;
 }
-OdeResult ode_rk45_integrate(OdeRhs rhs,void *ctx,int n,double x0,const double *y0,
+OdeResult ode_rk45_control(OdeRhs rhs,void *ctx,int n,double x0,const double *y0,
     double target,const OdeSettings *s,const OdeAdaptive *a,double spacing,
-    OdeSample sample,void *sample_ctx,OdeCancel cancel,void *cancel_ctx,OdeWork *work)
+    OdeSample sample,void *sample_ctx,OdeCancel cancel,void *cancel_ctx,OdeWork *work,
+    OdeAccepted accepted,void *accepted_ctx)
 {
     OdeResult r={.status=ODE_BAD_INPUT,.x=x0};OdeWork local={0};OdeWork *w=work ? work:&local;
     if(!rhs || !y0 || n<1 || n>ODE_MAX_DIM || !isfinite(x0) || !isfinite(target)
@@ -78,8 +79,13 @@ OdeResult ode_rk45_integrate(OdeRhs rhs,void *ctx,int n,double x0,const double *
     r.status=ode_values_status(y0,n);if(r.status!=ODE_OK)return r;
     memcpy(r.y,y0,(unsigned)n*sizeof(double));
     if(cancel && cancel(cancel_ctx)){r.status=ODE_CANCELLED;return r;}
+    if(accepted) {
+        r.status=accepted(x0,r.y,&r.x,r.y,accepted_ctx);
+        if(r.status!=ODE_OK && r.status!=ODE_EVENT_STOP)return r;
+    }
     if(sample && x0>=s->xmin && x0<=s->xmax && !sample(x0,r.y,0,sample_ctx))
         {r.status=ODE_SAMPLE_STOP;return r;}
+    if(r.status==ODE_EVENT_STOP)return r;
     double direction=target>=x0 ? 1:-1,span=fabs(target-x0);
     if(!span)return r;
     double max_h=fmin(span,fmax(span/8,10*fabs(nextafter(x0,target)-x0)));
@@ -105,9 +111,15 @@ OdeResult ode_rk45_integrate(OdeRhs rhs,void *ctx,int n,double x0,const double *
         if(status!=ODE_OK && !ode_invalid_region(status)){w->rejected++;r.status=status;break;}
         if(status==ODE_OK && error<=1) {
             if(cancel && cancel(cancel_ctx)){w->rejected++;r.status=ODE_CANCELLED;break;}
-            memcpy(r.y,trial.next,(unsigned)n*sizeof(double));r.x=end;w->accepted++;
+            w->accepted++;
             if(!w->min_h || step<w->min_h)w->min_h=step;
             if(step>w->max_h)w->max_h=step;
+            if(accepted) {
+                r.status=accepted(r.x,r.y,&end,trial.next,accepted_ctx);
+                if(r.status!=ODE_OK && r.status!=ODE_EVENT_STOP)break;
+            }
+            memcpy(r.y,trial.next,(unsigned)n*sizeof(double));r.x=end;
+            if(r.status==ODE_EVENT_STOP)break;
             double factor=error==0 ? 5:fmin(5,fmax(.2,.9*pow(error,-.2)));
             if(rejected)factor=fmin(1,factor);
             h=fmin(max_h,step*factor);rejected=false;invalid=ODE_OK;
@@ -132,3 +144,7 @@ OdeResult ode_rk45_integrate(OdeRhs rhs,void *ctx,int n,double x0,const double *
         && r.status!=ODE_CANCELLED && r.status!=ODE_SAMPLE_STOP)sample(r.x,r.y,ordinal+1,sample_ctx);
     return r;
 }
+OdeResult ode_rk45_integrate(OdeRhs rhs,void *ctx,int n,double x0,const double *y0,
+    double target,const OdeSettings *s,const OdeAdaptive *a,double spacing,
+    OdeSample sample,void *sample_ctx,OdeCancel cancel,void *cancel_ctx,OdeWork *work)
+{return ode_rk45_control(rhs,ctx,n,x0,y0,target,s,a,spacing,sample,sample_ctx,cancel,cancel_ctx,work,NULL,NULL);}

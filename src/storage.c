@@ -16,13 +16,13 @@
 #endif
 
 #define RECORD_MAGIC 0x44455131u
-#define RECORD_VERSION 9u
+#define RECORD_VERSION 10u
 
 typedef struct {
     uint32_t magic,version,size,generation,has_recall;
 } RecordHeader;
 
-/* This type describes the current version-9 byte layout. No object of this
+/* This type describes the current version-10 byte layout. No object of this
    type is allocated; session data is streamed directly from App documents. */
 typedef struct {
     uint32_t magic,version,size,generation,has_recall;
@@ -80,6 +80,13 @@ typedef struct {
     uint8_t phase_field,phase_nullclines,phase_ready;
 } Version8Document;
 _Static_assert(offsetof(Document,adaptive)==sizeof(Version8Document),"v8 prefix changed");
+typedef struct {
+    int kind,dim,nic;char text[9][192];double power;InitialCondition ic[10];
+    OdeSettings solver;int solver_custom;ViewWindow view;uint16_t enabled;
+    uint8_t color[10][9],field_style,field_color;ViewWindow phase_view;
+    uint8_t phase_field,phase_nullclines,phase_ready;OdeAdaptive adaptive;
+} Version9Document;
+_Static_assert(offsetof(Document,event)==sizeof(Version9Document),"v9 prefix changed");
 typedef struct {
     char path[256];
     RecordHeader header;
@@ -166,6 +173,7 @@ static size_t document_size(uint32_t version)
     if(version==6)return sizeof(Version6Document);
     if(version==7)return sizeof(Version7Document);
     if(version==8)return sizeof(Version8Document);
+    if(version==9)return sizeof(Version9Document);
     return sizeof(Document);
 }
 static size_t checksum_offset(uint32_t version)
@@ -288,6 +296,10 @@ static bool read_document(int fd,Document *d,uint32_t version,bool present,uint3
 {
     memset(d,0,sizeof(*d));
     ode_adaptive_defaults(&d->adaptive);
+    if(version==9) {
+        if(!native_read_hashed(fd,d,sizeof(Version9Document),hash))return false;
+        model_sanitize_colors(d);model_sanitize_field(d);return true;
+    }
     if(version==8) {
         if(!native_read_hashed(fd,d,sizeof(Version8Document),hash))return false;
         model_sanitize_colors(d);model_sanitize_field(d);return true;

@@ -138,6 +138,7 @@ void graph_backdrop(Document *d,CompiledModel *m)
 }
 static void graph_status(GraphResult result)
 {
+    if(result.status==ODE_EVENT_STOP){ui_text(7,4,UI_INK,"END: Event");return;}
     if(result.status!=ODE_OK) {
         ui_rect(0,0,384,18,C_WHITE);
         if(result.status==ODE_HAS_INVALID)
@@ -155,14 +156,21 @@ GraphResult graph_render(Document *d,CompiledModel *m,bool first)
 {
     model_work_begin(m);
     ModelWork plan=model_preflight(d,&d->solver);
-    if(plan.status!=ODE_OK)return (GraphResult){.status=plan.status,.failed_family=plan.family};
+    if(plan.status!=ODE_OK) {
+        solver_report_begin(d,m);solver_report_end(m,plan.status);
+        return (GraphResult){.status=plan.status,.failed_family=plan.family};
+    }
     OdeStatus phase_status=graph_phase_preflight(d,m,ui_cancel,NULL);
-    if(phase_status!=ODE_OK)return (GraphResult){.status=phase_status,.failed_family=-1};
+    if(phase_status!=ODE_OK) {
+        solver_report_begin(d,m);solver_report_end(m,phase_status);
+        return (GraphResult){.status=phase_status,.failed_family=-1};
+    }
     bool system=model_phase_supported(d);
     if(system && trace_cache_matches(d)) {
-        graph_backdrop(d,m);trace_cache_render(d);graph_phase_markers(d,-1);
+        graph_backdrop(d,m);trace_cache_render(d);graph_phase_markers(d,-1);graph_event_markers(d);
         GraphResult cached=trace_cache_result();graph_status(cached);return cached;
     }
+    solver_report_begin(d,m);
     if(system)graph_phase_reset();
     bool capture=system && trace_capture_begin(d);
     dclear(C_WHITE);
@@ -180,18 +188,38 @@ GraphResult graph_render(Document *d,CompiledModel *m,bool first)
             if(capture)trace_capture_branch_end(r);
             result.steps+=r.steps;
             if(r.invalid!=ODE_OK)result.invalid=r.invalid;
-            if(r.status!=ODE_OK && (result.status==ODE_OK ||
-                (result.status==ODE_HAS_INVALID && r.status!=ODE_HAS_INVALID))) {
+            if(r.status!=ODE_OK && (result.status==ODE_OK || result.status==ODE_EVENT_STOP ||
+                (result.status==ODE_HAS_INVALID && r.status!=ODE_HAS_INVALID && r.status!=ODE_EVENT_STOP))) {
                 result.status=r.status;result.failed_family=i;
             }
             if(r.status==ODE_CANCELLED) {result.status=r.status;break;}
         }
     }
-    if(capture)trace_capture_end(result.status==ODE_OK || result.status==ODE_HAS_INVALID);
+    if(capture)trace_capture_end(result.status==ODE_OK || result.status==ODE_HAS_INVALID || result.status==ODE_EVENT_STOP);
+    solver_report_end(m,result.status==ODE_HAS_INVALID ? result.invalid:result.status);
+    graph_event_markers(d);
     graph_phase_markers(d,-1);
     graph_status(result);
     ui_softkeys("TRACE","ZOOM","V-WIN",system ? "VIEW":"TABLE",system && d->view.phase ? "ANLYS":"G-SLV","PREV");
     return result;
+}
+void graph_event_markers(const Document *d)
+{
+    const SolverReport *r=solver_report();if(!r->valid || !d->event.enabled)return;
+    const ViewWindow *v=model_view_const(d);
+    for(unsigned i=0;i<r->markers.count;i++) {
+        const EventMarker *p=&r->markers.point[i];
+        if(!graph_family_enabled(d,p->family))continue;
+        int variable=0;while(variable<d->dim && !(d->enabled&(1u<<variable)))variable++;
+        if(!d->view.phase && variable==d->dim)continue;
+        int x,y;
+        if(!graph_point(v,d->view.phase ? p->y[v->phase_x]:p->x,
+            p->y[d->view.phase ? v->phase_y:variable],&x,&y))continue;
+        /* Square outline/orange center distinguishes EQPT diamonds and cursor. */
+        for(int dx=-3;dx<=3;dx++)for(int dy=-3;dy<=3;dy++)
+            if(x+dx>=PLOT_LEFT && x+dx<=PLOT_RIGHT && y+dy>=PLOT_TOP && y+dy<=PLOT_BOTTOM)
+                dpixel(x+dx,y+dy,dx==-3 || dx==3 || dy==-3 || dy==3 ? C_BLACK:C_RGB(31,15,0));
+    }
 }
 OdeStatus graph_highlight_curve(Document *d,CompiledModel *m,int family,int variable)
 {
@@ -206,7 +234,7 @@ OdeStatus graph_highlight_curve(Document *d,CompiledModel *m,int family,int vari
             .stride=d->adaptive.method==ODE_RK45 ? 1:d->solver.step,.color=graph_highlight_color(base,false)};
         ModelPathResult r=model_path_branch(d,m,family,direction,&d->solver,curve_point,&c,ui_cancel,NULL);
         if(r.status!=ODE_OK)status=r.status;
-        if(r.status!=ODE_OK && r.status!=ODE_HAS_INVALID)break;
+        if(r.status!=ODE_OK && r.status!=ODE_HAS_INVALID && r.status!=ODE_EVENT_STOP)break;
     }
     return status;
 }
@@ -251,11 +279,12 @@ OdeStatus graph_auto_window(Document *d,CompiledModel *m)
         b.family=i;
         for(int dir=-1;dir<=1;dir+=2) {
             const InitialCondition *ic=&d->ic[i];
+            m->event_family=i;
             if((dir>0 && ic->x>sampling.xmax) || (dir<0 && ic->x<sampling.xmin))continue;
             OdeResult r=model_integrate(d,m,ic->x,ic->y,
                 dir>0 ? sampling.xmax:sampling.xmin,&sampling,bound_point,&b,ui_cancel,NULL);
             if(r.status==ODE_CANCELLED) return r.status;
-            if(r.status!=ODE_OK) status=r.status;
+            if(r.status!=ODE_OK && r.status!=ODE_EVENT_STOP) status=r.status;
         }
     }
     if(!b.have) return ODE_BAD_INPUT;

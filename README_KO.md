@@ -10,9 +10,9 @@
 DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식의 수치해를
 컬러 그래프·기울기장·TRACE·G-Solve·표로 살펴보고, 2변수 시스템의 위상을 분석할 수 있습니다.
 
-**공개 베타 · v0.11.0-beta.1 · [MIT 라이선스](LICENSE)**
+**공개 베타 · v0.12.0-beta.1 · [MIT 라이선스](LICENSE)**
 
-**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.11.0-beta.1)**
+**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.1)**
 · [전체 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [버그 신고](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -89,7 +89,7 @@ Parameters 세 번째 **Method** 행에서 LEFT/RIGHT로 전환합니다. 계산
 RK45는 **Initial h / RelTol / AbsTol / Max steps**를 표시하며 기본값은 .1 / 1e-6 / 1e-9 / 20000입니다.
 Max steps는 거절을 포함한 시도 횟수입니다. Step은 숨기고 SF는 scalar 1차에서만 표시합니다.
 두 방식이 h 값을 공유하며 tolerance와 숨겨진 Step을 보존합니다. INIT는 Method를 유지하고
-해당 방식의 설정을 초기화합니다. 옛 저장은 RK4로 읽습니다.
+해당 방식의 설정을 초기화합니다. v3~v8 저장은 RK4, v9는 저장된 Method로 읽으며 모든 구버전의 Event는 OFF입니다.
 
 모든 방정식 모드·Graph·TRACE·Table·G-Solve·Phase에서 RK45를 사용할 수 있습니다.
 Table/G-Solve/TIME x=는 요청 x에 직접 도착하도록 적분합니다. TRACE 이동과 Phase x=는
@@ -98,6 +98,25 @@ Table/G-Solve/TIME x=는 요청 x에 직접 도착하도록 적분합니다. TRA
 **RK45는 explicit adaptive 방식이며 stiff ODE 전용 solver가 아닙니다.**
 강성이나 엄격한 tolerance에서는 Work limit/Step underflow에 도달할 수 있습니다.
 [계수·안전장치·벤치마크·메모리](docs/RK45_NUMERICS.md)를 참고하세요.
+
+## Event Detection / Solver Diagnostics
+
+Parameters **F2 SOLVE → F1 EVENT**에서 하나의 `E(x,state)=0` 조건을 설정합니다.
+**ANY / RISING / FALLING**은 backward에서도 x 증가 기준이며 **MARK / STOP**을 선택합니다.
+MARK는 계속 적분하며 최대 **32개** marker를 표시하고 그 이후 hit도 계속 셉니다.
+STOP은 IC·방향마다 refined root에서 종료합니다. Table/TRACE는 **END: Event**를 표시하고
+G-Solve도 유효한 해의 범위 안에서 동작합니다.
+
+**SOLVE → F2 INFO**는 RK4/RK45의 상태, refinement를 포함한 실제 수치 작업량, step 크기와
+Event 합계를 읽기 전용으로 표시합니다. UP/DOWN으로 읽고 EXIT로 복귀하며 계산·파일 쓰기는 없습니다.
+기존 Parameters INIT는 **SOLVE → F4 INIT**로 이동했습니다.
+
+| Event Settings | Solver Diagnostics (RK45) |
+|---|---|
+| ![Event ON, y-10, RISING, STOP 설정](docs/images/event-settings.png) | ![RK45 허용오차, 수락·거절·시도 횟수와 실제 RHS 호출 수](docs/images/solver-diagnostics.png) |
+
+기본 Event는 OFF입니다. accepted step 하나 안의 여러 crossing은 놓칠 수 있으며 root 정확도는
+수치해 오차의 영향을 받습니다. [알고리즘·벤치마크·한계](docs/EVENTS.md) · [사용 설명서](docs/USER_GUIDE.md)
 
 ## 주요 기능
 
@@ -149,7 +168,7 @@ V-WIN은 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`, Yscale `0.5`�
 
 ## 계산기에 설치하기
 
-1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.11.0-beta.1)를 엽니다.
+1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.1)를 엽니다.
 2. **DIFFEQ.g3a**를 받습니다. 다운로드 확인용 `SHA256SUMS.txt`도 제공됩니다.
 3. fx-CG50을 USB로 연결하고 USB Flash 모드를 선택한 뒤 컴퓨터에서 계산기 드라이브를 엽니다.
 4. `DIFFEQ.g3a`를 드라이브 **최상위**에 복사합니다. `@MainMem` 폴더 안에 넣지 않습니다.
@@ -158,7 +177,7 @@ V-WIN은 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`, Yscale `0.5`�
 
 [CASIO 공식 애드인 설치 안내](https://edu.casio.com/content/dam/casio/global/edu-casio-com/download/files/fx-cg50-series/Inst_Users_Guide.pdf)에 따른 절차입니다.
 계산기에는 `.g3a`만 있으면 됩니다. 업데이트 전에 기존 세션 파일을 백업하세요.
-이번 버전은 v9 형식으로 저장하며 같은 기기의 v3~v8 파일을 읽습니다. 구버전 앱은
+이번 버전은 v10 형식으로 저장하며 같은 기기의 v3~v9 파일을 읽습니다. 구버전 앱은
 새 저장 파일을 거부할 수 있고, 일부 이전 설정은 변환됩니다. [업그레이드 안내](docs/release/RELEASE_NOTES.md)를 확인하세요.
 
 ## 핵심 조작

@@ -10,9 +10,9 @@ Solve, graph, and explore ordinary differential equations on your calculator.
 DIFFEQ is a native **fx-CG50 add-in** with colorful solution curves, slope fields,
 TRACE, G-Solve, numerical tables, and phase analysis for two-variable systems.
 
-**Public Beta · v0.11.0-beta.1 · [MIT License](LICENSE)**
+**Public Beta · v0.12.0-beta.1 · [MIT License](LICENSE)**
 
-**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.11.0-beta.1)**
+**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.1)**
 · [All releases](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [Report a bug](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -93,7 +93,7 @@ calculation. RK45 shows **Initial h**, **RelTol**, **AbsTol**, and **Max steps**
 Step is hidden. Defaults are .1, 1e-6, 1e-9 and 20000 attempts, including rejected
 trials. SF remains first-order-only. Both methods share the saved h value;
 tolerances and hidden Step persist. INIT retains Method and resets its settings.
-Older sessions load as RK4.
+v3–v8 sessions load as RK4; v9 retains its saved method. All older formats load Event OFF.
 
 RK45 supports every equation mode, Graph/TRACE/Table/G-Solve and Phase.
 Numerical Table/G-Solve and TIME x= queries land at their requested x. Ordinary
@@ -103,6 +103,26 @@ uses a TIME Xdot-based grid separately from adaptive internal steps.
 **RK45 is an explicit adaptive Runge–Kutta method, not a stiff ODE solver.**
 Stiffness or strict tolerances can trigger work limits or Step underflow.
 See [coefficients, safeguards, benchmarks and memory](docs/RK45_NUMERICS.md).
+
+## Event Detection and Solver Diagnostics
+
+In Parameters, **F2 SOLVE → F1 EVENT** defines one `E(x,state)=0` condition.
+Choose **ANY / RISING / FALLING** (always relative to increasing x, even backward)
+and **MARK / STOP**. MARK continues with up to **32** visible markers while total
+hits keep counting. STOP ends each IC/direction at its refined root; Table and
+TRACE show **END: Event**, and G-Solve stays within the valid solution.
+
+**SOLVE → F2 INFO** shows read-only RK4/RK45 status, actual solver work (including
+Event refinement), step sizes and Event totals. UP/DOWN scrolls; EXIT returns.
+Opening it does not calculate or write files. Parameters INIT is now **SOLVE → F4 INIT**.
+
+| Event Settings | Solver Diagnostics (RK45) |
+|---|---|
+| ![Event y-10, enabled, RISING and STOP](docs/images/event-settings.png) | ![RK45 tolerances, accepted/rejected trials, attempts and actual RHS calls](docs/images/solver-diagnostics.png) |
+
+Events default OFF. Accepted-step bracketing can miss multiple crossings within
+one step; root accuracy remains limited by the numerical solution.
+[Event method, benchmarks and limits](docs/EVENTS.md) · [User guide](docs/USER_GUIDE.md)
 
 ## Features
 
@@ -159,7 +179,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 ## Install on your calculator
 
-1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.11.0-beta.1).
+1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.1).
 2. Download **DIFFEQ.g3a**. `SHA256SUMS.txt` is available to check your download.
 3. Connect the fx-CG50 by USB, select USB Flash mode, and open its storage drive.
 4. Copy `DIFFEQ.g3a` to the drive's **root directory**, outside `@MainMem`.
@@ -168,7 +188,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 These steps follow [CASIO's add-in installation guide](https://edu.casio.com/content/dam/casio/global/edu-casio-com/download/files/fx-cg50-series/Inst_Users_Guide.pdf).
 You only need the `.g3a` on the calculator. Keep a backup of existing session files
-when upgrading: this beta writes format v9 and can read same-device v3–v8 files.
+when upgrading: this beta writes format v10 and can read same-device v3–v9 files.
 Older add-ins may reject new saves; adaptations are explained in the
 [upgrade notes](docs/release/RELEASE_NOTES.md).
 

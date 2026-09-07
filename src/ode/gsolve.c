@@ -55,6 +55,7 @@ static OdeStatus curve_at(const Document *d,CompiledModel *m,GsolveCurve curve,d
 {
     *result=model_value_at(d,m,curve.family,x,cancel,cancel_ctx);
     if(steps)*steps+=result->steps;
+    if(result->status==ODE_EVENT_STOP && result->x==x)return ODE_OK;
     return result->status;
 }
 static OdeStatus metric_at(Search *s,double x,double *value,GsolvePoint *point)
@@ -135,6 +136,7 @@ static OdeStatus other_step(Search *s,double x)
         s->other_failure=ODE_OK;s->other_ready=false;
     }
     OdeResult result;
+    s->m->event_family=s->other.family;
     if(!s->other_ready) {
         result=model_value_at(s->d,s->m,s->other.family,x,s->cancel,s->cancel_ctx);
     } else if(x==s->other_x)return ODE_OK;
@@ -145,7 +147,7 @@ static OdeStatus other_step(Search *s,double x)
         s->other_ready=true;s->other_x=result.x;
         memcpy(s->other_y,result.y,(unsigned)s->d->dim*sizeof(double));
     }
-    if(ode_invalid_region(result.status)) {
+    if(ode_invalid_region(result.status) || result.status==ODE_EVENT_STOP) {
         s->other_failure=result.status;s->other_failure_direction=x>=result.x ? 1:-1;
         s->other_x=result.x;s->other_ready=false;
     }
@@ -154,6 +156,7 @@ static OdeStatus other_step(Search *s,double x)
 static bool scan_failure(Search *s,OdeStatus status)
 {
     s->have_previous=false;s->in_zero_run=false;
+    if(status==ODE_EVENT_STOP){s->failure=ODE_OK;return true;}
     if(ode_invalid_region(status)) {s->result->has_invalid=true;s->failure=ODE_OK;return true;}
     s->failure=status;return false;
 }
@@ -227,7 +230,7 @@ static GsolveResults search(const Document *d,CompiledModel *m,GsolveCurve curve
             scan_point,&s,cancel,cancel_ctx);
         result.steps+=scan.steps;
         if(scan.status==ODE_HAS_INVALID)result.has_invalid=true;
-        else if(scan.status!=ODE_OK && scan.status!=ODE_SAMPLE_STOP)result.status=scan.status;
+        else if(scan.status!=ODE_OK && scan.status!=ODE_SAMPLE_STOP && scan.status!=ODE_EVENT_STOP)result.status=scan.status;
         if(s.failure!=ODE_OK)result.status=s.failure;
         if(result.status!=ODE_OK)break;
     }

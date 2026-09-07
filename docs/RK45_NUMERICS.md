@@ -1,5 +1,9 @@
 # Dormand–Prince RK45 — v0.11.0-beta.1
 
+Event/Diagnostics integration is documented in [EVENTS](EVENTS.md). This file
+retains the v0.11 numerical-method baseline; v0.12 uses SAVE v10 and adds counted
+accepted-state hooks while preserving the RK4/RK45 arithmetic.
+
 RK45 is an optional explicit adaptive solver for all seven equation types and
 1–9 state components. Classical RK4 remains the factory default. Its step
 arithmetic, fixed h, Step decimation, preflight and existing status values are

@@ -5,6 +5,7 @@ OdeResult model_value_at(const Document *d,CompiledModel *m,int family,double x,
 {
     if(family<0 || family>=d->nic)return (OdeResult){.status=ODE_BAD_INPUT};
     const InitialCondition *ic=&d->ic[family];
+    m->event_family=family;
     return model_integrate(d,m,ic->x,ic->y,x,&d->solver,NULL,NULL,cancel,cancel_ctx);
 }
 OdeResult model_trajectory(const Document *d,CompiledModel *m,int family,int direction,
@@ -18,6 +19,7 @@ OdeResult model_trajectory_range(const Document *d,CompiledModel *m,int family,i
     OdeResult r={.status=ODE_BAD_INPUT};
     if(family<0 || family>=d->nic || (direction!=-1 && direction!=1)) return r;
     const InitialCondition *ic=&d->ic[family];
+    m->event_family=family;
     if((direction>0 && ic->x>range->xmax) || (direction<0 && ic->x<range->xmin)) {
         r.status=ODE_OK;r.x=ic->x;memcpy(r.y,ic->y,sizeof(r.y));return r;
     }

@@ -105,13 +105,13 @@ for entry in first+higher:
 
 sf20='1 4 F6 F6 DOWN DOWN DOWN DOWN DOWN 2 0 EXIT '
 for entry in higher:
-    in_higher=sf20+('EXIT '*4)+entry+' F6 F6 F2 '
+    in_higher=sf20+('EXIT '*4)+entry+' F6 F6 F2 F4 '
     to_main='EXIT '*(3 if entry=='2' else 4)
     restored=in_higher+to_main+'1 4 F6 F6 '
     assert 'TEXT 144 145 20\n' in tail(run(restored))
-    assert 'TEXT 144 145 12\n' in tail(run(restored+'F2'))
+    assert 'TEXT 144 145 12\n' in tail(run(restored+'F2 F4'))
 with tempfile.TemporaryDirectory() as directory:
-    run(sf20+('EXIT '*4)+'2 F6 F6 F2 '+('EXIT '*3)+'F6 EXE',directory)
+    run(sf20+('EXIT '*4)+'2 F6 F6 F2 F4 '+('EXIT '*3)+'F6 EXE',directory)
     loaded='F5 2 F1 F6 F6 '
     assert 'TEXT 20 145 Max steps\n' in tail(run(loaded,directory))
     assert 'TEXT 144 145 20\n' in tail(run(loaded+('EXIT '*3)+'1 4 F6 F6',directory))

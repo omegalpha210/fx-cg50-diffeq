@@ -1,3 +1,42 @@
+# Event / Diagnostics memory update — v0.12.0-beta.1
+
+Strict clean SH GCC 14.1 build compared with development e885230 (v0.11):
+
+| Target measurement | Before | After | Delta |
+| --- | ---: | ---: | ---: |
+| text | 194928 | 204936 | +10008 |
+| initialized data | 704 | 704 | 0 |
+| BSS | 64896 | 71952 | +7056 |
+| Document | 2844 | 3040 | +196 |
+| CompiledModel | 8148 | 9072 | +924 |
+| largest application frame (ui_graph) | 2572 | 2572 | 0 |
+
+Target sizeof: EventConfig195, EventMarker88, EventMarkers2820, SolverReport2928
+bytes. The report includes its 2820-byte marker list; its other metadata is108 B.
+A second 2820-byte static list stages TRACE markers for transactional cancellation.
+Current/recall Event configuration and one compiled bytecode program account for
+the remaining application growth, with linker layout/alignment in aggregate BSS.
+No extra trajectory or framebuffer is allocated. Total BSS growth is below10 KiB.
+
+Event refinement keeps one 88-byte marker and a solver result/state in bounded
+local workspace, with the bracket/reference metadata. The measured accepted_event
+frame (including inlined refinement) is396 B; model_integrate244 B,
+integrate_plain96 B, initial_probe48 B, event_value32 B. A scratch call uses the
+selected solver workspace (RK45 OdeDopri652 B within its988 B control frame).
+There is no recursive Event hook in refinement. The directed initial-zero probe
+runs before the canonical integration; it does not nest a second probe.
+
+Other frames: model_convert_system1944 (transactional ODE+Event text),
+ui_event1264, ui_solver_info268, app_run1340, phase_equilibria2144, ui_table1768.
+The maximum remains2572 B with -Wframe-larger-than=3072 and zero warnings.
+Individual frames exclude nested library/interrupt/gint/OS usage and cannot prove
+combined high-water headroom. Physical stack margin and responsiveness remain
+**HARDWARE TEST REQUIRED**. Full limits and benchmarks: [EVENTS](EVENTS.md).
+
+Earlier milestone measurements follow as historical records.
+
+---
+
 # RK45 memory update — v0.11.0-beta.1
 
 SH GCC 14.1 full build: text194928/data704/BSS64896 bytes. Phase baseline

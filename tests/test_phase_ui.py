@@ -177,5 +177,5 @@ print(
 )
 
 # Parameter INIT remains the TIME-window solver default even after Phase use.
-parameter_init = tail(run(phase_graph + "F6 F2"))
+parameter_init = tail(run(phase_graph + "F6 F2 F4"))
 assert "TEXT 144 35 -6\n" in parameter_init and "TEXT 144 57 6\n" in parameter_init

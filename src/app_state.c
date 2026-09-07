@@ -7,6 +7,7 @@ void app_initialize(App *a,const char *storage_directory)
     /* gint clears BSS for a fresh add-in launch, but application startup must
        also be correct when called again in a retained process/test harness. */
     memset(a,0,sizeof(*a));
+    solver_report_reset();
     model_defaults(&a->doc,EQ_GENERAL,1);
     /* Explicit RCL owns restoration. MENU resumes this execution without
        calling initialization; a true new execution always starts at defaults. */

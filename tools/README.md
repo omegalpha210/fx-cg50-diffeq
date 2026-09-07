@@ -10,3 +10,5 @@
 - `patches/`: minimal local macOS fixes. GCC additionally receives the upstream soft-float patch already shipped in its installer repository.
 
 The GCC build includes C and C++ compilers, but only libgcc is required here. This C application does not need a libstdc++ build. fxlink's Linux-only UDisks2 integration and optional SDL2 viewer are disabled. USB driver support remains compiled in.
+
+Event/Info README screenshots: `python3 tools/capture_events.py` (two production UI framebuffer captures, no emulator). Event benchmark: `build-host/test_events`; see [EVENTS](../docs/EVENTS.md).

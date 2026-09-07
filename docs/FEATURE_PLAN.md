@@ -38,7 +38,7 @@ Reference analysis was completed after the verified minimal G3A milestone and wa
 - [EXTENSION] fx-CG50-style ROOT/MAX/MIN/Y-ICPT/ICPT/Y-CAL/X-CAL over the current X domain, independent of Y clipping, with curve/result navigation.
 - [EXTENSION] Graph Setup controls for Grid and Axis Label without reducing the viewport.
 
-Completed in v0.10: SYS2 Phase field/nullclines/equilibria. Completed in v0.11: optional Dormand–Prince RK45 with embedded error control, runtime budgets and full consumer integration; RK4 remains default. See RK45_NUMERICS.md for verification. Deferred: solution integral, events, sweeps, bifurcation/Poincaré, implicit stiff solvers, CAS and FSAL optimization.
+Completed in v0.10: SYS2 Phase field/nullclines/equilibria. Completed in v0.11: optional Dormand–Prince RK45 with embedded error control, runtime budgets and full consumer integration; RK4 remains default. See RK45_NUMERICS.md for verification. Completed in v0.12: one Event definition (direction/MARK/STOP), bounded marker/refinement and read-only RK4/RK45 diagnostics; see EVENTS.md. Deferred: solution integral, sweeps, bifurcation/Poincaré, implicit stiff solvers, CAS and FSAL optimization.
 
 ## Delivery gates
 

@@ -27,6 +27,8 @@ typedef enum {
     APP_SCREEN_TABLE,
     APP_SCREEN_SAVE,
     APP_SCREEN_LOAD,
+    APP_SCREEN_EVENT,
+    APP_SCREEN_SOLVER_INFO,
     APP_SCREEN_COUNT
 } AppScreen;
 

@@ -3,6 +3,7 @@
 #include "ode.h"
 #include "rk45.h"
 #include "expression.h"
+#include "events.h"
 typedef enum {EQ_SEPARABLE,EQ_LINEAR,EQ_BERNOULLI,EQ_GENERAL,
     EQ_SECOND,EQ_HIGHER,EQ_SYSTEM} EquationKind;
 typedef enum {FIELD_SEGMENT,FIELD_ARROW} FieldStyle;
@@ -26,12 +27,18 @@ typedef struct {
     ViewWindow phase_view;
     uint8_t phase_field,phase_nullclines,phase_ready;
     OdeAdaptive adaptive;
+    EventConfig event;
 } Document;
 typedef struct {
     int kind,dim;
     double power;
     ExprProgram eq[ODE_MAX_DIM];
     OdeWork work;
+    ExprProgram event_program;
+    EventMarkers *event_sink;
+    uint32_t event_hits,event_evals,event_unavailable;
+    unsigned initial_events;
+    int event_family;
 } CompiledModel;
 typedef struct {int equation; ExprError expression; OdeStatus values;} ModelError;
 bool model_field_supported(const Document *d);
@@ -75,6 +82,12 @@ OdeResult model_trajectory_range(const Document *d,CompiledModel *m,int family,i
 ModelPathResult model_path_branch(const Document *d,CompiledModel *m,int family,int direction,
     const OdeSettings *range,OdeSample sample,void *sample_ctx,OdeCancel cancel,void *cancel_ctx);
 void model_work_begin(CompiledModel *m);
+ExprScope model_event_scope(const Document *d);
+ExprError model_event_compile(const Document *d,CompiledModel *m);
+void solver_report_begin(const Document *d,CompiledModel *m);
+void solver_report_end(CompiledModel *m,OdeStatus status);
+void solver_report_stage(CompiledModel *m);
+void solver_report_commit(const Document *d,CompiledModel *m,const OdeSettings *range,OdeStatus status);
 double model_output_spacing(const Document *d,const OdeSettings *range);
 OdeResult model_integrate(const Document *d,CompiledModel *m,double x,const double *y,
     double target,const OdeSettings *range,OdeSample sample,void *sample_ctx,

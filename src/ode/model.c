@@ -148,6 +148,8 @@ OdeStatus model_validate(const Document *d)
         || (d->kind==EQ_SECOND && d->dim!=2) || !isfinite(d->power)
         || d->field_style>FIELD_ARROW || d->field_color>=FIELD_COLORS
         || (d->solver_custom!=0 && d->solver_custom!=1)) return ODE_BAD_INPUT;
+    if(d->event.enabled>1 || d->event.direction>EVENT_FALLING || d->event.action>EVENT_STOP
+        || !memchr(d->event.text,0,EXPR_TEXT))return ODE_BAD_INPUT;
     OdeStatus status=ode_adaptive_validate(&d->adaptive);
     if(status!=ODE_OK)return status;
     status=ode_validate(&d->solver);
@@ -187,6 +189,7 @@ ModelError model_compile(const Document *d,CompiledModel *m)
     if(error.values!=ODE_OK) return error;
     m->kind=d->kind;m->dim=d->dim;m->power=d->power;
     model_work_begin(m);
+    m->event_sink=NULL;m->event_family=0;
     for(int i=0;i<model_equations(d);i++) {
         ExprScope scope={d->dim,d->kind==EQ_HIGHER,true,true};
         if(d->kind==EQ_SEPARABLE) {scope.allow_x=i==0;scope.allow_y=i==1;}
@@ -194,6 +197,10 @@ ModelError model_compile(const Document *d,CompiledModel *m)
             scope.allow_y=false;
         error.expression=expr_compile(d->text[i],scope,&m->eq[i]);
         if(error.expression.status!=EXPR_OK) {error.equation=i;return error;}
+    }
+    if(d->event.enabled) {
+        error.expression=model_event_compile(d,m);
+        if(error.expression.status!=EXPR_OK)error.equation=ODE_MAX_DIM;
     }
     return error;
 }
@@ -235,11 +242,13 @@ OdeStatus model_rhs(double x,const double *y,double *dy,void *ctx)
 bool model_convert_system(Document *d)
 {
     if(d->kind!=EQ_HIGHER) return false;
-    char text[ODE_MAX_DIM][EXPR_TEXT]={{0}};
+    char text[ODE_MAX_DIM][EXPR_TEXT]={{0}},event[EXPR_TEXT]={0};
     for(int i=0;i<d->dim-1;i++) snprintf(text[i],EXPR_TEXT,"y%d",i+2);
     if(!expr_to_system(d->text[0],text[d->dim-1],EXPR_TEXT)) return false;
+    if(!expr_to_system(d->event.text,event,EXPR_TEXT)) return false;
     d->kind=EQ_SYSTEM;
     memcpy(d->text,text,sizeof(text));
+    memcpy(d->event.text,event,sizeof(event));
     return true;
 }
 

@@ -1,7 +1,7 @@
-# DIFF EQ 사용 설명서 — v0.11.0-beta.1
+# DIFF EQ 사용 설명서 — v0.12.0-beta.1
 
 기본 RK4와 TRACE·G-Solve·10개 초기값·SYS 2D Phase 기능을 보존하면서
-선택형 Dormand–Prince RK45와 tolerance 기반 adaptive step 제어를 추가했습니다.
+한 개의 Event Detection과 읽기 전용 Solver Diagnostics를 추가했습니다.
 실제 fx-CG50의 새 경로 검증은 **HARDWARE TEST REQUIRED**입니다.
 
 ## 화면별 조작
@@ -11,7 +11,10 @@
 | 메인 | — | — | — | — | RCL | SAVE |
 | Equation 기본 bar | VAR (필요한 모드만) | FUNC (EDIT만) | V-WIN | — | — | NEXT |
 | Initial Conditions | PREV | — | V-WIN | — | — | NEXT |
-| Solver Parameters | PREV | INIT | V-WIN | OUTPUT | SET | GRAPH (빨강) |
+| Solver Parameters | PREV | SOLVE | V-WIN | OUTPUT | SET | GRAPH (빨강) |
+| SOLVE submenu | EVENT | INFO | — | INIT | — | — |
+| Event (EDIT) | VAR (필요 시) | FUNC | — | — | — | DONE |
+| Solver Info | — | — | — | — | — | — |
 | Output 종속변수 | — | — | COLOR | INIT | — | DONE |
 | Graph Settings: Grid/Label | — | — | — | INIT | — | DONE |
 | Graph Settings: Style | SEG | ARROW | — | INIT | — | DONE |
@@ -166,11 +169,11 @@ Method는 세 번째 행이며 LEFT/RIGHT로 RK4/RK45를 전환합니다. 계산
 RK4는 h → Step → (1차 SF) → Max steps, RK45는 Initial h → RelTol → AbsTol → (1차 SF) → Max steps입니다.
 2nd/N-th/SYS는 차수·변수 개수 1을 포함하여 SF 행이 없습니다. RK45의 숨겨진 Step은 사용하지 않습니다.
 UP/DOWN, 편집 EXE의 다음 행, 선택 행 도움말도 표시되는 행만 따릅니다.
-Parameter F2 INIT는 Method를 유지하고 자동 범위 추종, h=.1, Max Steps=20000을 복구합니다.
+Parameter F2 SOLVE → F4 INIT는 Method를 유지하고 자동 범위 추종, h=.1, Max Steps=20000을 복구합니다.
 RK4에서는 Step=1, RK45에서는 RelTol=1e-6/AbsTol=1e-9로 복구하며 다른 방식의 숨겨진 설정은 보존합니다.
 1차에서는 SF도 12로 복구하며, 고차/SYS에서는 숨겨진 SF 값을 보존합니다.
 예를 들어 SF=20 → 2nd → INIT → 1st에서도 20입니다. SAVE/RCL도 숨겨진 SF를 보존하며
-새 저장은 v9이며 기존 v3~v8 세션의 읽기 호환성을 유지합니다. Field Style/Color는 모든 모드에서
+새 저장은 v10이며 기존 v3~v9 세션의 읽기 호환성을 유지합니다. Field Style/Color는 모든 모드에서
 보존합니다. Solver 수정은 V-Window를 역으로 변경하지 않습니다.
 Xdot은 `(Xmax-Xmin)/378`이며 Xdot 편집은 Xmax를 변경합니다.
 
@@ -344,6 +347,57 @@ Y-CAL과 TRACE x=는 요청한 x까지 해당 IC에서 적분할 수 있을 때�
 일반 ODE가 특이점을 통과했다는 뜻이 아닙니다. 결과 없음은 계산되지 않은 영역의 해 부재를 보장하지 않습니다.
 자세한 경계는 [Numerical validity audit](NUMERICAL_VALIDITY_AUDIT.md)에 있습니다.
 
+## Event Detection / Solver Info
+
+Parameters **F2 SOLVE**에서 **F1 EVENT**, **F2 INFO**, **F4 INIT**를 엽니다.
+EXIT는 현재 child 화면 또는 SOLVE submenu만 닫습니다. 설정·INFO 방문만으로 계산하거나
+파일을 쓰지 않습니다. Event는 document당 하나이며 OFF에서도 입력한 설정을 보존합니다.
+
+Event Settings는 Enabled, E, Direction, Action 네 행입니다. LEFT/RIGHT로 선택값을 바꾸고
+E 행은 기존 inline 식 편집기와 FUNC/VAR를 사용합니다. F6 DONE/선택 상태 EXE로 돌아갑니다.
+기본은 OFF / 빈 E / ANY / MARK입니다. ON이면 GRAPH 전에 E를 compile하고 모든 IC에서
+평가합니다. 빈 식·사용 불가 변수·IC의 domain 오류는 먼저 수정해야 합니다.
+
+**E(x,state)=0**의 crossing을 찾습니다. 1차 `y`, 2차 `y`와 `y1`(y'), N-th `y1…y8`(도함수),
+SYS `y1…yn`을 기존 parser와 동일하게 사용합니다. N-th → SYS는 Event 식도 함께 변환합니다.
+ANY는 양쪽 crossing, RISING은 음→양, FALLING은 양→음입니다.
+**RISING/FALLING은 backward 적분에서도 항상 x가 증가하는 방향 기준입니다.**
+
+MARK는 계속 적분하며 최대 32개의 검정 외곽선·주황 중심 사각 marker를 Graph/Phase에 표시합니다.
+그 이후 hit도 INFO에서 계속 셉니다. 여러 출력에서는 첫 표시 변수에만 marker를 둡니다.
+STOP은 각 IC와 적분 방향의 첫 matching root에서 종료하며 반대 방향과 다른 IC는 계속 계산합니다.
+Table의 마지막 유효 행은 root x/state이고 `END: Event`를 표시합니다. TRACE는 root에 멈추며
+그 바깥으로 확장하지 않습니다. G-Solve 역시 그 이후에 해가 있다고 가정하지 않습니다.
+
+예: Others에 `y`, IC (0,1), E=`y-10`, RISING/STOP → x≈ln(10)=2.302585093에서 종료합니다.
+RK4 h=.1의 x 오차는 약1.76e-6, RK45 기본 tolerance의 직접 query 오차는 약3.61e-7입니다.
+이는 해당 문제의 측정값이며 모든 식에 같은 정확도를 보장하지 않습니다.
+IC의 E=0은 ANY에서 즉시 hit입니다. RISING/FALLING은 첫 유효 nonzero 진행의 방향으로
+원래 IC의 hit 여부를 판정합니다. 계속 0인 directed Event는 반복 hit하지 않습니다.
+초기 zero plateau의 directed STOP은 표시 전에 scratch로 방향을 판정하고 그 비용도 셉니다.
+
+검출은 accepted numerical step의 endpoint 부호를 사용합니다. **한 step 안에서 여러 번 0을 지나
+양끝 부호가 같거나 접하기만 하는 root는 놓칠 수 있습니다.** 작은 RK4 h 또는 엄격한 RK45 tolerance가
+도움이 될 수 있지만 RK45는 E의 진동이 아닌 ODE의 오차를 제어하므로 모든 hit를 보장하지 않습니다.
+Event 값만 domain/NaN/magnitude-invalid이면 그 구간의 Event 분석을 건너뛰고 정상 ODE는 계속합니다.
+48회 이내 secant/bisection과 선택 solver의 scratch target landing으로 root를 구합니다.
+
+**INFO는 마지막 trajectory run의 snapshot**입니다. Method, Status, 설정 범위·IC수·차원·h,
+RK4 Steps, RK45 RelTol/AbsTol/Accepted/Rejected/Attempts, 실제 RHS evals, h min/max를
+UP/DOWN으로 읽습니다. Event ON이면 Direction/Action/Hits/Stored/Unavailable도 보입니다.
+단일 STOP은 Stopped x를 표시합니다. 여러 IC는 합계를 표시합니다.
+Accepted/Steps는 refinement와 초기 방향 probe까지 포함하는 성공한 numerical trial 횟수이며,
+화면에 그린 점 수와 다릅니다. RHS도 그 모든 실제 solver 호출을 포함합니다.
+RK45 Rejected는 오차 제어의 정상적인 일부일 수 있고 Attempts=Accepted+Rejected입니다.
+취소·실패한 trial은 Rejected에 포함될 수 있으며 완전한 trial보다 RHS 호출 횟수가 적을 수 있습니다.
+h min/max도 scratch를 포함한 수락 step의 절댓값입니다. Phase FIELD/NULL/EQPT 작업은 제외합니다.
+
+새 Graph 계산과 성공한 TRACE 준비/확장은 보고서를 갱신합니다. Graph 실패/취소도 실제 작업량과
+상태를 남깁니다. 취소한 TRACE 확장은 이전 graph·marker·보고서를 함께 보존합니다.
+Table/G-Solve/Phase 분석과 INFO 방문은 보고서를 덮어쓰지 않습니다.
+새 문서·load·recall 후에는 `No solver run yet`이며 Event 설정만 SAVE v10에 저장됩니다.
+[정확한 수치 정책과 한계](EVENTS.md), [하드웨어 재시험](HARDWARE_RETEST.md)을 참고하십시오.
+
 ## Solver Methods: RK4와 RK45
 
 기존 계산 결과와 고정 h 비교에는 기본 RK4를 사용합니다. 구간마다 변화율이 크게 달라
@@ -445,10 +499,12 @@ current/recall과 설정을 모두 복원합니다. 진짜 새 실행은 default
 않습니다. MENU 왕복으로 같은 실행이 재개될 때는 이 초기화를 다시 하지 않습니다.
 
 계산기 root의 `DIFFEQ0.dat`와 `DIFFEQ1.dat`를 번갈아 씁니다. magic/version/size/checksum 및
-값을 검사하고 최신 slot이 손상되면 다른 정상 slot을 사용합니다. 새 저장은 **v9**이며
+값을 검사하고 최신 slot이 손상되면 다른 정상 slot을 사용합니다. 새 저장은 **v10**이며
 Private Constants, 개별 G/L mask, x export flag는 없습니다. 메모리에 별도의 private constant 배열도 없습니다.
 
-v9는 Method/RelTol/AbsTol을 current/recall에 저장합니다. v3~v8은 RK4와 기본 tolerance로 읽습니다.
+v10은 Event Enabled/Expression/Direction/Action과 Method/RelTol/AbsTol을 current/recall에 저장합니다.
+v3~v9는 Event OFF로 읽으며 v9의 RK45 설정은 보존합니다. v3~v8은 RK4와 기본 tolerance로 읽습니다.
+Diagnostics와 Event marker는 저장하지 않으며 load/recall 후 INFO는 No solver run yet입니다.
 v8은 고정 layout reader로 독립 Phase 창, FIELD/NULL 표시 설정과 첫 창 준비 상태를 current/recall에서 보존합니다.
 큰 trajectory나 analysis result는 저장하지 않습니다. v7의 10개 IC layout은 고정 reader로 읽고
 Phase 설정을 초기화합니다. 옛 SYS 2D에서 phase가 켜져 있었다면 기존 shared 창을 Phase 창으로
@@ -463,7 +519,7 @@ v3/v4는 Arrow/Pale Blue, v5의 명시적 Segment/색은 유지합니다. v3 sol
 
 옛 고차/SYS 여러 IC는 첫 완전 벡터를, 1차의 서로 다른 x0는 첫 x0와 같은 IC만 복원합니다.
 값을 새 x0로 강제로 옮기지 않습니다. 이 적응이 필요하면 load 안내를 표시하며 **load는 원래 파일을
-변경하지 않습니다**. 이후 명시적 SAVE는 새 v9로 두 slot을 순환하므로, 여러 번 SAVE하면 옛
+변경하지 않습니다**. 이후 명시적 SAVE는 새 v10으로 두 slot을 순환하므로, 여러 번 SAVE하면 옛
 slot은 교체될 수 있습니다. 원본 보존이 필요하면 기존 파일을 따로 보관하십시오.
 상세 mapping과 예외는 [OUTPUT/migration audit](OUTPUT_LIST_AUDIT.md)에 있습니다.
 

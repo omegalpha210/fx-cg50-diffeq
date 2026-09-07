@@ -26,7 +26,7 @@ for entry,scalar in [('1 4',True),('2',False),('3 9 F6',False),('4 9 F6',False)]
     edited=adaptive+'DOWN DOWN 1 EXP NEG 7 EXE 1 EXP NEG 1 0 EXIT '
     back=tail(run(edited+'UP UP UP LEFT RIGHT'))
     assert 'TEXT 144 123 1e-07\n' in back and 'TEXT 144 145 1e-10\n' in back
-    initialized=tail(run(edited+'F2'))
+    initialized=tail(run(edited+'F2 F4'))
     assert 'TEXT 144 79 RK45\n' in initialized and 'TEXT 144 123 1e-06\n' in initialized
     last=tail(run(adaptive+'DOWN '*20))
     assert 'Max steps' in last and 'Accepted + rejected attempts per path' in last

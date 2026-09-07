@@ -110,7 +110,7 @@ with tempfile.TemporaryDirectory() as directory:
     assert plot(recalled)==plot(baseline)
 # INIT restores factory values + first selector; Output includes every IC color.
 assert plot(run('2 F3 DOWN DOWN 2 EXIT F1'))==plot(run('2 F3'))
-assert plot(run('2 F6 F6 DOWN DOWN DOWN 2 EXIT F2'))==plot(run('2 F6 F6'))
+assert plot(run('2 F6 F6 DOWN DOWN DOWN 2 EXIT F2 F4'))==plot(run('2 F6 F6'))
 assert plot(run(output+'DOWN RIGHT F3 DOWN EXE F4'))==plot(run(output))
 settings='2 F6 F6 F5 '
 assert plot(run(settings+'LEFT DOWN LEFT F4'))==plot(run(settings))

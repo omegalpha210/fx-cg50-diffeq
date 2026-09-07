@@ -118,7 +118,7 @@ void ui_trace(App *a)
         } else ui_text(8,184,UI_BLUE,"Trace unavailable; graph retained");
         if(boundary) {
             ui_rect(0,179,384,19,C_WHITE);ui_text(8,184,UI_BLUE,follow_error==ODE_STEP_LIMIT || follow_error==ODE_WORK_LIMIT ?
-                "TRACE: too many steps; increase h":"TRACE: Numerical limit");
+                "TRACE: too many steps; increase h":(follow_error==ODE_EVENT_STOP ? "END: Event":"TRACE: Numerical limit"));
         }
         if(input_error)ui_softkeys("Invalid x","","","","","");
         else if(edit.active)ui_softkeys("x=","","","","","");
@@ -144,10 +144,11 @@ void ui_trace(App *a)
                         if(ui_trace_key(&blink).key==KEY_EXIT)break;
                         continue;
                     }
-                    if(status!=ODE_OK && status!=ODE_HAS_INVALID){input_error=true;continue;}
-                    a->dirty=true;edit.active=false;boundary=status==ODE_HAS_INVALID;continue;
+                    if(status!=ODE_OK && status!=ODE_HAS_INVALID && status!=ODE_EVENT_STOP){input_error=true;continue;}
+                    a->dirty=true;edit.active=false;boundary=status!=ODE_OK;follow_error=status;continue;
                 }
                 model_work_begin(&a->model);
+                a->model.event_family=curve.family;
                 OdeResult r=model_integrate(d,&a->model,d->ic[curve.family].x,
                     d->ic[curve.family].y,value,extent,NULL,NULL,ui_trace_cancel,NULL);
                 if(r.status==ODE_CANCELLED) {
@@ -155,10 +156,10 @@ void ui_trace(App *a)
                     if(control==KEY_EXIT)break;
                     continue;
                 }
-                if(r.status!=ODE_OK){input_error=true;continue;}
-                if(r.status==ODE_OK){point.x=r.x;for(int j=0;j<d->dim;j++)point.y[j]=r.y[j];}
+                if(r.status!=ODE_OK && r.status!=ODE_EVENT_STOP){input_error=true;continue;}
+                point.x=r.x;for(int j=0;j<d->dim;j++)point.y[j]=r.y[j];
                 trace_follow(d,&a->model,&point);a->dirty=true;
-                edit.active=false;boundary=false;continue;
+                edit.active=false;boundary=r.status==ODE_EVENT_STOP;follow_error=r.status;continue;
             }
             if((key<KEY_F1 || key>KEY_F6) && key!=KEY_OPTN)ui_inline_key(&edit,event);
             continue;
@@ -188,7 +189,7 @@ void ui_trace(App *a)
                 continue;
             }
             boundary=status!=ODE_OK;follow_error=status;
-            if(status==ODE_OK || status==ODE_HAS_INVALID)a->dirty=true;
+            if(status==ODE_OK || status==ODE_HAS_INVALID || status==ODE_EVENT_STOP)a->dirty=true;
         }
         if(key==KEY_UP){selected=(selected+count-1)%count;boundary=false;}
         if(key==KEY_DOWN){selected=(selected+1)%count;boundary=false;}
@@ -400,10 +401,10 @@ UiGraphAction ui_graph(App *a,bool first)
             ui_rect(0,198,384,18,UI_BLUE);
             ui_text(7,202,C_WHITE,"Drawing... EXIT cancels");dupdate();
             GraphResult next=graph_render(d,&a->model,first);first=false;redraw=false;
-            if(pending && next.status!=ODE_OK && next.status!=ODE_HAS_INVALID) {
+            if(pending && next.status!=ODE_OK && next.status!=ODE_HAS_INVALID && next.status!=ODE_EVENT_STOP) {
                 change_restore(d,&before);notice=next.status;
                 if(system && !phase && trace_cache_matches(d)) {
-                    graph_backdrop(d,&a->model);trace_cache_render(d);graph_phase_markers(d,-1);
+                    graph_backdrop(d,&a->model);trace_cache_render(d);graph_phase_markers(d,-1);graph_event_markers(d);
                 }
             } else {result=next;if(pending)a->dirty=true;}
             pending=false;phase=system && d->view.phase;

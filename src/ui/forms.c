@@ -57,6 +57,7 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
         "Slope-field columns (0-100); 0 = Off","Max RK4 steps per IC / direction",
         "LEFT/RIGHT: RK4 / RK45","RelTol: relative error target","AbsTol: absolute error floor"};
     int selected=state->selected;NumberEdit edit=state->edit;
+    bool solve=state->top!=0;
     for(;;) {
         int rows[8],count=parameter_rows(d,rows);
         if(selected<0 || selected>=count){selected=count-1;edit.active=false;}
@@ -78,8 +79,20 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
         number_cursor(&edit,selected-top);
         ui_form_hint(&edit,adaptive && field==2 ? "Initial step; RK45 adjusts internally":
             (adaptive && field==5 ? "Accepted + rejected attempts per path":help[field]));
-        ui_softkeys("PREV","INIT","V-WIN","OUTPUT","SET","GRAPH");dupdate();
+        if(solve)ui_softkeys("EVENT","INFO","","INIT","","");
+        else ui_softkeys("PREV","SOLVE","V-WIN","OUTPUT","SET","GRAPH");
+        dupdate();
         key_event_t event=ui_getkey();int key=event.key;
+        bool initialize=false;
+        if(solve) {
+            if(key==KEY_EXIT){solve=false;continue;}
+            if(key==KEY_F1 || key==KEY_F2) {
+                state->selected=selected;state->edit=edit;state->top=1;
+                return key==KEY_F1 ? UI_STAGE_EVENT:UI_STAGE_INFO;
+            }
+            if(key!=KEY_F4)continue;
+            initialize=true;solve=false;key=KEY_F2;event.key=KEY_F2;
+        }
         if(edit.active) {
             int action=stage_leave(key) || key==KEY_UP || key==KEY_DOWN || key==KEY_F2 ? 1:number_key(&edit,event);
             if(action==0)continue;
@@ -108,9 +121,10 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
         }
         key=ui_field_complete(key,false,&selected,count);event.key=(unsigned)key;
         if(stage_leave(key)) {
-            state->selected=selected;state->edit=edit;return stage_action(key);
+            state->selected=selected;state->edit=edit;state->top=0;return stage_action(key);
         }
         if(key==KEY_F2) {
+            if(!initialize){solve=true;continue;}
             int sf=model_field_supported(d) ? 12:d->solver.sf,step=adaptive ? d->solver.step:1;
             d->solver=(OdeSettings){0,1,.1,20000,step,sf};d->solver_custom=0;
             if(adaptive){ode_adaptive_defaults(&d->adaptive);d->adaptive.method=ODE_RK45;}

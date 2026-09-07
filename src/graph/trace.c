@@ -29,7 +29,7 @@ static uint64_t numerical_key(const Document *d)
 {
     uint64_t hash=UINT64_C(14695981039346656037);
 #define KEY(field) hash=hash_bytes(hash,&d->field,sizeof(d->field))
-    KEY(adaptive.method);KEY(adaptive.reltol);KEY(adaptive.abstol);KEY(kind);KEY(dim);KEY(nic);KEY(text);KEY(power);KEY(ic);
+    KEY(event);KEY(adaptive.method);KEY(adaptive.reltol);KEY(adaptive.abstol);KEY(kind);KEY(dim);KEY(nic);KEY(text);KEY(power);KEY(ic);
     KEY(solver.xmin);KEY(solver.xmax);KEY(solver.h);KEY(solver.max_steps);KEY(solver.step);
 #undef KEY
     return hash;
@@ -107,8 +107,9 @@ static void record_result(TraceSamples *out,TraceBranch *branch,ModelPathResult 
     out->result.steps+=result.steps;
     if(result.invalid!=ODE_OK)out->result.invalid=result.invalid;
     if(result.status==ODE_HAS_INVALID){out->has_invalid=true;branch->invalid=true;}
-    if(result.status!=ODE_OK && (out->result.status==ODE_OK ||
-        (out->result.status==ODE_HAS_INVALID && result.status!=ODE_HAS_INVALID))) {
+    if(result.status==ODE_EVENT_STOP)branch->event=true;
+    if(result.status!=ODE_OK && (out->result.status==ODE_OK || out->result.status==ODE_EVENT_STOP ||
+        (out->result.status==ODE_HAS_INVALID && result.status!=ODE_HAS_INVALID && result.status!=ODE_EVENT_STOP))) {
         out->result.status=result.status;out->result.failed_family=family;
     }
 }
@@ -155,7 +156,7 @@ void trace_capture_branch_end(ModelPathResult result)
     Capture *c=&graph_capture.capture;
     if(c->have)retain(c,&c->previous);
     record_result(&scratch.staging,c->branch,result,graph_capture.family);
-    if(result.status!=ODE_OK && result.status!=ODE_HAS_INVALID)graph_capture.failed=true;
+    if(result.status!=ODE_OK && result.status!=ODE_HAS_INVALID && result.status!=ODE_EVENT_STOP)graph_capture.failed=true;
     graph_capture.finished++;graph_capture.branch_active=false;
 }
 void trace_capture_end(bool success)
@@ -177,6 +178,7 @@ static OdeStatus prepare_range(const Document *d,CompiledModel *m,const OdeSetti
     unsigned active=0,slot=0;
     for(int f=0;f<d->nic;f++)if(capture_family(d,f))active++;
     if(!active)return ODE_BAD_INPUT;
+    solver_report_stage(m);
     unsigned capacity=TRACE_POINTS/(2*active);
     for(int f=0;f<d->nic;f++)if(capture_family(d,f))for(int side=0;side<2;side++) {
         TraceBranch *b=&out->branch[f][side];b->start=slot++*capacity;
@@ -188,9 +190,10 @@ static OdeStatus prepare_range(const Document *d,CompiledModel *m,const OdeSetti
         ModelPathResult r=model_path_branch(d,m,f,side ? 1:-1,range,capture,&c,ui_trace_cancel,NULL);
         if(c.have)retain(&c,&c.previous);
         record_result(out,b,r,f);
-        if(r.status!=ODE_OK && r.status!=ODE_HAS_INVALID)return r.status;
+        if(r.status!=ODE_OK && r.status!=ODE_HAS_INVALID && r.status!=ODE_EVENT_STOP){m->event_sink=NULL;return r.status;}
     }
     out->valid=out->branch[family][0].count+out->branch[family][1].count>0;
+    solver_report_commit(d,m,range,out->result.status==ODE_HAS_INVALID ? out->result.invalid:out->result.status);
     return ODE_OK;
 }
 static void selected_mask(const Document *d)
@@ -367,7 +370,7 @@ bool trace_cache_time_window(const Document *d,ViewWindow *window)
 }
 static void cached_render(Document *d,CompiledModel *m)
 {
-    graph_backdrop(d,m);trace_cache_render(d);graph_phase_markers(d,-1);
+    graph_backdrop(d,m);trace_cache_render(d);graph_phase_markers(d,-1);graph_event_markers(d);
     if(samples.has_invalid)ui_text(7,4,C_RED,"ERROR: Numerical limit");
 }
 static OdeStatus follow_point(Document *d,CompiledModel *m,const TracePoint *point,bool redraw)
@@ -397,6 +400,16 @@ void trace_follow(Document *d,CompiledModel *m,const TracePoint *point)
 OdeStatus trace_navigate(Document *d,CompiledModel *m,double target,bool jump,TracePoint *point)
 {
     if(!samples.valid || !isfinite(target) || fabs(target)>1e100)return ODE_BAD_INPUT;
+    for(int side=0;side<2;side++) {
+        TraceBranch *b=&samples.branch[samples.family][side];
+        if(!b->event || !b->count)continue;
+        TracePoint *terminal=&samples.point[b->start+b->count-1];
+        if((side ? 1:-1)*(target-terminal->x)>0) {
+            OdeStatus status=follow_point(d,m,terminal,false);
+            if(status!=ODE_OK)return status;
+            *point=*terminal;return ODE_EVENT_STOP;
+        }
+    }
     bool extended=false;
     if(!d->view.phase && (target<samples.extent.xmin || target>samples.extent.xmax)) {
         OdeSettings extent=samples.extent;
@@ -422,6 +435,10 @@ OdeStatus trace_navigate(Document *d,CompiledModel *m,double target,bool jump,Tr
     OdeStatus followed=follow_point(d,m,&next,extended);
     if(followed!=ODE_OK)return followed;
     *point=next;
+    if(!exact)for(int side=0;side<2;side++) {
+        TraceBranch *b=&samples.branch[samples.family][side];
+        if(b->event && b->count && next.x==samples.point[b->start+b->count-1].x)return ODE_EVENT_STOP;
+    }
     return exact ? ODE_OK:ODE_HAS_INVALID;
 }
 

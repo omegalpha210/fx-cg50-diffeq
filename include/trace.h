@@ -5,7 +5,7 @@
 /* Fixed shared point budget across all IVPs. Segment links forbid gap interpolation. */
 #define TRACE_POINTS (2*TRACE_BRANCH_POINTS)
 typedef struct {double x,y[ODE_MAX_DIM];} TracePoint;
-typedef struct {unsigned start,count;bool invalid;} TraceBranch;
+typedef struct {unsigned start,count;bool invalid,event;} TraceBranch;
 typedef struct {
     TracePoint point[TRACE_POINTS];
     unsigned char link[TRACE_POINTS];

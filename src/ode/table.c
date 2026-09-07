@@ -79,7 +79,8 @@ OdeStatus table_index_build(const Document *d,CompiledModel *m,TableIndex *index
         if(d->ic[f].x!=index->origin)return ODE_BAD_INPUT;
         for(int side=0;side<2;side++) {
             Span span={0};OdeResult r=model_trajectory(d,m,f,side ? 1:-1,scan,&span,cancel,cancel_ctx);
-            if(r.status!=ODE_OK && !ode_invalid_region(r.status))return r.status;
+            if(r.status!=ODE_OK && r.status!=ODE_EVENT_STOP && !ode_invalid_region(r.status))return r.status;
+            if(r.status==ODE_EVENT_STOP){if(side)index->high=r.status;else index->low=r.status;}
             if(ode_invalid_region(r.status)){if(side)index->high=r.status;else index->low=r.status;}
             if(!span.have)continue;
             if(!have){index->xmin=span.min;index->xmax=span.max;have=true;}
@@ -131,6 +132,19 @@ typedef struct {
     const Document *d;const TableIndex *index;TablePage *page;
     int family,direction;unsigned rows;bool have;double x,y[ODE_MAX_DIM];
 } PageCollector;
+typedef struct {const Document *d;const TableIndex *index;TablePage *page;unsigned row;int family;bool found;} TerminalRow;
+static bool terminal_row(double x,const double *y,uint32_t step,void *context)
+{
+    (void)step;TerminalRow *c=context;
+    if(x!=c->page->row[c->row][0])return true;
+    c->found=true;
+    for(int column=0;column<c->index->count;column++) {
+        int item=c->index->columns[column];if(c->index->solutions && item!=c->family)continue;
+        c->page->row[c->row][column+1]=y[c->index->solutions ? 0:item];
+        c->page->valid[c->row]|=(uint16_t)(1u<<(column+1));
+    }
+    return false;
+}
 static bool fill(double x,const double *y,uint32_t step,void *context)
 {
     (void)step;PageCollector *c=context;
@@ -166,9 +180,21 @@ void table_read_page_budgeted(const Document *d,CompiledModel *m,const TableInde
         /* Numerical rows land exactly; never substitute display interpolation. */
         for(int f=0;f<families;f++)for(unsigned row=0;row<rows;row++) {
             double target=page->row[row][0];
+            bool terminal=target==index->xmin || target==index->xmax;
+            for(unsigned i=0;i<index->extras;i++)if(target==index->extra[i])terminal=true;
+            if(d->event.enabled && d->event.action==EVENT_STOP && terminal) {
+                /* Replay the same accepted/output partition used by the index:
+                   terminal root coordinates/states then match without interpolation. */
+                TerminalRow c={d,index,page,row,f,false};
+                OdeResult r=model_trajectory(d,m,f,target>=d->ic[f].x ? 1:-1,terminal_row,&c,cancel,cancel_ctx);
+                if(r.status!=ODE_OK && r.status!=ODE_SAMPLE_STOP && r.status!=ODE_EVENT_STOP && !ode_invalid_region(r.status)) {
+                    page->result=r;return;
+                }
+                continue;
+            }
             OdeResult r=model_value_at(d,m,f,target,cancel,cancel_ctx);
             if(r.status!=ODE_OK) {
-                if(ode_invalid_region(r.status))continue;
+                if(ode_invalid_region(r.status) || r.status==ODE_EVENT_STOP)continue;
                 page->result=r;return;
             }
             for(int column=0;column<index->count;column++) {
@@ -183,7 +209,7 @@ void table_read_page_budgeted(const Document *d,CompiledModel *m,const TableInde
     for(int f=0;f<families;f++)for(int side=0;side<2;side++) {
         PageCollector c={.d=d,.index=index,.page=page,.family=f,.direction=side ? 1:-1,.rows=rows};
         OdeResult result=model_trajectory(d,m,f,c.direction,fill,&c,cancel,cancel_ctx);
-        if(result.status!=ODE_OK && result.status!=ODE_SAMPLE_STOP && !ode_invalid_region(result.status)) {
+        if(result.status!=ODE_OK && result.status!=ODE_SAMPLE_STOP && result.status!=ODE_EVENT_STOP && !ode_invalid_region(result.status)) {
             page->result=result;return;
         }
     }
