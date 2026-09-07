@@ -1,0 +1,49 @@
+# Local SDKs, Python environments and credentials
+.local/
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Native/host build and CMake output
+/build/
+/build-*/
+**/build-cg/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+compile_commands.json
+*.o
+*.obj
+*.elf
+*.map
+*.su
+*.g3a
+/dist/
+
+# Local diagnostics, test output and calculator sessions
+/docs/build-logs/
+*.log
+*.ppm
+__pycache__/
+*.pyc
+.pytest_cache/
+DIFFEQ[01].dat
+DIFFSTAT*.csv
+
+# Non-redistributed manuals and extracted pages
+/docs/reference/*
+!/docs/reference/README.md
+
+# Machine-specific editor and temporary files
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.tmp

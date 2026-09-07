@@ -1,0 +1,76 @@
+#include "ui.h"
+#include <gint/timer.h>
+#include <gint/drivers/keydev.h>
+#include <assert.h>
+#include <stdio.h>
+static key_event_t events[16];
+static int length,next,menu_count,timers,starts,stops,held=1;
+static volatile int *timer_flag;
+static keydev_transform_t transform;
+keydev_t *keydev_std(void) {return NULL;}
+keydev_transform_t keydev_transform(keydev_t *d) {(void)d;return transform;}
+void keydev_set_transform(keydev_t *d,keydev_transform_t t) {(void)d;transform=t;}
+int keydown(int key) {(void)key;return held;}
+static key_event_t event(int key) {return (key_event_t){.type=KEYEV_DOWN,.key=(unsigned)key,.mod=1};}
+key_event_t getkey(void) {return event(KEY_5);}
+key_event_t getkey_opt(int options,volatile int *timeout)
+{
+    assert(timeout);
+    if(next<length) {
+        /* Compute poll must NOT let gint consume MENU before safe return. */
+        if(events[next].key==KEY_MENU)assert(!(options&GETKEY_MENU));
+        return events[next++];
+    }
+    *timeout=1;return (key_event_t){.type=KEYEV_NONE};
+}
+void gint_osmenu(void) {menu_count++;}
+int timer_configure(int timer,uint64_t delay,gint_call_t callback)
+{
+    assert(timer==TIMER_ANY && delay==250000 && timers==0);
+    timers++;timer_flag=callback.flag;return 3;
+}
+void timer_start(int timer) {assert(timer==3);starts++;}
+void timer_stop(int timer) {assert(timer==3 && timers==1);timers--;stops++;}
+int main(void)
+{
+    events[0]=event(KEY_ADD);events[0].alpha=1;
+    events[1]=event(KEY_ADD);events[2]=event(KEY_EXIT);length=3;
+    assert(ui_cancel(NULL));
+    key_event_t first=ui_getkey(),second=ui_getkey();
+    assert(first.key==KEY_ADD && first.alpha && second.key==KEY_ADD && !second.alpha);
+    length=1;next=0;events[0]=event(KEY_MENU);
+    assert(ui_cancel(NULL) && menu_count==0);
+    assert(ui_getkey().key==KEY_5 && menu_count==1);
+    assert(ui_getkey().key==KEY_5 && menu_count==1);
+    /* Saturation cancels, retains order, and leaves unread native events. */
+    length=9;next=0;for(int i=0;i<9;i++)events[i]=event(KEY_RIGHT);
+    assert(ui_cancel(NULL) && next==8);
+    for(int i=0;i<8;i++)assert(ui_getkey().key==KEY_RIGHT);
+    assert(!ui_cancel(NULL));assert(ui_getkey().key==KEY_RIGHT);
+    for(int i=0;i<100;i++) {
+        UiBlink blink;ui_blink_start(&blink);
+        assert(timers==1 && blink.highlighted);
+        *timer_flag=1;
+        assert(ui_blink_key(&blink).type==KEYEV_NONE && !blink.highlighted);
+        ui_blink_stop(&blink);assert(timers==0 && blink.timer==-1);
+    }
+    assert(starts==100 && stops==100);
+    ui_trace_input(true);assert(transform.repeater(0,0,0)==400000);
+    assert(transform.repeater(0,2000000,50)==125000);
+    length=16;next=0;
+    for(int i=0;i<15;i++){events[i]=event(KEY_LEFT);events[i].type=KEYEV_HOLD;}
+    events[15]=event(KEY_EXIT);
+    assert(ui_trace_cancel(NULL));
+    UiBlink trace_blink={0};assert(ui_trace_key(&trace_blink).key==KEY_EXIT && next==16);
+    next=0;length=16;events[15]=events[14];
+    assert(!ui_trace_cancel(NULL));assert(ui_trace_key(&trace_blink).key==KEY_LEFT);
+    next=0;length=16;events[15]=event(KEY_MENU);
+    assert(ui_trace_cancel(NULL));assert(menu_count==1);
+    assert(ui_trace_key(&trace_blink).key==KEY_MENU && menu_count==2);
+    next=0;length=15;held=0;
+    assert(!ui_trace_cancel(NULL));
+    assert(ui_trace_key(&trace_blink).type==KEYEV_NONE); /* released HOLD is stale */
+    ui_trace_input(false);assert(transform.repeater==NULL);
+    puts("Target-branch key policy: retained events, one MENU, bounded saturation, 100 timer lifetimes passed.");
+    return 0;
+}

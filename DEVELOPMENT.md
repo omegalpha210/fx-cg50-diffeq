@@ -1,0 +1,97 @@
+# Building and developing DIFFEQ
+
+The runtime/numerical/UI source is the tested local milestone `671186f`; the first
+public snapshot updates packaging, version metadata, licensing and documentation.
+It does not add a numerical or UI feature. Private development history and manuals
+are deliberately not part of the public Git history.
+
+## Verified stack
+
+| Component | Tested version |
+|---|---|
+| Host | macOS arm64, Apple Clang 17 |
+| CMake | 4.4.3 (project minimum 3.15) |
+| fxSDK / gint | 2.11.0 / 2.11.0 (CMake requires gint ≥2.11) |
+| SH GCC / binutils | 14.1.0 / 2.42 |
+| fxlibc | 1.5.1 |
+| OpenLibm | SH port based on 0.7.0 |
+| Optional image tools | Python 3, Pillow |
+
+Exact upstream revisions: [toolchain lock](tools/toolchain-lock.json).
+GNU archive checksums: [downloads.sha256](tools/downloads.sha256).
+Other operating systems/toolchain versions have not been verified by this release.
+
+## Existing fxSDK installation
+
+Use a shell in which `fxsdk`, `sh-elf-gcc` and the installed CMake modules are available:
+
+```sh
+fxsdk build-cg -j8
+python3 tools/verify_g3a.py dist/DIFFEQ.g3a
+```
+
+The root project links `Gint::Gint`; its installed configuration resolves fxlibc,
+OpenLibm and libgcc. fxSDK selects the big-endian SH4 no-FPU target and uses fxgxa
+with the project's original icons. Application warnings are errors:
+`-Wall -Wextra -Werror -Wframe-larger-than=3072 -Os -g -fstack-usage`.
+No fast-math is enabled. ELF, linker map and `.su` files stay in ignored `build-cg/`.
+
+After initial configuration, a clean target compile/link is:
+
+```sh
+cmake --build build-cg --clean-first -j8
+python3 tools/verify_g3a.py dist/DIFFEQ.g3a
+sh-elf-size build-cg/diffeq
+```
+
+## Project-local macOS SDK
+
+The existing setup uses a whitespace-free `~/.local/diffeq-sdk` alias pointing at
+one workspace's `.local/`. `source tools/env.sh` activates that SDK/venv and the
+Homebrew tools in the current shell. `./tools/build.sh` then builds the add-in.
+Do not replace an existing alias or reinstall a working toolchain to build another
+source checkout; it can use the same installed SDK.
+
+For a fresh macOS/Homebrew environment only, `./tools/bootstrap.sh` reconstructs
+pinned tools, downloads verified GNU archives and runs the retained minimal example.
+It creates the alias, installs missing Homebrew/Python dependencies and refuses to
+overwrite an alias pointing elsewhere. Inspect the script before running it.
+It is a recorded reconstruction route, not a tested CI service.
+
+The retained patches handle a missing fxSDK string header and binutils system-zlib
+configuration on macOS. The GCC installer carries its upstream soft-float patch.
+C++ can be installed by that toolchain route, but this add-in uses C and does not
+link libstdc++. fxlink UDisks2/SDL2 options are disabled in the macOS bootstrap.
+No reference PDF is required to compile or test the app.
+
+## Host tests and UI captures
+
+```sh
+./tools/test.sh
+# Optional, after Pillow is available:
+python3 tools/capture_ui.py
+```
+
+The script configures `tests/`, builds and runs all 17 CTest groups with strict
+warnings, assertions and UBSan by default. The drawing/key adapter executes the
+actual application sources, with deterministic counters and temporary test files.
+It is not a SuperH/OS emulator. Physical timing, Fugue behavior and stack/allocator
+high-water require a calculator. ASan coverage is not claimed.
+
+The font atlas is already checked in with its upstream notice. `tools/host_font.py`
+regenerates its derived header; `tools/make_icons.py` regenerates original icons.
+No manual screenshots are included. Development-only PyMuPDF in the optional
+bootstrap requirements was used to inspect local manuals; it is not linked or
+redistributed with the add-in. Normal builds/tests do not need it.
+
+## Releases
+
+`VERSION` is the public prerelease string. CMake's project version and numeric G3A
+metadata use its numeric base (`0.9.0`, `00.09.0000`); the container cannot express
+`-beta.1`. The Git tag and Release make the beta designation explicit.
+
+Release from a clean tagged commit: clean target build, host tests, package check,
+then calculate SHA256. Attach `DIFFEQ.g3a`, `SHA256SUMS.txt` and the assembled
+`THIRD_PARTY_NOTICES.txt` to the prerelease. Relinking embeds a build timestamp, so
+hashes can differ across builds even with unchanged source. Do not commit binaries,
+manuals, local toolchains, private paths or raw diagnostic logs.

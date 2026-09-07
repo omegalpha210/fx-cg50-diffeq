@@ -1,0 +1,10 @@
+diff --git a/configure.sh b/configure.sh
+index 2dde6b3..db0d0f6 100755
+--- a/configure.sh
++++ b/configure.sh
+@@ -134,4 +134,4 @@ run_quietly giteapc-configure.log       \
+   --with-multilib-list="m3,m4-nofpu"    \
+   --program-prefix="sh-elf-"            \
+   --enable-libssp                       \
+-  --enable-lto
++  --enable-lto --with-system-zlib
