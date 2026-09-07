@@ -56,16 +56,16 @@ for speed in ['F3','F4']:
     assert 'y\'' in out
     before=run(trace+speed);blink=run(trace+speed+' '+'BLINK '*100)
     assert point(blink)==point(before) and plot(blink)==plot(before) and solves(blink)==solves(before)
-limited='2 F6 F6 DOWN DOWN 0 DOT 0 0 1 EXE F6 F1 F4 '
+limited='2 F6 F6 DOWN DOWN DOWN 0 DOT 0 0 1 EXE F6 F1 F4 '
 out=run(limited+'RIGHT '*250)
 assert 'TRACE: too many steps' in out and 'Partial: Cancelled' not in out
 out=run('1 4 1 0 0 MUL A:SUB EXE F6 F6 F6 F1 F4 '+'RIGHT '*100)
 assert 'TRACE: Numerical limit' in out and 'nan' not in tail(out).lower()
 
 params='1 4 F6 F6 '
-sf=params+'DOWN DOWN DOWN DOWN '
+sf=params+'DOWN DOWN DOWN DOWN DOWN '
 settings=params+'F5 '
-assert 'TEXT 20 123 SF\n' in tail(run(params))
+assert 'TEXT 20 145 SF\n' in tail(run(params))
 assert all(s in tail(run(settings)) for s in ['Slope Field','Style','Color','Arrow','Pale Blue'])
 assert 'TEXT 20 79 Density' not in run(settings)
 assert 'Private constants' not in run(settings+'EXIT OPTN')
@@ -82,8 +82,8 @@ assert plot(run(changed+'F3 DOWN EXIT'))==plot(run(changed))
 assert plot(run(changed+'F4'))==plot(run(settings))
 # Direct return restores the SF selector; appearance INIT preserves SF=24.
 assert plot(run(changed+'F4 EXIT'))==plot(run(sf+'2 4 EXIT'))
-assert 'TEXT 144 123 24\n' in tail(run(changed+'EXIT'))
-assert 'TEXT 144 123 12\n' in tail(run(changed+'EXIT F2'))
+assert 'TEXT 144 145 24\n' in tail(run(changed+'EXIT'))
+assert 'TEXT 144 145 12\n' in tail(run(changed+'EXIT F2'))
 assert all(s in tail(run(changed+'EXIT F2 F5')) for s in ['Segment','Pale Red'])
 assert all(s in tail(run(changed+'EXIT F4 F4 EXIT F5')) for s in ['Segment','Pale Red'])
 for invalid in ['NEG 1','1 0 1','1 DOT 5']:
@@ -94,7 +94,7 @@ with tempfile.TemporaryDirectory() as directory:
     run(changed+'EXIT EXIT EXIT EXIT EXIT F6 EXE',directory)
     restored=run('F5 2 F1 F6 F6 F5',directory)
     assert all(s in tail(restored) for s in ['Segment','Pale Red'])
-    assert 'TEXT 144 123 24\n' in tail(run('F5 2 F1 F6 F6',directory))
+    assert 'TEXT 144 145 24\n' in tail(run('F5 2 F1 F6 F6',directory))
 # Mode changes preserve global appearance and the existing SF setting.
 out=run(changed+'EXIT EXIT EXIT EXIT EXIT 2 EXIT 1 4 F6 F6 F5')
 assert all(s in tail(out) for s in ['Segment','Pale Red'])

@@ -32,9 +32,10 @@ static bool graph_more(App *a,GraphResult last)
         if(n==0)return true;
         if(n==1) {
             const ViewWindow *v=model_view_const(&a->doc);char text[220];
-            snprintf(text,sizeof(text),"%s view\n%s\nSteps: %u\nX: %.7g to %.7g\nY: %.7g to %.7g\nIntegration h: %.7g",
+            snprintf(text,sizeof(text),"%s view\n%s\nSteps: %u\nX: %.7g to %.7g\nY: %.7g to %.7g\n%s: %.7g",
                 a->doc.view.phase ? "PHASE":"TIME",ode_status_text(last.status),last.steps,
-                v->xmin,v->xmax,v->ymin,v->ymax,a->doc.solver.h);
+                v->xmin,v->xmax,v->ymin,v->ymax,
+                a->doc.adaptive.method==ODE_RK45 ? "RK45 initial h":"Integration h",a->doc.solver.h);
             ui_message("Graph details",text);
         }
         return false;
@@ -62,7 +63,11 @@ static bool graph_more(App *a,GraphResult last)
     }
     if(choice==4)return true;
     if(choice==5) {
-        char text[256];snprintf(text,sizeof(text),"%s\nSteps: %lu  IC: %d\nX: %.7g to %.7g\nY: %.7g to %.7g\nIntegration h: %.7g\nRedraw Step: %d",
+        char text[256];
+        if(d->adaptive.method==ODE_RK45)snprintf(text,sizeof(text),"%s\nAttempts: %lu  IC: %d\nX: %.7g to %.7g\nY: %.7g to %.7g\nRK45 initial h: %.7g\nRelTol %.3g  AbsTol %.3g",
+            ode_status_text(last.status),(unsigned long)last.steps,last.failed_family+1,d->view.xmin,d->view.xmax,
+            d->view.ymin,d->view.ymax,d->solver.h,d->adaptive.reltol,d->adaptive.abstol);
+        else snprintf(text,sizeof(text),"%s\nSteps: %lu  IC: %d\nX: %.7g to %.7g\nY: %.7g to %.7g\nIntegration h: %.7g\nRedraw Step: %d",
             ode_status_text(last.status),(unsigned long)last.steps,last.failed_family+1,d->view.xmin,d->view.xmax,
             d->view.ymin,d->view.ymax,d->solver.h,d->solver.step);
         ui_message("Graph details",text);
@@ -142,7 +147,8 @@ void ui_trace(App *a)
                     if(status!=ODE_OK && status!=ODE_HAS_INVALID){input_error=true;continue;}
                     a->dirty=true;edit.active=false;boundary=status==ODE_HAS_INVALID;continue;
                 }
-                OdeResult r=ode_integrate(model_rhs,&a->model,d->dim,d->ic[curve.family].x,
+                model_work_begin(&a->model);
+                OdeResult r=model_integrate(d,&a->model,d->ic[curve.family].x,
                     d->ic[curve.family].y,value,extent,NULL,NULL,ui_trace_cancel,NULL);
                 if(r.status==ODE_CANCELLED) {
                     int control=ui_trace_key(&blink).key;

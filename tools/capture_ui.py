@@ -12,7 +12,7 @@ output=root/'docs/ui-review'
 output.mkdir(parents=True,exist_ok=True)
 cases=[('main','Main',''),
     ('equation','Equation / NEXT','1 4 NEG A:SUB EXE'),
-    ('parameter','Parameters / GRAPH','1 4 F6 F6 DOWN DOWN 0 DOT 0 5 EXE'),
+    ('parameter','Parameters / GRAPH','1 4 F6 F6 DOWN DOWN RIGHT'),
     ('vwindow','V-Window','1 4 F3 NEG 7 EXE'),
     ('initial-conditions','First-order IC / list input','1 1 F6 DOWN S:MUL 0 COMMA 1 S:DIV EXE'),
     ('output','Output / selected state ON-OFF','2 F6 F6 F4 DOWN RIGHT'),
@@ -31,7 +31,7 @@ cases=[('main','Main',''),
 cases += [
     ('table-limit','Table / last valid row', '1 1 LEFT ACON F2 F2 XOT RIGHTP EXE F6 F6 F6 F4 F2'),
     ('table-scroll','Table / frozen x', '4 4 F6 F6 F6 F6 F4 RIGHT RIGHT'),
-    ('preflight','Preflight / no calculation', '2 F6 F6 DOWN DOWN 0 DOT 0 0 0 1 EXE F6'),
+    ('preflight','Preflight / no calculation', '2 F6 F6 DOWN DOWN DOWN 0 DOT 0 0 0 1 EXE F6'),
     ('trace-follow','TRACE / followed viewport', '2 EXE EXE EXE F1 '+'RIGHT '*160),
     ('zoom-pan','ZOOM / arrow pan keeps menu', '2 EXE EXE EXE F2 RIGHT')]
 ux_start=len(cases)
@@ -47,7 +47,7 @@ cases += [
     ('field-arrow-zero','Arrow / zero slope points right','1 4 0 EXE F6 F6 F5 '+arrow+'EXE EXIT F6'),
     ('field-arrow-up','Arrow / positive slope','1 4 1 EXE F6 F6 F5 '+arrow+'RIGHT EXE EXIT F6'),
     ('field-arrow-down','Arrow / negative slope','1 4 NEG 1 EXE F6 F6 F5 '+arrow+'RIGHT RIGHT EXE EXIT F6'),
-    ('field-arrow-max','SF100 / arrows remain visible','1 4 F6 F6 DOWN DOWN DOWN DOWN 1 0 0 EXE F5 '+arrow+'DOWN RIGHT EXE EXIT F6'),
+    ('field-arrow-max','SF100 / arrows remain visible','1 4 F6 F6 DOWN DOWN DOWN DOWN DOWN 1 0 0 EXE F5 '+arrow+'DOWN RIGHT EXE EXIT F6'),
     ('output-first','Output / y only, no x row','1 4 F6 F6 F4'),
     ('output-enabled','Output / shared ON-OFF','2 F6 F6 F4 DOWN RIGHT')]
 cases += [
@@ -57,7 +57,7 @@ cases += [
     ('table-many','Table / IC columns, frozen x','1 1 F6 DOWN S:MUL 0 COMMA 1 COMMA 2 COMMA 3 COMMA 4 COMMA 5 S:DIV EXE F6 F6 F4 RIGHT RIGHT'),
     ('ic-second','2nd / one complete vector','2 F6'),
     ('ic-list-error','IC / malformed list','1 1 F6 DOWN S:MUL 0 COMMA S:DIV F6'),
-    ('sf-parameter','Parameters / SF selected','1 4 F6 F6 DOWN DOWN DOWN DOWN')]
+    ('sf-parameter','Parameters / SF selected','1 4 F6 F6 DOWN DOWN DOWN DOWN DOWN')]
 polish_start=len(cases)
 cases += [
     ('polish-equation-select','Equation SELECT / contextual hint','1 4'),
@@ -65,9 +65,9 @@ cases += [
     ('polish-ic-edit','IC numeric EDIT / common hint','2 F6 DOWN 2'),
     ('polish-list-edit','IC list EDIT / common hint','1 1 F6 DOWN S:MUL 0 COMMA 1 S:DIV'),
     ('polish-vwindow-edit','V-Window EDIT / common hint','2 F3 DOWN DOWN 2'),
-    ('polish-parameter-edit','Parameters EDIT / common hint','2 F6 F6 DOWN DOWN 0 DOT 0 5'),
-    ('polish-sf-first','First-order / SF selected','1 4 F6 F6 DOWN DOWN DOWN DOWN'),
-    ('polish-sf-second','2nd / Step then Max steps','2 F6 F6 DOWN DOWN DOWN 2 EXE'),
+    ('polish-parameter-edit','Parameters EDIT / common hint','2 F6 F6 DOWN DOWN DOWN 0 DOT 0 5'),
+    ('polish-sf-first','First-order / SF selected','1 4 F6 F6 DOWN DOWN DOWN DOWN DOWN'),
+    ('polish-sf-second','2nd / Step then Max steps','2 F6 F6 DOWN DOWN DOWN DOWN 2 EXE'),
     ('polish-sf-nth','N-th9 / no SF row','3 9 F6 F6 F6'),
     ('polish-sf-system','SYS9 / no SF row','4 9 F6 F6 F6'),
     ('polish-field-swatch','Field / Pale Magenta swatch','1 4 F6 F6 F5 DOWN DOWN DOWN F3 DOWN EXE'),

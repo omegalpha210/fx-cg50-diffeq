@@ -153,6 +153,7 @@ static bool captured_point(double x,const double *y,uint32_t step,void *ctx)
 }
 GraphResult graph_render(Document *d,CompiledModel *m,bool first)
 {
+    model_work_begin(m);
     ModelWork plan=model_preflight(d,&d->solver);
     if(plan.status!=ODE_OK)return (GraphResult){.status=plan.status,.failed_family=plan.family};
     OdeStatus phase_status=graph_phase_preflight(d,m,ui_cancel,NULL);
@@ -172,7 +173,7 @@ GraphResult graph_render(Document *d,CompiledModel *m,bool first)
     for(int i=0;i<d->nic && result.status!=ODE_CANCELLED;i++) {
         if(!system && !graph_family_enabled(d,i)) continue;
         for(int direction=-1;direction<=1;direction+=2) {
-            Curve c={.d=d,.family=i,.variable=-1,.stride=first ? 1:d->solver.step,.color=-1};
+            Curve c={.d=d,.family=i,.variable=-1,.stride=first || d->adaptive.method==ODE_RK45 ? 1:d->solver.step,.color=-1};
             if(capture)trace_capture_branch_begin(d,i,direction<0 ? 0:1);
             ModelPathResult r=model_path_branch(d,m,i,direction,&d->solver,
                 capture ? captured_point:curve_point,&c,ui_cancel,NULL);
@@ -202,7 +203,7 @@ OdeStatus graph_highlight_curve(Document *d,CompiledModel *m,int family,int vari
     int base=graph_palette_color(model_color(d,family,d->view.phase ? d->view.phase_y:variable));
     for(int direction=-1;direction<=1;direction+=2) {
         Curve c={.d=d,.family=family,.variable=variable,
-            .stride=d->solver.step,.color=graph_highlight_color(base,false)};
+            .stride=d->adaptive.method==ODE_RK45 ? 1:d->solver.step,.color=graph_highlight_color(base,false)};
         ModelPathResult r=model_path_branch(d,m,family,direction,&d->solver,curve_point,&c,ui_cancel,NULL);
         if(r.status!=ODE_OK)status=r.status;
         if(r.status!=ODE_OK && r.status!=ODE_HAS_INVALID)break;
@@ -229,6 +230,7 @@ static bool bound_point(double x,const double *y,uint32_t step,void *ctx)
 }
 OdeStatus graph_auto_window(Document *d,CompiledModel *m)
 {
+    model_work_begin(m);
     if(model_phase_supported(d) && (d->view.phase || trace_cache_matches(d))) {
         if(!trace_cache_matches(d))return ODE_BAD_INPUT;
         bool ok=d->view.phase ? trace_cache_phase_window(d,&d->phase_view):
@@ -250,7 +252,7 @@ OdeStatus graph_auto_window(Document *d,CompiledModel *m)
         for(int dir=-1;dir<=1;dir+=2) {
             const InitialCondition *ic=&d->ic[i];
             if((dir>0 && ic->x>sampling.xmax) || (dir<0 && ic->x<sampling.xmin))continue;
-            OdeResult r=ode_integrate(model_rhs,m,d->dim,ic->x,ic->y,
+            OdeResult r=model_integrate(d,m,ic->x,ic->y,
                 dir>0 ? sampling.xmax:sampling.xmin,&sampling,bound_point,&b,ui_cancel,NULL);
             if(r.status==ODE_CANCELLED) return r.status;
             if(r.status!=ODE_OK) status=r.status;

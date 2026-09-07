@@ -10,9 +10,9 @@
 DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식의 수치해를
 컬러 그래프·기울기장·TRACE·G-Solve·표로 살펴보고, 2변수 시스템의 위상을 분석할 수 있습니다.
 
-**공개 베타 · v0.10.0-beta.1 · [MIT 라이선스](LICENSE)**
+**공개 베타 · v0.11.0-beta.1 · [MIT 라이선스](LICENSE)**
 
-**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.10.0-beta.1)**
+**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.11.0-beta.1)**
 · [전체 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [버그 신고](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -35,7 +35,7 @@ DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식�
 
 | 3. 계산 설정 | 4. 그래프 탐색 |
 |---|---|
-| ![적분 구간 -3부터 3, h=0.1, Step=1, SF=12인 Parameters](docs/images/solver-parameters.png) | ![기울기장을 끈 상태의 magenta와 cyan 해 곡선](docs/images/graph-solution.png) |
+| ![RK45, Initial h=0.1, RelTol=1e-6, AbsTol=1e-9인 Parameters](docs/images/solver-parameters.png) | ![기울기장을 끈 상태의 magenta와 cyan 해 곡선](docs/images/graph-solution.png) |
 | 적분 구간, h와 기울기장 밀도를 설정합니다. | GRAPH를 눌러 계산한 뒤 이동·확대·TRACE·표를 사용합니다. |
 
 단계 이동은 **F6 NEXT**, 계산은 **F6 GRAPH**입니다. 일반 필드를 편집하지 않고
@@ -73,16 +73,37 @@ N1(빨강)은 `f1=0`, N2(파랑)는 `f2=0`입니다. **F4 VIEW → F1 TIME**으�
 결과입니다. Center / Neutral candidate는 비선형·전역 안정성을 확정하지 않습니다.
 검색에서 점을 놓칠 수 있고, 불확실하거나 미분을 구할 수 없는 경우 Inconclusive/Unavailable로 표시합니다.
 
-두 그래프는 **최대 258점의 궤적 캐시**를 공유합니다. 투영 전환·이동·확대는 RK4를 다시
+두 그래프는 **최대 258점의 궤적 캐시**를 공유합니다. 투영 전환·이동·확대는 trajectory solver를 다시
 계산하지 않으므로 촘촘한 특징은 보관된 표본 해상도를 넘어설 수 있습니다. Phase TRACE는
 이 캐시를 사용하고 계산된 시간 구간 안에서 이동합니다. [수치 방법과 한도](docs/PHASE_NUMERICS.md)를 참고하세요.
-**HARDWARE TEST REQUIRED:** 새 Phase 화면과 조작은 호스트에서 시험했으며 실제 기기 검증이 필요합니다.
+**HARDWARE TEST REQUIRED:** 새 RK45 계산/취소 및 stack high-water, 새 Phase 화면과 조작은 호스트에서 시험했으며 실제 기기 검증이 필요합니다.
+
+## Solver Methods
+
+| 방식 | step 제어 | 사용 목적 |
+|---|---|---|
+| **Classical RK4** (기본값) | 고정 h, Step으로 출력 간격 조절 | 기존 결과 유지, h를 바꿔 비교 |
+| **Dormand–Prince RK45** | embedded local error에 따른 adaptive h | non-stiff 해의 변화에 맞춰 간격 자동 조절 |
+
+Parameters 세 번째 **Method** 행에서 LEFT/RIGHT로 전환합니다. 계산은 GRAPH에서 시작합니다.
+RK45는 **Initial h / RelTol / AbsTol / Max steps**를 표시하며 기본값은 .1 / 1e-6 / 1e-9 / 20000입니다.
+Max steps는 거절을 포함한 시도 횟수입니다. Step은 숨기고 SF는 scalar 1차에서만 표시합니다.
+두 방식이 h 값을 공유하며 tolerance와 숨겨진 Step을 보존합니다. INIT는 Method를 유지하고
+해당 방식의 설정을 초기화합니다. 옛 저장은 RK4로 읽습니다.
+
+모든 방정식 모드·Graph·TRACE·Table·G-Solve·Phase에서 RK45를 사용할 수 있습니다.
+Table/G-Solve/TIME x=는 요청 x에 직접 도착하도록 적분합니다. TRACE 이동과 Phase x=는
+기존 캐시의 화면용 선형 보간이며 점 사이에서 tolerance 정확도를 보장하지 않습니다.
+출력 격자는 TIME Xdot을 기준으로 내부 adaptive step과 별도로 정합니다.
+**RK45는 explicit adaptive 방식이며 stiff ODE 전용 solver가 아닙니다.**
+강성이나 엄격한 tolerance에서는 Work limit/Step underflow에 도달할 수 있습니다.
+[계수·안전장치·벤치마크·메모리](docs/RK45_NUMERICS.md)를 참고하세요.
 
 ## 주요 기능
 
 - **7가지 방정식 유형:** 변수분리형·선형·Bernoulli·일반 1차, 선형 2차, 일반 N차,
   연립 미분방정식. 차수와 시스템 크기는 **1~9**이며 N차→시스템 변환과 두 상태의 위상 궤적을 지원합니다.
-- 초기조건에서 양방향으로 적분하는 **고전적 RK4**. 1차는 공통 x0에서 **최대 10개 y0**를
+- 초기조건에서 양방향으로 적분하는 **고전적 RK4 또는 적응형 Dormand–Prince RK45**. 1차는 공통 x0에서 **최대 10개 y0**를
   입력할 수 있습니다. 고차·시스템 UI는 모든 상태 초기값을 갖춘 하나의 벡터를 입력합니다.
 - **1차 기울기장:** SF 0~100, Segment/Arrow와 옅은 색 6종. 기본은 Arrow / Pale Blue입니다.
 - **2D SYS Phase:** 정규화 벡터장, 수치 nullcline, 최대 16개 평형점 후보,
@@ -98,7 +119,7 @@ TIME TRACE 속도 버튼은 **노랑 / Bright Green / Cyan** 배경과 검정 �
 테두리가 생깁니다. NORMAL=1×Xdot, FAST=2×, FASTER=3×입니다. F5 LEFT/F6 RIGHT는 곡선과
 속도를 유지하며 설정된 Solver Xrange 양끝으로 이동합니다. 끝점에 도달하는 것만으로 미리
 적분하지 않고 실제 계산 범위 밖 이동 요청에서 확장합니다. X/Y 추적은 폭·높이와 solver 설정을 유지합니다.
-TIME에서 명시적으로 `x=`를 입력하면 유효 구간 안의 해당 x까지 RK4로 평가하는 동작을 유지합니다.
+TIME에서 명시적으로 `x=`를 입력하면 유효 구간 안의 해당 x까지 선택한 solver로 평가하는 동작을 유지합니다.
 이 경로는 Phase의 캐시 보간으로 대체하지 않습니다.
 
 Graph Settings의 Grid/Axis Label은 LEFT/RIGHT로 토글하고 F1/F2는 비어 있습니다.
@@ -117,7 +138,7 @@ h = 0.1
 ```
 
 V-WIN은 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`, Yscale `0.5`로
-설정합니다. Xdot은 자동으로 갱신됩니다. Parameters의 Step `1`, SF `12`, Max steps
+설정합니다. Xdot은 자동으로 갱신됩니다. 기존 RK4 그래프 예제는 Method RK4, Step `1`, SF `12`, Max steps
 `20000`은 그대로 둡니다. 자동 적분 구간은 `-3`부터 `3`입니다.
 두 해는 오른쪽에서 y=1, 왼쪽에서 y=-1에 가까워집니다.
 **SF=0**으로 바꾸면 기울기장 없이 해만 표시한 화면을 재현할 수 있습니다.
@@ -128,7 +149,7 @@ V-WIN은 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`, Yscale `0.5`�
 
 ## 계산기에 설치하기
 
-1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.10.0-beta.1)를 엽니다.
+1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.11.0-beta.1)를 엽니다.
 2. **DIFFEQ.g3a**를 받습니다. 다운로드 확인용 `SHA256SUMS.txt`도 제공됩니다.
 3. fx-CG50을 USB로 연결하고 USB Flash 모드를 선택한 뒤 컴퓨터에서 계산기 드라이브를 엽니다.
 4. `DIFFEQ.g3a`를 드라이브 **최상위**에 복사합니다. `@MainMem` 폴더 안에 넣지 않습니다.
@@ -137,7 +158,7 @@ V-WIN은 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`, Yscale `0.5`�
 
 [CASIO 공식 애드인 설치 안내](https://edu.casio.com/content/dam/casio/global/edu-casio-com/download/files/fx-cg50-series/Inst_Users_Guide.pdf)에 따른 절차입니다.
 계산기에는 `.g3a`만 있으면 됩니다. 업데이트 전에 기존 세션 파일을 백업하세요.
-이번 버전은 v8 형식으로 저장하며 같은 기기의 v3~v7 파일을 읽습니다. 구버전 앱은
+이번 버전은 v9 형식으로 저장하며 같은 기기의 v3~v8 파일을 읽습니다. 구버전 앱은
 새 저장 파일을 거부할 수 있고, 일부 이전 설정은 변환됩니다. [업그레이드 안내](docs/release/RELEASE_NOTES.md)를 확인하세요.
 
 ## 핵심 조작
@@ -149,7 +170,7 @@ V-WIN은 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`, Yscale `0.5`�
 | 편집 중 | EXE는 확정 후 다음 필드 선택, 마지막 행은 머묾. EXIT는 확정 후 같은 행 선택 |
 | Equation | EDIT에서 FUNC 사용, 필요한 모드에 VAR 표시. EXIT는 열린 token bar부터 닫음 |
 | OUTPUT | LEFT/RIGHT ON/OFF, F3 COLOR, F4 INIT, F6 DONE. EXE는 출력 행 순서로 이동 |
-| Parameters | F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
+| Parameters | Method: LEFT/RIGHT로 RK4/RK45 전환; F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
 | Graph (2D SYS 제외) | 방향키 이동, F1 TRACE, F2 ZOOM, F3 V-WIN, F4 TABLE, F5 G-SLV, F6 magenta PREV |
 | 2D SYS Graph | F4 VIEW → F1 TIME / F2 PHASE / F3 TABLE, Phase에서는 F5 ANLYS |
 | Phase 분석 | F1 FIELD, F2 NULL, F3 EQPT, F4 INFO, LEFT/RIGHT 평형점 순회, EXIT 복귀 |
@@ -187,7 +208,8 @@ SH GCC 14.1.0, binutils 2.42, fxlibc 1.5.1과 고정한 OpenLibm SH port에서 �
 
 `h`는 RK4 적분 간격입니다. 작게 하면 정확도가 좋아질 수 있지만 계산량이 늘어나므로
 여러 h에서 결과를 비교하세요. 사전 계산량 검사와 Max steps가 과도한 계산을 제한합니다.
-고정 간격 RK4는 적응형·강성 전용 해법이 아니며, 급격한 변화나 특이점에서 수치 한계에 도달할 수 있습니다.
+RK45는 추정 local error 제어를 추가하지만 두 방식 모두 전역 정확도나 모든 특이점 검출을 보장하지 않습니다.
+수치적 pole 위치가 실제 위치와 조금 다를 수 있으며 실패한 prefix 너머에서 새 해를 시작하지 않습니다.
 
 NaN/Inf와 절댓값 `1e100` 초과 영역은 그리지 않습니다. 계산된 유효 구간은 유지하며,
 실패한 지점 너머로 해를 임의 연결하지 않습니다. G-Solve는 표본 사이의 특징을 놓칠 수 있습니다.
@@ -195,7 +217,7 @@ TRACE는 제한된 표본과 보간을 사용하고 Table은 값을 다시 계�
 CSV는 STAT에서 직접 가져와야 하며 OS List를 자동으로 쓰지 않습니다.
 [수치 안전성](docs/SOLVER_SAFETY_AUDIT.md)과 [릴리스 검증](docs/ACCEPTANCE.md)을 참고하세요.
 
-**HARDWARE TEST REQUIRED:** Phase 표시·분석, 최신 LCD 배치·색상, 키 반복·blink 타이밍,
+**HARDWARE TEST REQUIRED:** 새 RK45 계산/취소 및 stack high-water, Phase 표시·분석, 최신 LCD 배치·색상, 키 반복·blink 타이밍,
 MENU/Fugue 복귀, 실제 SAVE/RCL·STAT은 계산기에서 재시험해야 합니다.
 [하드웨어 체크리스트](docs/HARDWARE_RETEST.md)는 이를 호스트 PASS와 구분합니다.
 

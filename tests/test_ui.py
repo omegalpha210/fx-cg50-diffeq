@@ -65,11 +65,11 @@ run('2 F6 F4 DOWN 2 EXE F5',["y'0",'Initial Conditions'],['ADD','DROP','IC 2'])
 run('2 F6 NEG 2 EXE',['Initial Conditions','x0','-2','y0'],['Expression editor'])
 run('1 4 F6 F5 F6 F6',['TRACE'],['No initial conditions.'])
 run('2 F6 F5',["y'0"],['No initial conditions.','ADD','DROP'])
-run('1 4 NEG A:SUB F3 EXIT F6 DOWN 2 F6 F4 EXIT DOWN DOWN 0 DOT 0 5 F5 EXIT',
+run('1 4 NEG A:SUB F3 EXIT F6 DOWN 2 F6 F4 EXIT DOWN DOWN DOWN 0 DOT 0 5 F5 EXIT',
     ['-y','Initial Conditions','Output selection','Parameter','0.05'])
 run('2 F6 SIN F1 EXE',['Invalid value','sin('])
 # Repeated PREV/NEXT retains edited fields and manual parameters exactly.
-edited='1 4 NEG A:SUB F6 DOWN 2 F6 NEG 3 EXE 3 EXE 0 DOT 0 5 EXE'
+edited='1 4 NEG A:SUB F6 DOWN 2 F6 NEG 3 EXE 3 EXE DOWN 0 DOT 0 5 EXE'
 baseline=run(edited)
 assert plot(run(edited+' F1 F1 F6 F6 '*30))==plot(baseline)
 # Red emphasis is confined to F6; inspect RGB bytes from the host drawing.

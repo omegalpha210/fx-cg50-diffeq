@@ -35,7 +35,7 @@ for value in ['{}','{0,}','{,1}','{0,,1}','{0,1','{0,{1}}','0,1','{1/0}','{0,1,2
     assert 'TEXT 14 9 Parameter\n' in tail(fixed)
 # All ten values enter the existing total-work preflight (240,000 > 200,000).
 many=ic('{0,1,2,3,4,5,6,7,8,9}')
-out=run(many+'F6 DOWN DOWN 0 DOT 0 0 0 5 EXE F6')
+out=run(many+'F6 DOWN DOWN DOWN 0 DOT 0 0 0 5 EXE F6')
 assert 'Total calculation too large.' in out
 assert re.findall(r'solves=(\d+)',out)[-1]=='0'
 # Manual separable example: common x0, two distinct columns, exact initial states.
@@ -84,9 +84,9 @@ for entry,n,last in [('2',2,"y'0"),('3 9 F6',9,'y(8)0'),('4 9 F6',9,'y9_0')]:
     assert 'Invalid value' in tail(bad) and 'Parameter' not in bad
 # Save and restore the list, SF, colors, and the common output bit.
 with tempfile.TemporaryDirectory() as directory:
-    prefix=ic('{0,1,-1}')+'F6 DOWN DOWN DOWN DOWN 2 4 EXIT F4 RIGHT EXIT '
+    prefix=ic('{0,1,-1}')+'F6 DOWN DOWN DOWN DOWN DOWN 2 4 EXIT F4 RIGHT EXIT '
     run(prefix+'EXIT EXIT EXIT EXIT F6 EXE',directory)
     assert '{0,1,-1}' in tail(run('F5 2 F1 F6',directory))
-    assert 'TEXT 144 123 24\n' in tail(run('F5 2 F1 F6 F6',directory))
+    assert 'TEXT 144 145 24\n' in tail(run('F5 2 F1 F6 F6',directory))
     assert 'OFF' in tail(run('F5 2 F1 F6 F6 F4',directory))
 print('List IC physical input/errors/workload, manual two curves, all-state ICs, unified Table navigation/CSV and SAVE passed.')

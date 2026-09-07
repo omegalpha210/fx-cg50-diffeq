@@ -1,9 +1,8 @@
-# DIFF EQ 사용 설명서 — v0.10.0-beta.1
+# DIFF EQ 사용 설명서 — v0.11.0-beta.1
 
-기존 RK4·TRACE·G-Solve·10개 1차 초기값 기능을 보존하면서 SYS 2D Phase Portrait,
-벡터장, nullcline, 평형점과 국소 선형 분류를 추가했습니다. 이번 변경은
-**HARDWARE TEST REQUIRED**이며 host 검증이 계산기 시험을 대신하지 않습니다.
-실제 메뉴는 gint 기본 글꼴의 영어/ASCII를 사용합니다.
+기본 RK4와 TRACE·G-Solve·10개 초기값·SYS 2D Phase 기능을 보존하면서
+선택형 Dormand–Prince RK45와 tolerance 기반 adaptive step 제어를 추가했습니다.
+실제 fx-CG50의 새 경로 검증은 **HARDWARE TEST REQUIRED**입니다.
 
 ## 화면별 조작
 
@@ -163,13 +162,15 @@ IC set을 뜻하지 않습니다. 고차/SYS의 새 UI는 한 벡터만 받으�
 **Solver Parameters**의 x min/max는 적분 구간입니다. 처음에는 `ceil(V-Window Xmin)`과
 `floor(V-Window Xmax)`이며 사용자가 V-Window/Graph pan/zoom을 조작하면 따라갑니다. TRACE runtime 추적은 이 자동 범위도 변경하지 않습니다. 직접 편집한 범위는 user override로
 유지됩니다. **SF(0~100, 기본값 12)는 scalar 1차 네 모드에서만 Parameters에 표시합니다.**
-Separable/Linear/Bernoulli/General은 Step → SF → Max steps 순서입니다.
-2nd/N-th/SYS는 차수·변수 개수 1을 포함하여 SF 행이 없으며 Step → Max steps로 이동합니다.
+Method는 세 번째 행이며 LEFT/RIGHT로 RK4/RK45를 전환합니다. 계산은 GRAPH/EXE에서 시작합니다.
+RK4는 h → Step → (1차 SF) → Max steps, RK45는 Initial h → RelTol → AbsTol → (1차 SF) → Max steps입니다.
+2nd/N-th/SYS는 차수·변수 개수 1을 포함하여 SF 행이 없습니다. RK45의 숨겨진 Step은 사용하지 않습니다.
 UP/DOWN, 편집 EXE의 다음 행, 선택 행 도움말도 표시되는 행만 따릅니다.
-Parameter F2 INIT는 자동 범위 추종, h=.1, Step=1, Max Steps=20000을 복구합니다.
+Parameter F2 INIT는 Method를 유지하고 자동 범위 추종, h=.1, Max Steps=20000을 복구합니다.
+RK4에서는 Step=1, RK45에서는 RelTol=1e-6/AbsTol=1e-9로 복구하며 다른 방식의 숨겨진 설정은 보존합니다.
 1차에서는 SF도 12로 복구하며, 고차/SYS에서는 숨겨진 SF 값을 보존합니다.
 예를 들어 SF=20 → 2nd → INIT → 1st에서도 20입니다. SAVE/RCL도 숨겨진 SF를 보존하며
-새 저장은 v8이며 기존 v3~v7 세션의 읽기 호환성을 유지합니다. Field Style/Color는 모든 모드에서
+새 저장은 v9이며 기존 v3~v8 세션의 읽기 호환성을 유지합니다. Field Style/Color는 모든 모드에서
 보존합니다. Solver 수정은 V-Window를 역으로 변경하지 않습니다.
 Xdot은 `(Xmax-Xmin)/378`이며 Xdot 편집은 Xmax를 변경합니다.
 
@@ -178,7 +179,7 @@ x 행과 CSV X control은 없습니다. **LEFT/RIGHT는 선택 변수의 ON/OFF*
 하단 안내는 `LEFT/RIGHT: ON/OFF toggle` 한 줄입니다. 7행 페이지에서는 위쪽의 부가 설명을
 생략해 마지막 행과 겹치지 않으며, F3 COLOR·INIT·DONE과 기존 EXE 동작은 유지됩니다.
 한 ON/OFF 값이 모든 IC에 공통으로 적용됩니다. ON은 Graph·TRACE·G-Solve·Table·CSV/STAT에 포함,
-OFF는 이 사용자 출력들에서 숨김입니다. 숨겨진 y' 같은 내부 state도 RK4에서 계속 계산합니다.
+OFF는 이 사용자 출력들에서 숨김입니다. 숨겨진 y' 같은 내부 state도 선택한 solver에서 계속 계산합니다.
 SYS 2D Phase는 Output ON/OFF와 무관하게 두 state를 사용합니다. 다른 모드의 기존 phase projection은 두 축 state가 모두 ON일 때 표시합니다. 원래 독립 G/L 선택이 제공하던 차이와
 이번 통합의 호환성 정책은 [OUTPUT audit](OUTPUT_LIST_AUDIT.md)에 기록했습니다.
 
@@ -250,8 +251,8 @@ Field 팔레트는 기존 선명한 solution 팔레트와 별개입니다. 설�
   모드 버튼 자체는 현재 x·곡선·blink·창·h·Step을 바꾸거나 solver를 실행하지 않습니다.
   새 TRACE는 NORMAL이며 속도는 저장하지 않습니다. 숫자 x= 편집 중에는 속도 버튼이 숨겨집니다.
   저장된 유효
-  RK4 점 사이를 선형 보간합니다. 캐시 내부의 x 이동과 blink는 적분하지 않습니다. **표시되는 y는 보간 근사값**이며
-  TIME에서 정확한 지정 x의 RK4 결과가 필요하면 F1 x=를 사용합니다. SYS 2D PHASE의 x=는 보관된 trajectory를 보간하며 새 적분을 하지 않습니다. 보간은 invalid gap을 건너지 않습니다.
+  선택한 solver의 보관점 사이를 선형 보간합니다. 캐시 내부의 x 이동과 blink는 적분하지 않습니다. **표시되는 y는 보간 근사값**이며
+  TIME에서 지정 x까지 수치적으로 적분한 결과가 필요하면 F1 x=를 사용합니다. SYS 2D PHASE의 x=는 보관된 trajectory를 보간하며 새 적분을 하지 않습니다. 보간은 invalid gap을 건너지 않습니다.
   UP/DOWN은 ON 곡선을 바꾸고 가능한 경우 같은 x를 유지합니다. SYS 2D PHASE는 TIME 창의 Xdot으로 이동하고 필요하면 phase 창만 pan합니다. Phase zoom은 시간 진행 간격을 바꾸지 않으며 Phase에서 적분 범위를 확장하지 않습니다.
   **F5 LEFT / F6 RIGHT**는 현재 설정된 Solver Xrange min/max로 이동합니다. 캐시의 유효 endpoint/보간을
   우선하며 numerical-invalid endpoint에서는 가장 가까운 유효 점과 짧은 numerical-limit 안내를 사용합니다.
@@ -267,7 +268,7 @@ Field 팔레트는 기존 선명한 solution 팔레트와 별개입니다. 설�
   TIME의 캐시 밖 연속 이동은 매번 계산이 필요할 수 있으며 한 작업만 진행하고 repeat를 병합합니다.
   취소·work-limit 실패 시 임시 결과를 버려 이전 캐시·커서·창·완성 그래프를 보존합니다.
   캐시는 표시 중인 모든 IC에 **총 258점**을 나누어 사용하므로, 긴 구간이나 많은 IC에서는
-  TRACE 보간·pan 후 곡선의 해상도가 낮아질 수 있습니다. 보관량과 RK4 단계 수는 별개입니다.
+  TRACE 보간·pan 후 곡선의 해상도가 낮아질 수 있습니다. 보관량과 내부 solver 단계 수는 별개입니다.
   선택 곡선은 250 ms timer로 강조/해제됩니다. Black은 **Black↔Blue**이며 G-Solve도 같은 정책입니다.
   LEFT/RIGHT hold는 세 모드 모두 400 ms 후 일정한 125 ms(8회/초) 간격입니다.
   FAST/FASTER는 이동 간격만 바꾸며 보간 정확도나 CPU/키 반복 속도를 높이지 않습니다.
@@ -286,7 +287,7 @@ G-SLV 메뉴를 열거나 페이지를 바꿨다가 EXIT만 하면 그래프와 
 Table은 항상 독립변수 x와 종속변수의 time-domain 표입니다. SYS IC는 기존과 같이 완전 벡터 하나입니다.
 
 TIME과 PHASE의 V-Window는 별도로 보존됩니다. Phase V-WIN, 방향키 pan, ZOOM IN/OUT/AUTO/ORIG는
-TIME 창·식·IC·h·Step·Solver Xrange를 바꾸지 않습니다. 첫 Phase 창은 원래 RK4 스트림에서 얻은
+TIME 창·식·IC·h·Step·Solver Xrange를 바꾸지 않습니다. 첫 Phase 창은 원래 수치 스트림에서 얻은
 유한 y1/y2 범위에 12% 여백을 더합니다. 유효점이 부족하면 두 축 [-3.1,3.1]을 사용합니다.
 ORIG도 이 기본 창으로 돌아갑니다. 가로/세로 pixel scale이 다르면 원 궤적이 타원처럼 보입니다.
 
@@ -337,13 +338,35 @@ TRACE는 남아 있는 유효 점에서 계속 이동하며 경계에서는 `TRA
 계산된 유효 구간에서만 찾고 x순으로 결과를 표시하며, 빈 구간을 가로질러 근·극값을 만들지 않습니다.
 Y-CAL과 TRACE x=는 요청한 x까지 해당 IC에서 적분할 수 있을 때만 값을 반환합니다.
 
-**현재 RK4는 각 IC에서 양방향으로 성공한 prefix를 보존합니다.** 실패 지점 너머의 같은 해를
+**두 solver 모두 각 IC에서 양방향으로 성공한 prefix를 보존합니다.** 실패 지점 너머의 같은 해를
 새 초기조건 없이 재시작하지 않습니다. 반대 방향과 별도 IC는 계속 사용할 수 있지만 별도 IC는 별도 곡선입니다.
 합성 valid/gap/valid 테스트는 신뢰 가능한 양쪽 값이 주어졌을 때의 소비 경로를 검증하며,
 일반 ODE가 특이점을 통과했다는 뜻이 아닙니다. 결과 없음은 계산되지 않은 영역의 해 부재를 보장하지 않습니다.
 자세한 경계는 [Numerical validity audit](NUMERICAL_VALIDITY_AUDIT.md)에 있습니다.
 
-## h·Step·Max Steps와 계산 시작 전 검사
+## Solver Methods: RK4와 RK45
+
+기존 계산 결과와 고정 h 비교에는 기본 RK4를 사용합니다. 구간마다 변화율이 크게 달라
+자동 step 조절이 필요하면 RK45를 선택합니다. RK45는 Dormand–Prince 5(4)로
+component별 AbsTol+RelTol×상태 크기에 대해 최대 local error norm ≤1인 단계만 수락합니다.
+RelTol은 상대 오차 목표, AbsTol은 작은 값의 절대 오차 바닥입니다. 기본값은 1e-6/1e-9이며
+기존 numeric editor의 EXP와 NEG로 입력합니다. 0/음수/NaN/Inf는 거부하고
+RelTol<100×machine epsilon, AbsTol<최소 normal double은 Tolerance too small입니다.
+
+같은 h 값을 공유하므로 방식 전환 시 보존됩니다. RK45 Initial h=.1은 첫 제안이며
+실제 내부 h는 자동으로 변합니다. RelTol/AbsTol과 숨겨진 RK4 Step도 방식 전환·RAM Recall·새 식에서 유지됩니다.
+RK45 Max steps는 IC/방향 또는 수치 query당 수락+거절 시도 합계(기본20000, 상한100000)입니다.
+전체 동작에서 최대200000시도/800000 RHS/2400000 RHS×차원을 runtime에 제한합니다.
+STAT 전체 export도 같은 budget을 공유합니다. EXIT는 거절 재시도·각 stage에서도 검사합니다.
+
+RK45 Step은 숨기며 Graph/Table 출력은 TIME Xdot과 범위/1024 중 큰 간격의 IC 기준 격자입니다.
+수치 Table/G-Solve/TIME x=는 요청 x에 직접 도착하도록 적분합니다. TRACE 방향키/Phase x=는
+기존 258점 캐시의 화면용 선형 보간이며 tolerance 정확도를 보장하지 않습니다.
+RK45는 explicit adaptive 방식이며 **stiff ODE 전용 solver가 아닙니다**.
+강성·특이점·엄격한 tolerance에서는 Step underflow/Work limit에 도달할 수 있습니다.
+허용오차는 전역 정확도 보증이 아닙니다. [계수·안전장치·정량 결과](RK45_NUMERICS.md)를 참고하세요.
+
+## RK4 h·Step·Max Steps와 계산 시작 전 검사
 
 h는 양수 유한값이어야 합니다. 0·음수·NaN·Inf는 거부합니다. 작은 h 자체를 일괄 금지하지 않으며,
 각 IC에서 실제 적분할 방향 끝점까지 `ceil(abs(target-x0)/h)`를 계산합니다. 매우 작은 h는
@@ -364,7 +387,8 @@ OUTPUT OFF여도 모든 입력 IC와 모든 내부 state를 시작 전 작업량
 Separable `sinh(x)*(y^2-1)`, IC (0,0)의 해는 `-tanh(cosh(x)-1)`로 bounded입니다.
 h=.1 RK4는 약 ±4.4에서 마지막 유효 수치점을 남기고 그 다음 단계에서 magnitude guard에 걸립니다.
 이는 **고정 h의 수치 안정성 한계**이며 해의 수학적 발산으로 해석하면 안 됩니다.
-작은 h를 사용자가 선택할 수 있지만 이번 버전은 adaptive solver나 자동 재시도를 하지 않습니다.
+RK4는 h를 자동 변경하지 않습니다. RK45 기본 tolerance에서는 x=7까지 완료했고 오차는 약1.78e-7입니다.
+이는 관측한 구간의 검증이며 더 넓은 모든 구간에서 성공한다는 보장은 아닙니다.
 
 ## Table·STAT
 
@@ -377,14 +401,15 @@ Table은 항상 **작은 x → 큰 x 오름차순**이며 7행을 보여줍니�
 - **MID**: 처음 진입할 때 사용한 동일한 중앙 page. 반복 이동해도 같으며 수평 열 위치를 보존합니다.
 
 유효 범위의 가운데 절반에 0이 있으면 x=0을 중앙 행에 놓습니다. 기존 출력 격자에 0이 없어도
-인접한 유효 RK4 점에서 보간해 0행을 추가합니다. 그렇지 않으면 `(유효 min+max)/2`에 가장 가까운
+RK4는 인접한 유효 점에서 보간해 0행을 추가하고, RK45는 x=0까지 직접 적분합니다. 그렇지 않으면 `(유효 min+max)/2`에 가장 가까운
 sample을 중앙으로 사용합니다. h를 변경하지 않으며 범위 끝/7행 미만에서는 page를 안전하게 clamp합니다.
 기본 ±6, h=.1의 첫 page는 -.3..+.3, 중앙이 0입니다. 비대칭 -2..8은 3 부근입니다.
 
 1차 `y0={0,1}`은 **x | y1 | y2**, 세 값이면 y3까지 표시합니다. 여기의 y1/y2는 초기값 순서의
 **해 번호**입니다. N-th의 y/y'/y(8), SYS의 y1/y2는 **state 변수**입니다. 이 두 의미를 혼용하지 않습니다.
 각 해가 도달한 유효 범위가 다르면 도달하지 못한 셀은 `--`, CSV는 빈 셀입니다. 수락된 인접점 사이만
-보간하며 실패한 점이나 빈 구간을 넘겨 값을 만들지 않습니다. 수치 한계에서는 Step 격자 밖 마지막
+RK4에서 보간하며 실패한 점이나 빈 구간을 넘겨 값을 만들지 않습니다.
+RK45 Table/STAT은 각 행 x까지 원래 IC에서 다시 적분하며 보간하지 않습니다. 재계산이 실패한 셀은 비웁니다. 수치 한계에서는 Step 격자 밖 마지막
 수락점도 보존합니다. 긴 적분의 누적 x 반올림은 h의 1e-7 이하 차이 범위에서 수락점으로 맞춥니다.
 부동소수점 표현 한계 때문에 출력 간격으로 서로 다른 x행을 만들 수 없으면 Table을 안전하게 거부합니다.
 TOP/BTM의 정상 끝은 END, 해당 방향의 어느 해에 수치 한계가 있으면 `END: Numerical limit`을
@@ -401,7 +426,7 @@ TOP/BTM의 정상 끝은 END, 해당 방향의 어느 해에 수치 한계가 �
 ```
 
 List Editor의 26열×999행 한도에 맞춰 label 1행 + **최대 998 data rows**입니다. 초과하면 파일을
-생성하기 전에 거부하고 Step을 늘리도록 안내합니다. 전체 trajectory 대신 작은 범위 index와
+생성하기 전에 거부합니다. RK4는 Step을 늘리고, RK45는 Solver Xrange를 줄이거나 TIME Xdot을 늘립니다. 전체 trajectory 대신 작은 범위 index와
 7+1행 버퍼를 사용합니다. 각 파일 create/append/close는 `gint_world_switch` 안에서 완료하며,
 취소/오류 파일은 handle이 정상적으로 닫혔을 때 제거합니다. **실제 STAT의 빈 셀 import/정렬 유지,
 Fugue 저장/취소 반응은 HARDWARE RETEST REQUIRED**입니다. 빈값을 0으로 대체하지 않습니다.
@@ -420,10 +445,11 @@ current/recall과 설정을 모두 복원합니다. 진짜 새 실행은 default
 않습니다. MENU 왕복으로 같은 실행이 재개될 때는 이 초기화를 다시 하지 않습니다.
 
 계산기 root의 `DIFFEQ0.dat`와 `DIFFEQ1.dat`를 번갈아 씁니다. magic/version/size/checksum 및
-값을 검사하고 최신 slot이 손상되면 다른 정상 slot을 사용합니다. 새 저장은 **v8**이며
+값을 검사하고 최신 slot이 손상되면 다른 정상 slot을 사용합니다. 새 저장은 **v9**이며
 Private Constants, 개별 G/L mask, x export flag는 없습니다. 메모리에 별도의 private constant 배열도 없습니다.
 
-v8은 독립 Phase 창, FIELD/NULL 표시 설정과 첫 창 준비 상태를 current/recall에 저장합니다.
+v9는 Method/RelTol/AbsTol을 current/recall에 저장합니다. v3~v8은 RK4와 기본 tolerance로 읽습니다.
+v8은 고정 layout reader로 독립 Phase 창, FIELD/NULL 표시 설정과 첫 창 준비 상태를 current/recall에서 보존합니다.
 큰 trajectory나 analysis result는 저장하지 않습니다. v7의 10개 IC layout은 고정 reader로 읽고
 Phase 설정을 초기화합니다. 옛 SYS 2D에서 phase가 켜져 있었다면 기존 shared 창을 Phase 창으로
 옮기고 TIME 기본 창을 만듭니다. 자동/수동 여부와 무관하게 Solver 설정은 그대로 보존합니다.
@@ -437,7 +463,7 @@ v3/v4는 Arrow/Pale Blue, v5의 명시적 Segment/색은 유지합니다. v3 sol
 
 옛 고차/SYS 여러 IC는 첫 완전 벡터를, 1차의 서로 다른 x0는 첫 x0와 같은 IC만 복원합니다.
 값을 새 x0로 강제로 옮기지 않습니다. 이 적응이 필요하면 load 안내를 표시하며 **load는 원래 파일을
-변경하지 않습니다**. 이후 명시적 SAVE는 새 v8로 두 slot을 순환하므로, 여러 번 SAVE하면 옛
+변경하지 않습니다**. 이후 명시적 SAVE는 새 v9로 두 slot을 순환하므로, 여러 번 SAVE하면 옛
 slot은 교체될 수 있습니다. 원본 보존이 필요하면 기존 파일을 따로 보관하십시오.
 상세 mapping과 예외는 [OUTPUT/migration audit](OUTPUT_LIST_AUDIT.md)에 있습니다.
 

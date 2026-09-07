@@ -29,7 +29,7 @@ def keys(text):
     return ' '.join(mapping.get(c,c) for c in text)+' '
 # Constant slopes give exact cached interpolation and test both Y directions.
 ic='1 4 1 EXE F6 DOWN '+keys('{0,1}')+'EXE '
-graph=ic+'F6 DOWN DOWN DOWN DOWN 0 EXE F6 '
+graph=ic+'F6 DOWN DOWN DOWN DOWN DOWN 0 EXE F6 '
 trace=graph+'F1 DOWN '
 for speed,multiple in [('F2',1),('F3',2),('F4',3)]:
     base=run(trace+speed)

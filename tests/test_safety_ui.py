@@ -45,7 +45,7 @@ for entry in ['1 1','1 2','1 3','1 4','2','3 F6']:
 for prefix in ['2','2 F6','2 F6 F6']:
     for move in ['', 'DOWN','DOWN DOWN']:
         assert re.findall(r'^PLOT (\w+)',run(prefix+' '+move+' EXE'),re.M)[-1]==re.findall(r'^PLOT (\w+)',run(prefix+' '+move+' F6'),re.M)[-1]
-params='2 F6 F6 DOWN DOWN '
+params='2 F6 F6 DOWN DOWN DOWN '
 for h in ['0','NEG 1']:
     out=run(params+h+' EXE EXE')
     assert 'h must be finite and > 0.' in out and solves(out)==0
@@ -54,7 +54,7 @@ for h in ['0 DOT 0 0 0 1','1 EXP NEG 3 0 0']:
     assert 'Too many integration steps.' in out and 'Increase h or Max Steps.' in out
     assert 'TEXT 14 9 Parameter\n' in tail(out) and solves(out)==0
 assert solves(run(params+'0 DOT 0 0 1 EXE F6'))>0
-assert solves(run('2 F6 F6 0 EXE 0 DOT 0 1 EXE 0 DOT 0 0 0 1 EXE F6'))>0
+assert solves(run('2 F6 F6 0 EXE 0 DOT 0 1 EXE DOWN 0 DOT 0 0 0 1 EXE F6'))>0
 # TRACE follows both viewport edges; only actual beyond-cache moves integrate.
 graph='2 EXE EXE EXE '
 base=run(graph+'F1')
@@ -66,11 +66,11 @@ for direction in ['LEFT','RIGHT']:
     # Switch/blink retain x and the auto-followed viewport.
     switched=run(graph+'F1 '+(direction+' ')*310+'DOWN BLINK BLINK')
     assert re.findall(r'IC1 x=([-+.\deE]+)',switched)[-1]==re.findall(r'IC1 x=([-+.\deE]+)',out)[-1]
-manual='2 F6 F6 NEG 2 EXE 2 EXE 0 DOT 0 5 EXE F6 F1 '
+manual='2 F6 F6 NEG 2 EXE 2 EXE DOWN 0 DOT 0 5 EXE F6 F1 '
 exact=run(manual+'RIGHT '*310+'F1 1 0 EXE')
 assert 'IC1 x=10 ' in tail(exact)
 out=run(manual+'RIGHT '*310+'EXIT EXIT')
-assert all(s in tail(out) for s in ['TEXT 144 35 -2\n','TEXT 144 57 2\n','TEXT 144 79 0.05\n'])
+assert all(s in tail(out) for s in ['TEXT 144 35 -2\n','TEXT 144 57 2\n','TEXT 144 101 0.05\n'])
 for direction in ['LEFT','RIGHT','UP','DOWN']:
     out=run(graph+'F2 '+direction)
     assert bar(out)==['IN','OUT','AUTO','ORIG','','']

@@ -26,6 +26,9 @@ double table_x_at(const TableIndex *index,unsigned row);
 unsigned table_bottom(const TableIndex *index);
 unsigned table_nearest(const TableIndex *index,double x);
 void table_column_label(const Document *d,const TableIndex *index,int column,char *out,unsigned size);
+/* Continue an existing export transaction without resetting its solver budget. */
+void table_read_page_budgeted(const Document *d,CompiledModel *m,const TableIndex *index,unsigned start,
+    TablePage *page,OdeCancel cancel,void *cancel_ctx);
 void table_read_page(const Document *d,CompiledModel *m,const TableIndex *index,unsigned start,
     TablePage *page,OdeCancel cancel,void *cancel_ctx);
 #endif

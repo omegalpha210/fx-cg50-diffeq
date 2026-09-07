@@ -26,6 +26,14 @@ typedef struct {
     uint16_t enabled;uint8_t color[10][9];uint8_t field_style,field_color;
 } V7Document;
 typedef struct {uint32_t magic,version,size,generation,has_recall;V7Document current,recall;uint32_t checksum;} V7Record;
+typedef struct {
+    int kind,dim,nic;char text[9][192];double power;
+    InitialCondition ic[10];OdeSettings solver;int solver_custom;ViewWindow view;
+    uint16_t enabled;uint8_t color[10][9],field_style,field_color;ViewWindow phase_view;
+    uint8_t phase_field,phase_nullclines,phase_ready;
+} V8Document;
+typedef struct {uint32_t magic,version,size,generation,has_recall;V8Document current,recall;uint32_t checksum;} V8Record;
+static V8Record eight;
 typedef struct {uint32_t magic,version,size,generation,has_recall;Document current,recall;uint32_t checksum;} CurrentRecord;
 static V6Record six;
 static V7Record seven;
@@ -117,6 +125,8 @@ int main(void)
     b.doc=a.doc;b.doc.phase_view.labels=2;assert(model_validate(&b.doc)==ODE_BAD_INPUT);
     b.doc=a.doc;b.doc.phase_view.phase=0;assert(model_validate(&b.doc)==ODE_BAD_INPUT);
     b.doc=a.doc;b.doc.phase_view.phase_x=1;assert(model_validate(&b.doc)==ODE_BAD_INPUT);
+    b.doc=a.doc;b.doc.adaptive.reltol=1e-300;assert(!storage_save(&b,directory));
+    b.doc=a.doc;b.doc.adaptive.method=2;assert(!storage_save(&b,directory));
     b.doc=a.doc;b.doc.phase_field=2;assert(model_validate(&b.doc)==ODE_BAD_INPUT);
     b.doc=a.doc;b.doc.phase_nullclines=2;assert(model_validate(&b.doc)==ODE_BAD_INPUT);
     b.doc=a.doc;b.doc.phase_ready=2;assert(model_validate(&b.doc)==ODE_BAD_INPUT);
@@ -210,7 +220,7 @@ int main(void)
     assert(!memcmp(&b.recall.solver,&a.recall.solver,sizeof(a.recall.solver)) && b.recall.solver_custom);
     assert(b.doc.phase_field==1 && b.doc.phase_nullclines==0 && b.doc.phase_ready==0);
 
-    /* Current v8 round-trips independent windows and phase preferences. */
+    /* Current v9 round-trips independent windows and phase preferences. */
     model_defaults(&a.doc,EQ_SYSTEM,2);a.doc.view.phase=1;
     a.doc.view.xmin=-20;a.doc.view.xmax=30;a.doc.view.ymin=-11;a.doc.view.ymax=12;
     a.doc.phase_view=(ViewWindow){-2.5,4.5,-6.5,7.5,.5,.75,0,1,1,0,1};
@@ -219,22 +229,37 @@ int main(void)
     a.recall.phase_view=(ViewWindow){-9,10,-12,13,2,3,1,0,1,0,1};
     a.recall.phase_field=1;a.recall.phase_nullclines=1;a.recall.phase_ready=0;
     a.has_recall=true;
+    /* Genuine frozen v8 layout, not a new Document mislabeled as an old record. */
+    eight.magic=0x44455131;eight.version=8;eight.size=sizeof(eight);eight.generation=30;eight.has_recall=1;
+    _Static_assert(sizeof(V8Document)==offsetof(Document,adaptive),"v8 fixture ABI");
+    memcpy(&eight.current,&a.doc,sizeof(V8Document));memcpy(&eight.recall,&a.recall,sizeof(V8Document));
+    write_bytes(paths[0],&eight,sizeof(eight),offsetof(V8Record,checksum));
+    assert(storage_load(&b,directory));
+    assert(b.doc.adaptive.method==ODE_RK4 && b.recall.adaptive.method==ODE_RK4);
+    assert(b.doc.adaptive.reltol==1e-6 && b.doc.adaptive.abstol==1e-9);
+    assert(same_window(&b.doc.phase_view,&a.doc.phase_view) && b.doc.phase_nullclines==1);
+    a.doc.adaptive=(OdeAdaptive){ODE_RK45,2e-7,3e-10};
+    a.recall.adaptive=(OdeAdaptive){ODE_RK4,5e-5,6e-8};
     for(unsigned c=0;c<FIELD_COLORS;c++) {
         a.doc.field_style=FIELD_SEGMENT;a.doc.field_color=(uint8_t)c;
         a.recall.field_style=FIELD_ARROW;a.recall.field_color=(uint8_t)(5-c);a.recall.enabled=0;
         assert(storage_save(&a,directory) && storage_load(&b,directory));
         assert(b.doc.field_style==FIELD_SEGMENT && b.doc.field_color==c && b.recall.field_color==5-c);
         assert(b.doc.enabled==3 && b.recall.enabled==0 && !b.migration_warnings);
+        assert(b.doc.adaptive.method==ODE_RK45 && b.doc.adaptive.reltol==2e-7 && b.doc.adaptive.abstol==3e-10);
+        assert(b.recall.adaptive.method==ODE_RK4 && b.recall.adaptive.reltol==5e-5);
         assert(same_window(&b.doc.view,&a.doc.view) && same_window(&b.doc.phase_view,&a.doc.phase_view));
         assert(same_window(&b.recall.view,&a.recall.view) && same_window(&b.recall.phase_view,&a.recall.phase_view));
         assert(b.doc.phase_field==0 && b.doc.phase_nullclines==1 && b.doc.phase_ready==1);
         assert(b.recall.phase_field==1 && b.recall.phase_nullclines==1 && b.recall.phase_ready==0);
     }
+    b.doc=a.doc;b.doc.adaptive.reltol=1e-300;assert(!storage_save(&b,directory));
+    b.doc=a.doc;b.doc.adaptive.method=2;assert(!storage_save(&b,directory));
     b.doc=a.doc;b.doc.phase_field=2;assert(!storage_save(&b,directory));
 
     /* Current invalid phase bytes are rejected; current field appearance sanitizes. */
     seven.generation=100;write_bytes(paths[0],&seven,sizeof(seven),offsetof(V7Record,checksum));
-    memset(&record,0,sizeof(record));record.magic=0x44455131;record.version=8;
+    memset(&record,0,sizeof(record));record.magic=0x44455131;record.version=9;
     record.size=sizeof(record);record.generation=101;record.has_recall=1;
     record.current=a.doc;record.recall=a.recall;record.current.field_style=255;record.current.field_color=255;
     write_bytes(paths[1],&record,sizeof(record),offsetof(CurrentRecord,checksum));
@@ -242,12 +267,12 @@ int main(void)
     record.generation=102;record.current.phase_nullclines=2;
     write_bytes(paths[1],&record,sizeof(record),offsetof(CurrentRecord,checksum));
     assert(storage_load(&b,directory) && b.doc.nic==10 && b.doc.phase_view.xmin==-8);
-    record.version=9;record.current.phase_nullclines=1;
+    record.version=10;record.current.phase_nullclines=1;
     write_bytes(paths[1],&record,sizeof(record),offsetof(CurrentRecord,checksum));
     assert(storage_load(&b,directory) && b.doc.nic==10 && b.doc.phase_view.xmin==-8);
     assert(truncate(paths[1],25)==0);assert(storage_load(&b,directory) && b.doc.field_style==FIELD_ARROW);
     FILE *f=fopen(paths[0],"rb");assert(f);unsigned char check[sizeof(seven)];size_t n=fread(check,1,sizeof(check),f);fclose(f);
     assert(n==sizeof(seven) && !memcmp(check,&seven,n));
     for(int i=0;i<2;i++)assert(remove(paths[i])==0);assert(rmdir(directory)==0);
-    printf("v3-v7 migration, independent phase windows, v8 roundtrip/validation and two-slot recovery passed. Current record %zu, v7 %zu, oldest %zu bytes.\n",sizeof(record),sizeof(seven),sizeof(OldRecord));
+    printf("v3-v8 migration, solver preferences, independent phase windows, v9 roundtrip/validation and two-slot recovery passed. Current record %zu, v7 %zu, oldest %zu bytes.\n",sizeof(record),sizeof(seven),sizeof(OldRecord));
 }

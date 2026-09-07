@@ -16,13 +16,13 @@
 #endif
 
 #define RECORD_MAGIC 0x44455131u
-#define RECORD_VERSION 8u
+#define RECORD_VERSION 9u
 
 typedef struct {
     uint32_t magic,version,size,generation,has_recall;
 } RecordHeader;
 
-/* This type describes the current version-8 byte layout. No object of this
+/* This type describes the current version-9 byte layout. No object of this
    type is allocated; session data is streamed directly from App documents. */
 typedef struct {
     uint32_t magic,version,size,generation,has_recall;
@@ -72,6 +72,14 @@ typedef struct {
 } Version7Document;
 _Static_assert(offsetof(Document,phase_view)==sizeof(Version7Document),
     "v7 document prefix changed");
+/* Frozen v8 retains the original OdeSettings ABI and appends Phase prefs. */
+typedef struct {
+    int kind,dim,nic;char text[9][192];double power;InitialCondition ic[10];
+    OdeSettings solver;int solver_custom;ViewWindow view;uint16_t enabled;
+    uint8_t color[10][9],field_style,field_color;ViewWindow phase_view;
+    uint8_t phase_field,phase_nullclines,phase_ready;
+} Version8Document;
+_Static_assert(offsetof(Document,adaptive)==sizeof(Version8Document),"v8 prefix changed");
 typedef struct {
     char path[256];
     RecordHeader header;
@@ -157,6 +165,7 @@ static size_t document_size(uint32_t version)
     if(version==5)return sizeof(LegacyDocument);
     if(version==6)return sizeof(Version6Document);
     if(version==7)return sizeof(Version7Document);
+    if(version==8)return sizeof(Version8Document);
     return sizeof(Document);
 }
 static size_t checksum_offset(uint32_t version)
@@ -278,6 +287,11 @@ static void migrate_phase_state(Document *d,bool present)
 static bool read_document(int fd,Document *d,uint32_t version,bool present,uint32_t *hash,unsigned *warnings)
 {
     memset(d,0,sizeof(*d));
+    ode_adaptive_defaults(&d->adaptive);
+    if(version==8) {
+        if(!native_read_hashed(fd,d,sizeof(Version8Document),hash))return false;
+        model_sanitize_colors(d);model_sanitize_field(d);return true;
+    }
     if(version==RECORD_VERSION) {
         if(!native_read_hashed(fd,d,sizeof(*d),hash))return false;
         model_sanitize_colors(d);model_sanitize_field(d);return true;
@@ -615,7 +629,7 @@ static bool export_table(const Document *document,CompiledModel *model,const cha
     ok=ok && append_format(&used,"\n") && append_file(path,used,&removable);
     *status=ok ? ODE_OK:ODE_IO_ERROR;
     for(unsigned start=0;start<index.total && *status==ODE_OK;start+=csv_page.count) {
-        table_read_page(document,model,&index,start,&csv_page,cancel,cancel_context);
+        table_read_page_budgeted(document,model,&index,start,&csv_page,cancel,cancel_context);
         if(csv_page.result.status!=ODE_OK){*status=csv_page.result.status;break;}
         used=0;
         for(unsigned row=0;row<csv_page.count;row++) {

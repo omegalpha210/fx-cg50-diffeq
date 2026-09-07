@@ -18,8 +18,8 @@ graph = parameters + 'F6 '
 cases = [
     ('equation-entry', equation, 1),
     ('initial-conditions', ic, 1),
-    ('solver-parameters', parameters, 1),
-    ('graph-solution', parameters + 'DOWN DOWN DOWN DOWN 0 EXE F6', 1),
+    ('solver-parameters', parameters + 'DOWN DOWN RIGHT', 1),
+    ('graph-solution', parameters + 'DOWN DOWN DOWN DOWN DOWN 0 EXE F6', 1),
     ('graph-slope-field', graph, 2),
     ('graph-trace', graph + 'F1 RIGHT RIGHT RIGHT', 1),
     ('graph-gsolve', graph + 'F5 F4 EXE', 1),

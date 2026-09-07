@@ -85,14 +85,14 @@ bool app_compile(App *a)
 
 static void new_document(App *a,EquationKind kind,int dimension)
 {
-    OdeSettings solver=a->doc.solver;ViewWindow view=a->doc.view;
+    OdeSettings solver=a->doc.solver;ViewWindow view=a->doc.view;OdeAdaptive adaptive=a->doc.adaptive;
     int solver_custom=a->doc.solver_custom;
     ViewWindow phase_view=a->doc.phase_view;
     uint8_t phase_field=a->doc.phase_field,phase_nullclines=a->doc.phase_nullclines,phase_ready=a->doc.phase_ready;
     uint8_t field_style=a->doc.field_style,field_color=a->doc.field_color;
     model_defaults(&a->doc,kind,dimension);
     a->doc.solver=solver;a->doc.solver_custom=solver_custom;a->doc.view=view;
-    a->doc.field_style=field_style;a->doc.field_color=field_color;
+    a->doc.field_style=field_style;a->doc.field_color=field_color;a->doc.adaptive=adaptive;
     a->doc.phase_view=phase_view;a->doc.phase_field=phase_field;
     a->doc.phase_nullclines=phase_nullclines;a->doc.phase_ready=phase_ready;
     a->doc.view.phase=0;
@@ -103,13 +103,13 @@ static void new_document(App *a,EquationKind kind,int dimension)
 static void use_recall(App *a)
 {
     bool was_phase_system=model_phase_supported(&a->doc);
-    OdeSettings solver=a->doc.solver;ViewWindow view=a->doc.view;
+    OdeSettings solver=a->doc.solver;ViewWindow view=a->doc.view;OdeAdaptive adaptive=a->doc.adaptive;
     int solver_custom=a->doc.solver_custom;
     ViewWindow phase_view=a->doc.phase_view;
     uint8_t phase_field=a->doc.phase_field,phase_nullclines=a->doc.phase_nullclines,phase_ready=a->doc.phase_ready;
     uint8_t field_style=a->doc.field_style,field_color=a->doc.field_color;
     a->doc=a->recall;a->doc.solver=solver;a->doc.solver_custom=solver_custom;a->doc.view=view;
-    a->doc.field_style=field_style;a->doc.field_color=field_color;
+    a->doc.field_style=field_style;a->doc.field_color=field_color;a->doc.adaptive=adaptive;
     a->doc.phase_view=phase_view;a->doc.phase_field=phase_field;
     a->doc.phase_nullclines=phase_nullclines;a->doc.phase_ready=phase_ready;
     if(a->doc.dim<2 || was_phase_system!=model_phase_supported(&a->doc))a->doc.view.phase=0;
@@ -377,7 +377,7 @@ static ScreenTransition screen_calculate(App *a,AppUi *ui)
 {
     ModelWork plan=model_preflight(&a->doc,&a->doc.solver);
     if(plan.status!=ODE_OK) {
-        ui->parameters.selected=2;ui->parameters.edit.active=false;
+        ui->parameters.selected=3;ui->parameters.edit.active=false; /* h / Initial h */
         ui_message("Calculation not started",plan.status==ODE_STEP_LIMIT ?
             "Too many integration steps.\nIncrease h or Max Steps.":
             (plan.status==ODE_WORK_LIMIT ? "Total calculation too large.\nIncrease h, shorten range or use fewer ICs.":ode_status_text(plan.status)));

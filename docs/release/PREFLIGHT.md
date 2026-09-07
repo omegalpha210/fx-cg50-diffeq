@@ -1,3 +1,15 @@
+# v0.11.0-beta.1 preflight
+
+Development source e885230 (hardware-crash-fix), public parent713ddc2. Preserve
+public ancestry and all old tags; synchronize only public-safe source/docs.
+Required gates: all36 host/UBSan tests, full strict SH compile/link,13 G3A checks,
+coefficient/benchmark/memory audit, README EN/KO assets/links, private-path/secret
+and public-history scan, unchanged MIT/dependency notices. Repeat from public
+candidate and exact new tag before uploading. Download assets and compare bytes
+and SHA256. Exact identifiers/results belong to release VALIDATION.md.
+
+The following older milestone checklist is retained as history.
+
 # Phase beta public-source and publication audit
 
 The validated development milestone is `6bc10c9` (implementation `dc14ca7`), preserving all earlier local

@@ -2,6 +2,17 @@
 
 The application is native C11. The numerical engine, expression compiler, equation model, graph geometry and UI are independent modules. The target links against installed gint headers and `Gint::Gint`; host tests link the same mathematical core against the host C library.
 
+## RK45 dispatch and output (v0.11)
+
+Document appends OdeAdaptive without changing the old OdeSettings ABI. Frozen
+v3–v8 readers set RK4 defaults; v9 stores the new preferences. CompiledModel
+owns operation-local work counters. solver.c dispatches to the unchanged RK4
+driver or rk45.c, a generic Dormand–Prince 5(4) implementation with a 652-byte
+fixed workspace. Adaptive internal steps and the Xdot-based output grid are
+separate. Streaming consumers retain their bounded allocations. Table/G-Solve
+land at requested x; TRACE cached interpolation remains display-only.
+See [RK45_NUMERICS](RK45_NUMERICS.md) for budgets, memory and quantitative tests.
+
 ## Modules and data flow
 
 - `src/math/expression.c`: bounded recursive-descent compiler → compact RPN bytecode. Parse once when Parameters GRAPH validates the document, evaluate repeatedly at RK stages. No heap AST and no string parsing in the integration loop.

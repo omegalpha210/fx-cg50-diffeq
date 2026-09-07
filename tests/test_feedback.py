@@ -23,7 +23,7 @@ def rgb565(value):return bytes([(value>>11&31)*255//31,(value>>5&63)*255//63,(va
 
 # Ordinary fields: EDIT EXE advances once; EXIT commits/stays; last selected runs.
 forms=[('2','DIFF EQ / Linear 2nd',3),('2 F6','Initial Conditions',3),
- ('2 F6 F6','Parameter',5),('2 F3','View Window',7),('3','Order (1-9)',1)]
+ ('2 F6 F6','Parameter',6),('2 F3','View Window',7),('3','Order (1-9)',1)]
 for prefix,title,count in forms:
     assert plot(run(prefix+' EXE'))==plot(run(prefix+' F6'))
     if count>1:assert plot(run(prefix+' 2 EXE'))==plot(run(prefix+' 2 EXIT DOWN'))
@@ -110,7 +110,7 @@ with tempfile.TemporaryDirectory() as directory:
     assert plot(recalled)==plot(baseline)
 # INIT restores factory values + first selector; Output includes every IC color.
 assert plot(run('2 F3 DOWN DOWN 2 EXIT F1'))==plot(run('2 F3'))
-assert plot(run('2 F6 F6 DOWN DOWN 2 EXIT F2'))==plot(run('2 F6 F6'))
+assert plot(run('2 F6 F6 DOWN DOWN DOWN 2 EXIT F2'))==plot(run('2 F6 F6'))
 assert plot(run(output+'DOWN RIGHT F3 DOWN EXE F4'))==plot(run(output))
 settings='2 F6 F6 F5 '
 assert plot(run(settings+'LEFT DOWN LEFT F4'))==plot(run(settings))
@@ -136,9 +136,9 @@ for operation in ['F1','F2','F3','F4']:
     assert bar(run(graph+'F2 '+operation+' EXIT'))==['TRACE','ZOOM','V-WIN','TABLE','G-SLV','PREV']
 assert plot(run(graph+'F2 '+('F1 F1 F2 F3 F4 '*100)+'EXIT'))==plot(run(graph))
 assert plot(run(graph+'RIGHT UP F2 F4'))==plot(run(graph+'RIGHT UP F3 F1 EXIT'))
-manual='2 F6 F6 NEG 2 EXE 2 EXE 0 DOT 0 5 EXE F6 '
+manual='2 F6 F6 NEG 2 EXE 2 EXE DOWN 0 DOT 0 5 EXE F6 '
 out=run(manual+'RIGHT F2 F4 EXIT EXIT')
-assert all(s in tail(out) for s in ['TEXT 144 35 -2\n','TEXT 144 57 2\n','TEXT 144 79 0.05\n'])
+assert all(s in tail(out) for s in ['TEXT 144 35 -2\n','TEXT 144 57 2\n','TEXT 144 101 0.05\n'])
 assert plot(run(manual+'RIGHT F2 F4'))==plot(run(manual))
 # Scalar prompts: empty draft, only RUN, EXE/F6 same path, blink has no solves.
 for operation,result in [('F1','Y-CAL'),('F2','X-CAL')]:

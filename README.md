@@ -10,9 +10,9 @@ Solve, graph, and explore ordinary differential equations on your calculator.
 DIFFEQ is a native **fx-CG50 add-in** with colorful solution curves, slope fields,
 TRACE, G-Solve, numerical tables, and phase analysis for two-variable systems.
 
-**Public Beta · v0.10.0-beta.1 · [MIT License](LICENSE)**
+**Public Beta · v0.11.0-beta.1 · [MIT License](LICENSE)**
 
-**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.10.0-beta.1)**
+**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.11.0-beta.1)**
 · [All releases](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [Report a bug](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -36,8 +36,8 @@ Open any image for its full-size view, especially on a phone.
 
 | 3. Choose solver settings | 4. Draw and explore |
 |---|---|
-| ![Solver range -3 to 3, h=0.1, Step=1 and slope-field density 12](docs/images/solver-parameters.png) | ![Magenta and cyan solution curves with slope field disabled](docs/images/graph-solution.png) |
-| Set the integration range, h, and optional field density. | Press GRAPH. Pan, zoom, trace, or open a table. |
+| ![RK45 selected with Initial h=0.1, RelTol=1e-6 and AbsTol=1e-9](docs/images/solver-parameters.png) | ![Magenta and cyan solution curves with slope field disabled](docs/images/graph-solution.png) |
+| Choose RK4 or RK45, its settings, and optional field density. | Press GRAPH. Pan, zoom, trace, or open a table. |
 
 Use **F6 NEXT** between stages and **F6 GRAPH** to calculate. In a selected,
 unedited ordinary field, **EXE** performs the same primary action from any row.
@@ -76,17 +76,40 @@ candidate is not a nonlinear or global stability result. Searches can miss roots
 inconclusive or unavailable classifications are retained honestly.
 
 Both projections reuse a bounded **258-point trajectory cache**. Reprojection,
-pan and zoom do not rerun RK4; closely spaced features can exceed the retained
+pan and zoom do not rerun the trajectory solver; closely spaced features can exceed the retained
 resolution. Phase TRACE uses this cache and stays within its calculated time
 range. See [numerical methods and bounds](docs/PHASE_NUMERICS.md).
 **HARDWARE TEST REQUIRED:** these new Phase views and interactions are host-tested.
+
+## Solver Methods
+
+| Method | Step control | Use |
+|---|---|---|
+| **Classical RK4** (default) | Fixed h; Step controls output decimation | Preserve familiar results and compare chosen step sizes |
+| **Dormand–Prince RK45** | Adaptive h with embedded local error estimate | Adjust the step automatically as a non-stiff solution changes |
+
+In Parameters, select **Method** and press LEFT/RIGHT. Switching does not start
+calculation. RK45 shows **Initial h**, **RelTol**, **AbsTol**, and **Max steps**;
+Step is hidden. Defaults are .1, 1e-6, 1e-9 and 20000 attempts, including rejected
+trials. SF remains first-order-only. Both methods share the saved h value;
+tolerances and hidden Step persist. INIT retains Method and resets its settings.
+Older sessions load as RK4.
+
+RK45 supports every equation mode, Graph/TRACE/Table/G-Solve and Phase.
+Numerical Table/G-Solve and TIME x= queries land at their requested x. Ordinary
+TRACE movement and Phase x= retain bounded, display-only linear interpolation;
+they do not guarantee tolerance accuracy between cached points. RK45 output
+uses a TIME Xdot-based grid separately from adaptive internal steps.
+**RK45 is an explicit adaptive Runge–Kutta method, not a stiff ODE solver.**
+Stiffness or strict tolerances can trigger work limits or Step underflow.
+See [coefficients, safeguards, benchmarks and memory](docs/RK45_NUMERICS.md).
 
 ## Features
 
 - **Seven equation types:** separable, linear, Bernoulli and general first-order;
   linear second-order; general N-th order; systems of ODEs. Orders and systems
   support **1–9 states**, with N-th-to-system conversion and two-state phase portraits.
-- **Classical RK4**, integrated in both directions from the initial condition.
+- **Classical RK4 or adaptive Dormand–Prince RK45**, integrated in both directions from the initial condition.
   First-order `y0` accepts up to **10 values** at a common `x0`; higher-order and
   system input uses one complete initial-state vector.
 - **Slope fields** for the four scalar first-order modes: SF density 0–100,
@@ -106,7 +129,7 @@ border on the active mode: NORMAL=1×Xdot, FAST=2×, FASTER=3×. F5 LEFT and F6 
 jump to configured Solver Xrange endpoints without changing curve or speed.
 Reaching an endpoint does not prefetch; a move beyond the calculated range extends
 in that input. X/Y follow pans the view while preserving spans and solver settings.
-Explicit TIME `x=` queries retain RK4 evaluation at the requested in-range x;
+Explicit TIME `x=` queries use the selected solver at the requested in-range x;
 they are not replaced by Phase's cached interpolation.
 
 Graph Settings toggles Grid/Axis Label with LEFT/RIGHT; their F1/F2 are blank.
@@ -125,7 +148,7 @@ h = 0.1
 ```
 
 Set V-WIN to Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`,
-Yscale `0.5`. Xdot updates automatically. Leave Parameters at Step `1`, SF `12`
+Yscale `0.5`. Xdot updates automatically. For the original RK4 graph examples, leave Method RK4, Step `1`, SF `12`
 and Max steps `20000`. The automatic solver range becomes `-3` to `3`.
 The two curves approach y=1 to the right and y=-1 to the left.
 Set **SF=0** to reproduce the solution-only view.
@@ -136,7 +159,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 ## Install on your calculator
 
-1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.10.0-beta.1).
+1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.11.0-beta.1).
 2. Download **DIFFEQ.g3a**. `SHA256SUMS.txt` is available to check your download.
 3. Connect the fx-CG50 by USB, select USB Flash mode, and open its storage drive.
 4. Copy `DIFFEQ.g3a` to the drive's **root directory**, outside `@MainMem`.
@@ -145,7 +168,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 These steps follow [CASIO's add-in installation guide](https://edu.casio.com/content/dam/casio/global/edu-casio-com/download/files/fx-cg50-series/Inst_Users_Guide.pdf).
 You only need the `.g3a` on the calculator. Keep a backup of existing session files
-when upgrading: this beta writes format v8 and can read same-device v3–v7 files.
+when upgrading: this beta writes format v9 and can read same-device v3–v8 files.
 Older add-ins may reject new saves; adaptations are explained in the
 [upgrade notes](docs/release/RELEASE_NOTES.md).
 
@@ -158,7 +181,7 @@ Older add-ins may reject new saves; adaptations are explained in the
 | Editing | EXE commits and selects the next field; the last field stays. EXIT commits and stays |
 | Equation | FUNC is available in EDIT; VAR appears only where relevant. EXIT closes the token bar first |
 | OUTPUT | LEFT/RIGHT toggles ON/OFF; F3 COLOR, F4 INIT, F6 DONE. EXE follows the output rows |
-| Parameters | F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
+| Parameters | Method: LEFT/RIGHT toggles RK4/RK45; F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
 | Graph (except 2D SYS) | Arrows pan; F1 TRACE, F2 ZOOM, F3 V-WIN, F4 TABLE, F5 G-SLV, F6 magenta PREV |
 | 2D SYS Graph | F4 VIEW → F1 TIME / F2 PHASE / F3 TABLE; Phase uses F5 ANLYS |
 | Phase analysis | F1 FIELD, F2 NULL, F3 EQPT, F4 INFO; LEFT/RIGHT cycles equilibria, EXIT returns |
@@ -196,8 +219,10 @@ timestamps mean a later rebuild can have a different file hash.
 
 `h` controls the RK4 step. A smaller value can improve accuracy but increases work;
 compare results at different h values. Preflight workload checks and Max steps
-prevent excessive calculations. Fixed-step RK4 is not an adaptive or stiff solver:
-rapid variation and singularities can still cause numerical failure.
+prevent excessive calculations. RK45 adds estimated local-error control, but
+neither method guarantees global accuracy or detects every singularity. The
+numerically estimated pole can differ slightly from its mathematical location.
+Failed prefixes are not resumed as a new branch.
 
 Nonfinite values and magnitudes above `1e100` are not plotted. Valid computed
 prefixes remain usable; the solver does not continue across an unknown gap.
@@ -206,7 +231,7 @@ sample set; Table may recompute values. CSV requires manual import into STAT and
 does not directly write OS lists. See [numerical safety](docs/SOLVER_SAFETY_AUDIT.md)
 and [release validation](docs/ACCEPTANCE.md).
 
-**HARDWARE TEST REQUIRED:** Phase rendering/analysis, the latest LCD layout/colors, held-key and blink timing,
+**HARDWARE TEST REQUIRED:** new RK45 execution/cancellation and stack high-water, Phase rendering/analysis, the latest LCD layout/colors, held-key and blink timing,
 MENU/Fugue reentry, native SAVE/RCL and STAT behavior need device retesting.
 The [hardware checklist](docs/HARDWARE_RETEST.md) keeps these separate from host PASS.
 

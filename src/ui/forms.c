@@ -41,41 +41,51 @@ static UiStageAction stage_action(int key)
     if(key==KEY_F5)return UI_STAGE_SETTINGS;
     return key==KEY_F6 ? UI_STAGE_NEXT:UI_STAGE_BACK;
 }
-/* UI indices refer only to visible rows. Solver fields keep their identity. */
-static int parameter_field(int row,bool field_supported)
-{return !field_supported && row>=4 ? row+1:row;}
+/* Visible-row mapping keeps hidden Step/SF fields out of selection/editing. */
+static int parameter_rows(const Document *d,int rows[8])
+{
+    int count=0;rows[count++]=0;rows[count++]=1;rows[count++]=6;rows[count++]=2;
+    if(d->adaptive.method==ODE_RK45){rows[count++]=7;rows[count++]=8;}
+    else rows[count++]=3;
+    if(model_field_supported(d))rows[count++]=4;
+    rows[count++]=5;return count;
+}
 UiStageAction ui_parameters(Document *d,UiStageState *state)
 {
     static const char *const help[]={"Integration start","Integration end",
         "RK4 h > 0; smaller means more work","Output spacing only; h is unchanged",
-        "Slope-field columns (0-100); 0 = Off",
-        "Max RK4 steps per IC / direction"};
-    bool field_supported=model_field_supported(d);int count=field_supported ? 6:5;
+        "Slope-field columns (0-100); 0 = Off","Max RK4 steps per IC / direction",
+        "LEFT/RIGHT: RK4 / RK45","RelTol: relative error target","AbsTol: absolute error floor"};
     int selected=state->selected;NumberEdit edit=state->edit;
-    if(selected<0 || selected>=count){selected=count-1;edit.active=false;}
     for(;;) {
-        const char *labels[]={"Xrange min","Xrange max","h","Step","SF","Max steps"};
-        char values[6][48];
+        int rows[8],count=parameter_rows(d,rows);
+        if(selected<0 || selected>=count){selected=count-1;edit.active=false;}
+        int top=selected>6 ? selected-6:0,field=rows[selected];
+        bool adaptive=d->adaptive.method==ODE_RK45;
+        const char *labels[]={"Xrange min","Xrange max",adaptive ? "Initial h":"h","Step","SF",
+            "Max steps","Method","RelTol","AbsTol"};
+        char values[9][48];
         snprintf(values[0],48,"%.9g",d->solver.xmin);snprintf(values[1],48,"%.9g",d->solver.xmax);
         snprintf(values[2],48,"%.9g",d->solver.h);snprintf(values[3],48,"%d",d->solver.step);
         snprintf(values[4],48,"%d",d->solver.sf);snprintf(values[5],48,"%lu",(unsigned long)d->solver.max_steps);
+        snprintf(values[6],48,"%s",adaptive ? "RK45":"RK4");
+        snprintf(values[7],48,"%.9g",d->adaptive.reltol);snprintf(values[8],48,"%.9g",d->adaptive.abstol);
         ui_frame("Parameter",NULL);
-        int field=parameter_field(selected,field_supported);
-        for(int row=0;row<count;row++) {
-            int item=parameter_field(row,field_supported);
-            ui_field(row,labels[item],edit.active && row==selected ? edit.text:values[item],row==selected);
+        for(int row=top;row<count && row<top+7;row++) {
+            int item=rows[row];
+            ui_field(row-top,labels[item],edit.active && row==selected ? edit.text:values[item],row==selected);
         }
-        number_cursor(&edit,selected);
-        ui_form_hint(&edit,help[field]);
-        ui_softkeys("PREV","INIT","V-WIN","OUTPUT","SET","GRAPH");
-        dupdate();
+        number_cursor(&edit,selected-top);
+        ui_form_hint(&edit,adaptive && field==2 ? "Initial step; RK45 adjusts internally":
+            (adaptive && field==5 ? "Accepted + rejected attempts per path":help[field]));
+        ui_softkeys("PREV","INIT","V-WIN","OUTPUT","SET","GRAPH");dupdate();
         key_event_t event=ui_getkey();int key=event.key;
         if(edit.active) {
             int action=stage_leave(key) || key==KEY_UP || key==KEY_DOWN || key==KEY_F2 ? 1:number_key(&edit,event);
             if(action==0)continue;
-            double value;OdeSettings before=d->solver;
+            double value;OdeSettings before=d->solver;OdeAdaptive old=d->adaptive;
             if(!number_value(&edit,&value))continue;
-            if(field>=3 && (value<0 || value>100000 || value!=floor(value))) {
+            if(field>=3 && field<=5 && (value<0 || value>100000 || value!=floor(value))) {
                 ui_message("Invalid setting","Use an integer within the setting limit.");continue;
             }
             if(field==0)d->solver.xmin=value;
@@ -84,8 +94,14 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
             if(field==3)d->solver.step=(int)value;
             if(field==4)d->solver.sf=(int)value;
             if(field==5)d->solver.max_steps=(uint32_t)value;
+            if(field==7)d->adaptive.reltol=value;
+            if(field==8)d->adaptive.abstol=value;
             OdeStatus status=ode_validate(&d->solver);
-            if(status!=ODE_OK){d->solver=before;ui_message("Invalid parameter",status==ODE_BAD_STEP ? "h must be finite and > 0.":ode_status_text(status));continue;}
+            if(status==ODE_OK)status=ode_adaptive_validate(&d->adaptive);
+            if(status!=ODE_OK) {
+                d->solver=before;d->adaptive=old;
+                ui_message("Invalid parameter",status==ODE_BAD_STEP ? "h must be finite and > 0.":ode_status_text(status));continue;
+            }
             if(field<=1)d->solver_custom=1;
             edit.active=false;
             if(key==KEY_EXE || key==KEY_EXIT){ui_field_complete(key,true,&selected,count);continue;}
@@ -94,14 +110,22 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
         if(stage_leave(key)) {
             state->selected=selected;state->edit=edit;return stage_action(key);
         }
-        if(key==KEY_F2){
-            int sf=field_supported ? 12:d->solver.sf;
-            d->solver=(OdeSettings){0,1,.1,20000,1,sf};d->solver_custom=0;
+        if(key==KEY_F2) {
+            int sf=model_field_supported(d) ? 12:d->solver.sf,step=adaptive ? d->solver.step:1;
+            d->solver=(OdeSettings){0,1,.1,20000,step,sf};d->solver_custom=0;
+            if(adaptive){ode_adaptive_defaults(&d->adaptive);d->adaptive.method=ODE_RK45;}
             int projection=d->view.phase;d->view.phase=0;
             model_sync_solver_window(d);d->view.phase=projection;selected=0;continue;
         }
+        if(field==6) {
+            if(key==KEY_LEFT || key==KEY_RIGHT)d->adaptive.method=adaptive ? ODE_RK4:ODE_RK45;
+            if(key==KEY_UP && selected>0)selected--;
+            if(key==KEY_DOWN && selected<count-1)selected++;
+            continue;
+        }
         double current=field==0 ? d->solver.xmin:(field==1 ? d->solver.xmax:(field==2 ? d->solver.h:
-            (field==3 ? d->solver.step:(field==4 ? d->solver.sf:(double)d->solver.max_steps))));
+            (field==3 ? d->solver.step:(field==4 ? d->solver.sf:(field==5 ? (double)d->solver.max_steps:
+            (field==7 ? d->adaptive.reltol:d->adaptive.abstol))))));
         number_select(&edit,event,current,&selected,count);
     }
 }

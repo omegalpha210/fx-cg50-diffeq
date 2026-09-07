@@ -29,7 +29,7 @@ static uint64_t numerical_key(const Document *d)
 {
     uint64_t hash=UINT64_C(14695981039346656037);
 #define KEY(field) hash=hash_bytes(hash,&d->field,sizeof(d->field))
-    KEY(kind);KEY(dim);KEY(nic);KEY(text);KEY(power);KEY(ic);
+    KEY(adaptive.method);KEY(adaptive.reltol);KEY(adaptive.abstol);KEY(kind);KEY(dim);KEY(nic);KEY(text);KEY(power);KEY(ic);
     KEY(solver.xmin);KEY(solver.xmax);KEY(solver.h);KEY(solver.max_steps);KEY(solver.step);
 #undef KEY
     return hash;
@@ -137,7 +137,7 @@ bool trace_capture_branch_begin(const Document *d,int family,int side)
     graph_capture.branches|=bit;graph_capture.family=family;
     b->start=graph_capture.slot++*graph_capture.capacity;
     double target=side ? d->solver.xmax:d->solver.xmin;
-    double steps=ceil(fabs(target-d->ic[family].x)/d->solver.h);
+    double steps=ceil(fabs(target-d->ic[family].x)/model_output_spacing(d,&d->solver));
     unsigned stride=(unsigned)fmax(1,fmin(100000,ceil(steps/(graph_capture.capacity-1))));
     graph_capture.capture=(Capture){.d=d,.out=&scratch.staging,.branch=b,.stride=stride,
         .capacity=graph_capture.capacity,.target=target};
@@ -170,6 +170,7 @@ void trace_capture_end(bool success)
 static OdeStatus prepare_range(const Document *d,CompiledModel *m,const OdeSettings *range,
     int family,int variable,TraceSamples *out)
 {
+    model_work_begin(m);
     ModelWork plan=model_preflight(d,range);if(plan.status!=ODE_OK)return plan.status;
     memset(out,0,sizeof(*out));out->extent=*range;out->family=family;out->variable=variable;out->dim=d->dim;
     out->result.failed_family=-1;
@@ -180,7 +181,7 @@ static OdeStatus prepare_range(const Document *d,CompiledModel *m,const OdeSetti
     for(int f=0;f<d->nic;f++)if(capture_family(d,f))for(int side=0;side<2;side++) {
         TraceBranch *b=&out->branch[f][side];b->start=slot++*capacity;
         double target=side ? range->xmax:range->xmin;
-        double steps=ceil(fabs(target-d->ic[f].x)/range->h);
+        double steps=ceil(fabs(target-d->ic[f].x)/model_output_spacing(d,range));
         /* preflight bounded every executed path before any integer cast */
         unsigned stride=(unsigned)fmax(1,fmin(100000,ceil(steps/(capacity-1))));
         Capture c={.d=d,.out=out,.branch=b,.stride=stride,.capacity=capacity,.target=target};

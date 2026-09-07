@@ -13,7 +13,7 @@ void __cyg_profile_func_enter(void *function,void *caller)
 {
     (void)caller;
     /* Function-address comparison is the compiler instrumentation ABI. */
-    if(function==(void *)(uintptr_t)ode_integrate)solves++;
+    if(function==(void *)(uintptr_t)ode_integrate || function==(void *)(uintptr_t)ode_rk45_integrate)solves++;
     if(function==(void *)(uintptr_t)model_rhs)rhs_calls++;
     if(function==(void *)(uintptr_t)gsolve_search ||
        function==(void *)(uintptr_t)gsolve_intersections)searches++;

@@ -84,35 +84,35 @@ higher=['2','3 1 F6','3 2 F6','3 9 F6','4 1 F6','4 9 F6']
 for entry in first+higher:
     params=entry+' F6 F6 '
     supported=entry in first
-    count=6 if supported else 5
+    count=7 if supported else 6
     labels=re.findall(r'TEXT 20 \d+ ([^\n]+)',tail(run(params)))
-    assert labels==['Xrange min','Xrange max','h','Step']+(['SF'] if supported else [])+['Max steps']
+    assert labels==['Xrange min','Xrange max','Method','h','Step']+(['SF'] if supported else [])+['Max steps']
     assert plot(run(params+'DOWN '*20))==plot(run(params+'DOWN '*(count-1)))
     assert plot(run(params+'DOWN '*20+'UP '*20))==plot(run(params))
     for row in range(count):
         current=params+'DOWN '*row
         assert plot(run(current+'F5 EXIT'))==plot(run(current))
         if not supported:assert 'Slope-field' not in tail(run(current))
-    step=params+'DOWN DOWN DOWN 2 EXE '
+    step=params+'DOWN DOWN DOWN DOWN 2 EXE '
     expected='Slope-field columns' if supported else 'Max RK4 steps'
     assert expected in tail(run(step)) and EDIT not in tail(run(step))
     if not supported:
         last=step+'5 0 0 0 0 EXE '
-        assert 'TEXT 144 123 50000\n' in tail(run(last))
+        assert 'TEXT 144 145 50000\n' in tail(run(last))
         assert 'Max RK4 steps' in tail(run(last))
         assert bar(run(last+'EXE'))==BASE
         assert 'LEFT/RIGHT: ON/OFF toggle' in tail(run(params+'F5'))
 
-sf20='1 4 F6 F6 DOWN DOWN DOWN DOWN 2 0 EXIT '
+sf20='1 4 F6 F6 DOWN DOWN DOWN DOWN DOWN 2 0 EXIT '
 for entry in higher:
     in_higher=sf20+('EXIT '*4)+entry+' F6 F6 F2 '
     to_main='EXIT '*(3 if entry=='2' else 4)
     restored=in_higher+to_main+'1 4 F6 F6 '
-    assert 'TEXT 144 123 20\n' in tail(run(restored))
-    assert 'TEXT 144 123 12\n' in tail(run(restored+'F2'))
+    assert 'TEXT 144 145 20\n' in tail(run(restored))
+    assert 'TEXT 144 145 12\n' in tail(run(restored+'F2'))
 with tempfile.TemporaryDirectory() as directory:
     run(sf20+('EXIT '*4)+'2 F6 F6 F2 '+('EXIT '*3)+'F6 EXE',directory)
     loaded='F5 2 F1 F6 F6 '
-    assert 'TEXT 20 123 Max steps\n' in tail(run(loaded,directory))
-    assert 'TEXT 144 123 20\n' in tail(run(loaded+('EXIT '*3)+'1 4 F6 F6',directory))
+    assert 'TEXT 20 145 Max steps\n' in tail(run(loaded,directory))
+    assert 'TEXT 144 145 20\n' in tail(run(loaded+('EXIT '*3)+'1 4 F6 F6',directory))
 print('UI polish: logical EDIT hints, context/overlay restoration, PREV pixels, six field swatches and mode-aware SF/INIT/SAVE retention passed.')

@@ -55,7 +55,8 @@ void ui_table(App *a)
                 ui_message("STAT data saved",message);
             } else {
                 snprintf(message,sizeof(message),status==ODE_STEP_LIMIT ?
-                    "More than 998 data rows. Increase Step and retry.":"Export failed: %s.",ode_status_text(status));
+                    (d->adaptive.method==ODE_RK45 ? "More than 998 data rows. Narrow Xrange or increase TIME Xdot.":
+                    "More than 998 data rows. Increase Step and retry."):"Export failed: %s.",ode_status_text(status));
                 ui_message("STAT data not saved",message);
             }
         }

@@ -1,28 +1,32 @@
-# DIFFEQ v0.10.0-beta.1
+# DIFFEQ v0.11.0-beta.1 — Adaptive RK45
 
-SYS 2D now offers **VIEW → TIME / PHASE / TABLE**. PHASE plots y2 versus y1
-from the existing RK4 trajectory cache, with an independent V-Window and TRACE.
-PHASE **ANLYS → FIELD / NULL / EQPT / INFO** adds normalized vector arrows,
-red/blue numerical nullclines, bounded fixed-point search and numerical-Jacobian
-local linear classification. TIME G-Solve and time-domain tables remain available.
+Added optional **Dormand–Prince RK45** alongside the unchanged default Classical
+RK4. Parameters Method uses LEFT/RIGHT; RK45 exposes Initial h, RelTol, AbsTol
+and Max steps. Defaults .1/1e-6/1e-9/20000; rejected attempts count toward limits.
+Adaptive internal steps are separate from the TIME Xdot-based output grid.
 
-Non-autonomous trajectories are supported. Their field and nullclines are frozen
-at IC x0 and labeled; EQPT is autonomous only. Center/Neutral and Inconclusive
-labels do not establish nonlinear or global stability. A finite grid may miss
-roots or narrow structures; the 258-point retained trajectory may lose detail
-on long intervals. No RK45, symbolic solver, bifurcation or 3D feature is included.
+All seven equation modes, 1–9 states, ten first-order ICs, Graph/TRACE/Table,
+G-Solve and SYS2 Phase use the selected solver. Table/G-Solve/TIME x= evaluations
+land at the requested x; ordinary TRACE and Phase x= remain display-only cached
+interpolation. Step is hidden for RK45; scalar-only SF and existing RK4 semantics
+remain. Stage cancellation, attempt/RHS/work budgets and Step underflow prevent
+unbounded retries. No extra full-trajectory buffer or FSAL optimization is used.
 
-New sessions use **v8** and retain independent phase windows and toggles.
-Same-device v3–v7 sessions remain readable; old active SYS2 phase windows migrate
-without changing configured solver endpoints. Back up older sessions before
-explicit SAVE; older add-ins may reject v8. Analysis results are not serialized.
+New SAVE format **v9** stores Method/tolerances in current and recall records.
+Frozen same-device v3–v8 readers load as RK4. Back up old sessions before saving;
+older add-ins may reject new records. Native save/migration needs hardware retest.
 
-The 33 host/UBSan groups, strict SH compile/link, bounded-density benchmark,
-package checks and three new project-renderer README screenshots are part of
-this release's verification. The release asset `VALIDATION.md` identifies the
-exact public source, binary size/hash and final measurements.
+36 host/UBSan groups, all previous regressions, strict SH compile/link with zero
+warnings, 13 package checks and updated Parameters renderer images pass before
+publication. The release asset VALIDATION.md records the exact tag build, memory
+and binary SHA256. See [RK45_NUMERICS](../RK45_NUMERICS.md) for coefficients and
+quantitative comparisons: RK45 can improve automatic accuracy control but is
+not always cheaper than RK4 and is not a stiff solver.
 
-**HARDWARE TEST REQUIRED:** the new phase workflow needs physical fx-CG50 LCD,
-held-key/cancel timing, long-expression performance, stack high-water, MENU/Fugue
-and native session migration retests. Prior first/second-order hardware results
-do not imply these new paths have been tested on hardware.
+Local error estimates do not certify global accuracy or a singularity location.
+A numerical pole can shift slightly; the solver stops and does not restart a
+far continuation. Fine features may be missed by finite grids and retained
+TRACE samples. **HARDWARE TEST REQUIRED:** target-math numerical results,
+long 9-state/10-IC execution, rejection cancellation, physical keys/LCD, stack
+high-water, MENU/Fugue and SAVE/RCL/STAT. Events, sweeps, bifurcation/Poincaré,
+implicit/BDF/Rosenbrock, CAS and FSAL remain intentionally deferred.

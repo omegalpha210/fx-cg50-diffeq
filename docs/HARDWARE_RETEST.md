@@ -1,3 +1,26 @@
+# RK45 priority retest — v0.11.0-beta.1
+
+**HARDWARE TEST REQUIRED — all new RK45 cases remain pending.**
+Record release SHA256, calculator OS, settings, observed values/time and keys.
+
+1. Parameters Method LEFT/RIGHT in first/second/N-th9/SYS9: no immediate solve,
+   RK45 Initial h/RelTol/AbsTol, hidden Step, first-only SF, Max steps scrolling.
+2. Scientific tolerance edits, invalid 0/negative/1e-300 RelTol, INIT retention,
+   repeated Method changes and F6 GRAPH/PREV/EXIT.
+3. Compare y'=y, y''=-y and harmonic SYS with the numerical benchmark; backward
+   and off-grid TIME x=/Table/Y-CAL; tighten tolerance and compare results.
+4. Bounded sinh through x=7; singular y'=y² near x=1 must stop, never restart a
+   far branch. Do not interpret the slightly shifted numerical pole as continuation.
+5. Long SYS9 and ten-IC runs: EXIT/MENU during accepted and rejected attempts,
+   workload status, no reboot; measure actual stack high-water and key latency.
+6. TRACE NORMAL/FAST/FASTER, endpoint following/extension cancellation; Phase
+   projection/field/nullclines/EQPT; verify the old graph/cursor survives cancellation.
+7. Table TOP/BTM/MID and empty terminal cells, STAT import and export cancellation.
+8. SAVE v9 with RK45/tolerances, RAM recall preference retention, same-device
+   frozen v3–v8 sessions load as RK4; MENU/Fugue and restart behavior.
+
+The earlier feature checks remain applicable below.
+
 # fx-CG50 hardware retest — TRACE X/Y, endpoints and ten initial values
 
 **HARDWARE TEST REQUIRED — every case below is pending on a physical calculator.**

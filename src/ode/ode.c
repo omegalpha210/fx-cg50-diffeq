@@ -61,11 +61,11 @@ const char *ode_status_text(OdeStatus s)
     static const char *const text[]={"Complete","Cancelled","Page complete",
         "Invalid values/range","h too small for x","Step limit reached",
         "NaN or infinity","Magnitude > 1e100","Math domain / singularity","Storage I/O error",
-        "Valid regions / gaps","Total calculation too large"};
+        "Valid regions / gaps","Total calculation too large","Step underflow","Tolerance too small"};
     return (unsigned)s<sizeof(text)/sizeof(text[0]) ? text[s] : "Unknown error";
 }
 bool ode_invalid_region(OdeStatus status)
-{return status==ODE_NONFINITE || status==ODE_DIVERGED || status==ODE_DOMAIN;}
+{return status==ODE_NONFINITE || status==ODE_DIVERGED || status==ODE_DOMAIN || status==ODE_STEP_UNDERFLOW;}
 OdeStatus ode_values_status(const double *values,int count)
 {
     for(int i=0;i<count;i++) {

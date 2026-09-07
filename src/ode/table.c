@@ -13,6 +13,7 @@ static bool scan(double x,const double *y,uint32_t step,void *context)
 }
 static bool same_sample(const Document *d,double x,double y)
 {
+    if(d->adaptive.method==ODE_RK45)return x==y;
     /* Direct grid arithmetic differs from repeated RK4 additions. Match only
        a tiny fraction of h (and never more than that fraction of the range).
        Copy an accepted state at that point; do not extrapolate a failed step. */
@@ -62,11 +63,13 @@ unsigned table_nearest(const TableIndex *index,double x)
 OdeStatus table_index_build(const Document *d,CompiledModel *m,TableIndex *index,
     OdeCancel cancel,void *cancel_ctx)
 {
+    model_work_begin(m);
     memset(index,0,sizeof(*index));index->last=-1;
     ModelWork work=model_preflight(d,&d->solver);
     if(work.status!=ODE_OK)return work.status;
     if(!d->nic)return ODE_BAD_INPUT;
-    index->origin=d->ic[0].x;index->spacing=d->solver.h*d->solver.step;
+    index->origin=d->ic[0].x;index->spacing=d->adaptive.method==ODE_RK45 ?
+        model_output_spacing(d,&d->solver):d->solver.h*d->solver.step;
     index->solutions=model_field_supported(d);bool have=false;
     if(index->solutions) {
         if(d->enabled&1u)for(int f=0;f<d->nic;f++)index->columns[index->count++]=f;
@@ -96,7 +99,7 @@ OdeStatus table_index_build(const Document *d,CompiledModel *m,TableIndex *index
         if(index->spacing<resolution)return ODE_BAD_STEP; /* no duplicate rounded x rows */
         /* RK4 accumulates x while the index computes grid coordinates directly.
            Snap only sub-step rounding at endpoints, never change h. */
-        double tolerance=1e-7/d->solver.step;
+        double tolerance=d->adaptive.method==ODE_RK45 ? 0:1e-7/d->solver.step;
         double first=ceil((index->xmin-index->origin)/index->spacing-tolerance);
         double last=floor((index->xmax-index->origin)/index->spacing+tolerance);
         if(!isfinite(first) || !isfinite(last) || first<-100001 || last>100001)return ODE_BAD_STEP;
@@ -150,7 +153,7 @@ static bool fill(double x,const double *y,uint32_t step,void *context)
     double edge=c->page->row[c->direction>0 ? c->rows-1:0][0];
     return c->direction*(edge-x)>0;
 }
-void table_read_page(const Document *d,CompiledModel *m,const TableIndex *index,unsigned start,
+void table_read_page_budgeted(const Document *d,CompiledModel *m,const TableIndex *index,unsigned start,
     TablePage *page,OdeCancel cancel,void *cancel_ctx)
 {
     memset(page,0,sizeof(*page));
@@ -159,6 +162,24 @@ void table_read_page(const Document *d,CompiledModel *m,const TableIndex *index,
     for(unsigned row=0;row<rows;row++){page->row[row][0]=table_x_at(index,start+row);page->valid[row]=1;}
     page->count=rows>TABLE_ROWS ? TABLE_ROWS:rows;page->more=rows>TABLE_ROWS;
     int families=index->solutions ? d->nic:1;
+    if(d->adaptive.method==ODE_RK45) {
+        /* Numerical rows land exactly; never substitute display interpolation. */
+        for(int f=0;f<families;f++)for(unsigned row=0;row<rows;row++) {
+            double target=page->row[row][0];
+            OdeResult r=model_value_at(d,m,f,target,cancel,cancel_ctx);
+            if(r.status!=ODE_OK) {
+                if(ode_invalid_region(r.status))continue;
+                page->result=r;return;
+            }
+            for(int column=0;column<index->count;column++) {
+                int item=index->columns[column];
+                if(index->solutions && item!=f)continue;
+                page->row[row][column+1]=r.y[index->solutions ? 0:item];
+                page->valid[row]|=(uint16_t)(1u<<(column+1));
+            }
+        }
+        page->result.status=ODE_OK;return;
+    }
     for(int f=0;f<families;f++)for(int side=0;side<2;side++) {
         PageCollector c={.d=d,.index=index,.page=page,.family=f,.direction=side ? 1:-1,.rows=rows};
         OdeResult result=model_trajectory(d,m,f,c.direction,fill,&c,cancel,cancel_ctx);
@@ -167,4 +188,10 @@ void table_read_page(const Document *d,CompiledModel *m,const TableIndex *index,
         }
     }
     page->result.status=ODE_OK;
+}
+void table_read_page(const Document *d,CompiledModel *m,const TableIndex *index,unsigned start,
+    TablePage *page,OdeCancel cancel,void *cancel_ctx)
+{
+    model_work_begin(m);
+    table_read_page_budgeted(d,m,index,start,page,cancel,cancel_ctx);
 }

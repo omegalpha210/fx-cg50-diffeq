@@ -49,6 +49,7 @@ void model_defaults(Document *d,EquationKind kind,int dim)
     model_phase_window_defaults(&d->phase_view);
     d->phase_field=1;d->phase_nullclines=0;d->phase_ready=0;
     d->solver=(OdeSettings){0,1,.1,20000,1,12};
+    ode_adaptive_defaults(&d->adaptive);
     d->solver_custom=0;model_sync_solver_window(d);
     model_output_defaults(d);model_field_appearance_defaults(d);
     for(int i=0;i<ODE_MAX_IC;i++)d->ic[i].y[0]=1;
@@ -147,7 +148,9 @@ OdeStatus model_validate(const Document *d)
         || (d->kind==EQ_SECOND && d->dim!=2) || !isfinite(d->power)
         || d->field_style>FIELD_ARROW || d->field_color>=FIELD_COLORS
         || (d->solver_custom!=0 && d->solver_custom!=1)) return ODE_BAD_INPUT;
-    OdeStatus status=ode_validate(&d->solver);
+    OdeStatus status=ode_adaptive_validate(&d->adaptive);
+    if(status!=ODE_OK)return status;
+    status=ode_validate(&d->solver);
     if(status!=ODE_OK) return status;
     const ViewWindow *v=&d->view;
     if(!isfinite(v->xmin) || !isfinite(v->xmax) || !isfinite(v->ymin)
@@ -183,6 +186,7 @@ ModelError model_compile(const Document *d,CompiledModel *m)
     ModelError error={.equation=-1,.values=model_validate(d)};
     if(error.values!=ODE_OK) return error;
     m->kind=d->kind;m->dim=d->dim;m->power=d->power;
+    model_work_begin(m);
     for(int i=0;i<model_equations(d);i++) {
         ExprScope scope={d->dim,d->kind==EQ_HIGHER,true,true};
         if(d->kind==EQ_SEPARABLE) {scope.allow_x=i==0;scope.allow_y=i==1;}
@@ -245,6 +249,20 @@ ModelWork model_preflight(const Document *d,const OdeSettings *range)
     if(plan.status!=ODE_OK)return plan;
     if(d->dim<1 || d->dim>ODE_MAX_DIM || d->nic<0 || d->nic>ODE_MAX_IC) {
         plan.status=ODE_BAD_INPUT;return plan;
+    }
+    if(d->adaptive.method==ODE_RK45) {
+        plan.status=ode_adaptive_validate(&d->adaptive);
+        if(plan.status!=ODE_OK)return plan;
+        double dx=model_output_spacing(d,range);
+        if(!isfinite(dx) || dx<=0){plan.status=ODE_BAD_STEP;return plan;}
+        for(int f=0;f<d->nic;f++) {
+            double x=d->ic[f].x;
+            if(!isfinite(x)){plan.status=ODE_BAD_INPUT;return plan;}
+            if((x<range->xmax && x+range->h==x) || (x>range->xmin && x-range->h==x)) {
+                plan.status=ODE_STEP_UNDERFLOW;plan.family=f;return plan;
+            }
+        }
+        return plan; /* Adaptive cost is enforced by the shared runtime budget. */
     }
     /* Include all configured IVPs: Table/Output can select hidden families later. */
     for(int f=0;f<d->nic;f++)for(int side=0;side<2;side++) {

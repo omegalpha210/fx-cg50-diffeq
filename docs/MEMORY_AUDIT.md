@@ -1,3 +1,22 @@
+# RK45 memory update — v0.11.0-beta.1
+
+SH GCC 14.1 full build: text194928/data704/BSS64896 bytes. Phase baseline
+text187848/data704/BSS64816; BSS **+80**, data **unchanged**.
+Target sizeof checks: OdeDopri652 (504 B stages +144 B candidate/error +4 B index),
+OdeAdaptive20, OdeWork32, Document2844, CompiledModel8148 bytes.
+Workspace is local to the integration call, not a new mutable static allocation.
+Coefficient tables occupy448 B read-only. No additional trajectory/cache/framebuffer.
+The added BSS is preferences/diagnostics plus linker alignment.
+
+Measured frames: ode_rk45_integrate988, ode_dopri_step100, ui_parameters872;
+largest overall ui_graph2572, phase_equilibria2144, ui_table1768 bytes.
+A frame excludes its callers/callees; G-Solve can evaluate nested queries from a
+sample callback. Bounded frames alone do not establish available stack headroom.
+Physical high-water and interrupt/OS stack overlap: **HARDWARE TEST REQUIRED**.
+Detailed algorithms and benchmark: [RK45_NUMERICS](RK45_NUMERICS.md).
+
+The earlier audits below describe their respective fixed-RK4 milestones.
+
 # Phase milestone memory update (2026-09-08)
 
 The current P0–P4 build adds **1,824 B BSS** (62,992 → 64,816), with data unchanged

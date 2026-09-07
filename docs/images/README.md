@@ -10,7 +10,7 @@ The permitted gint font is attributed in THIRD_PARTY_NOTICES.md.
 | diffeq-icon.png | Project's original assets/icon-uns.png from tools/make_icons.py; 92×64 → 184×128 with nearest-neighbor |
 | equation-entry.png | General first-order equation 1-y^2 |
 | initial-conditions.png | x0=0, y0={0,0.5}; current ten-value help |
-| solver-parameters.png | Range -3..3, h=.1, Step1, SF12, Max steps20000 |
+| solver-parameters.png | Range -3..3, Method RK45, Initial h=.1, RelTol1e-6, AbsTol1e-9, SF12 (Max steps below scroll) |
 | graph-solution.png | Same example, SF0 |
 | graph-slope-field.png | Same example, SF12, default Arrow/Pale Blue; 396×224 → 792×448 nearest-neighbor |
 | graph-trace.png | Same example, NORMAL TRACE after three RIGHT events; colored speeds and LEFT/RIGHT endpoint keys |
@@ -28,8 +28,9 @@ Reproduce with an existing compiler/CMake/Python and Pillow:
 python3 tools/capture_readme.py
 ```
 
-The beta.3 captures use development source 0fbe0de. TRACE softkeys and the IC limit
-hint were regenerated with the exact public candidate renderer.
+The v0.11 Parameters capture shows the RK45 rows. All eight original gallery
+frames are reproduced with the exact public candidate renderer; graph examples
+retain default RK4. The gallery is not enlarged for this milestone.
 
 Captures were visually checked. Host output is not evidence of physical LCD
 contrast, calculator key timing or OS behavior; hardware retesting remains pending.

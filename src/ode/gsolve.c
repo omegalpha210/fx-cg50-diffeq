@@ -86,6 +86,7 @@ OdeStatus gsolve_ycal(const Document *d,CompiledModel *m,GsolveCurve curve,doubl
     double xmin,xmax;
     if(!m || !point || !valid_curve(d,curve) || !isfinite(x)
         || !search_domain(d,&xmin,&xmax) || x<xmin || x>xmax)return ODE_BAD_INPUT;
+    model_work_begin(m);
     OdeResult result;OdeStatus status=curve_at(d,m,curve,x,&result,NULL,cancel,cancel_ctx);
     if(status==ODE_OK)*point=(GsolvePoint){result.x,result.y[curve.variable]};
     return status;
@@ -137,7 +138,7 @@ static OdeStatus other_step(Search *s,double x)
     if(!s->other_ready) {
         result=model_value_at(s->d,s->m,s->other.family,x,s->cancel,s->cancel_ctx);
     } else if(x==s->other_x)return ODE_OK;
-    else result=ode_integrate(model_rhs,s->m,s->d->dim,s->other_x,s->other_y,x,
+    else result=model_integrate(s->d,s->m,s->other_x,s->other_y,x,
         &s->d->solver,NULL,NULL,s->cancel,s->cancel_ctx);
     s->result->steps+=result.steps;
     if(result.status==ODE_OK) {
@@ -181,7 +182,7 @@ static bool scan_point(double x,const double *y,uint32_t step,void *ctx)
         else {
             /* A branch can start exactly at an extremum (notably the IC).
                Check both trusted sides; a stationary inflection is not an extremum. */
-            double left,right,delta=s->d->solver.h*.5;
+            double left,right,delta=(s->d->adaptive.method==ODE_RK45 ? model_output_spacing(s->d,&s->d->solver):s->d->solver.h)*.5;
             if(x-delta>=s->xmin && x+delta<=s->xmax) {
                 OdeStatus a=metric_at(s,x-delta,&left,NULL),b=metric_at(s,x+delta,&right,NULL);
                 if(a==ODE_OK && b==ODE_OK && wanted_change(s,left,right))
@@ -210,6 +211,7 @@ static GsolveResults search(const Document *d,CompiledModel *m,GsolveCurve curve
     GsolveCurve other,bool intersection,GsolveMode mode,double target,
     OdeCancel cancel,void *cancel_ctx)
 {
+    if(m)model_work_begin(m);
     GsolveResults result={.status=ODE_BAD_INPUT};double xmin,xmax;
     if(!m || !valid_curve(d,curve) || (intersection && (!valid_curve(d,other)
         || same_curve(curve,other))) || (!intersection && (mode<GSOLVE_ROOT
