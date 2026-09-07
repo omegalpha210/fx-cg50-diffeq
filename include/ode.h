@@ -8,7 +8,7 @@
 typedef enum {
     ODE_OK, ODE_CANCELLED, ODE_SAMPLE_STOP, ODE_BAD_INPUT,
     ODE_BAD_STEP, ODE_STEP_LIMIT, ODE_NONFINITE, ODE_DIVERGED, ODE_DOMAIN, ODE_IO_ERROR,
-    ODE_HAS_INVALID
+    ODE_HAS_INVALID, ODE_WORK_LIMIT
 } OdeStatus;
 typedef struct {
     double xmin, xmax, h;

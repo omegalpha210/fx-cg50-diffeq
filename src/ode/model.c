@@ -31,7 +31,7 @@ void model_defaults(Document *d,EquationKind kind,int dim)
     model_window_defaults(&d->view);
     d->solver=(OdeSettings){0,1,.1,20000,1,12};
     d->solver_custom=0;model_sync_solver_window(d);
-    model_output_defaults(d);
+    model_output_defaults(d);model_field_appearance_defaults(d);
     for(int i=0;i<9;i++) {
         d->ic[i].y[0]=1;
         strcpy(d->text[i],"0");
@@ -49,6 +49,15 @@ void model_defaults(Document *d,EquationKind kind,int dim)
             for(int i=0;i<d->dim-1;i++) snprintf(d->text[i],EXPR_TEXT,"y%d",i+2);
             strcpy(d->text[d->dim-1],"-y1");break;
     }
+}
+bool model_field_supported(const Document *d)
+{return d->kind>=EQ_SEPARABLE && d->kind<=EQ_GENERAL && d->dim==1;}
+void model_field_appearance_defaults(Document *d)
+{d->field_style=FIELD_ARROW;d->field_color=0;}
+void model_sanitize_field(Document *d)
+{
+    if(d->field_style>FIELD_ARROW)d->field_style=FIELD_ARROW;
+    if(d->field_color>=FIELD_COLORS)d->field_color=0;
 }
 unsigned model_default_color(int family,int variable,int dimension)
 {
@@ -71,10 +80,14 @@ void model_color_defaults(Document *d)
 void model_output_defaults(Document *d)
 {
     model_color_defaults(d);
-    for(int i=0;i<ODE_MAX_IC;i++) {
-        d->graph_mask[i]=(uint16_t)((1u<<d->dim)-1);
-        d->list_mask[i]=(uint16_t)((1u<<(d->dim+1))-1);
-    }
+    d->enabled=(uint16_t)((1u<<d->dim)-1);
+}
+void model_output_color(Document *d,int variable,unsigned color)
+{
+    static const unsigned order[]={2,4,5,1,0,3};
+    unsigned seed=0;while(seed<6 && order[seed]!=color)seed++;
+    if(seed==6 || variable<0 || variable>=d->dim)return;
+    for(int f=0;f<ODE_MAX_IC;f++)d->color[f][variable]=(uint8_t)order[(seed+(unsigned)f*d->dim)%6];
 }
 void model_sanitize_colors(Document *d)
 {
@@ -115,6 +128,7 @@ OdeStatus model_validate(const Document *d)
     if(!d || d->kind<0 || d->kind>EQ_SYSTEM || d->dim<1 || d->dim>9
         || d->nic<0 || d->nic>9 || (d->kind<=EQ_GENERAL && d->dim!=1)
         || (d->kind==EQ_SECOND && d->dim!=2) || !isfinite(d->power)
+        || d->field_style>FIELD_ARROW || d->field_color>=FIELD_COLORS
         || (d->solver_custom!=0 && d->solver_custom!=1)) return ODE_BAD_INPUT;
     OdeStatus status=ode_validate(&d->solver);
     if(status!=ODE_OK) return status;
@@ -129,10 +143,9 @@ OdeStatus model_validate(const Document *d)
             || v->phase_y<0 || v->phase_y>=d->dim || v->phase_x==v->phase_y)))
         return ODE_BAD_INPUT;
     if(d->nic==0 && (d->kind>EQ_GENERAL || d->solver.sf==0)) return ODE_BAD_INPUT;
-    for(int i=0;i<EXPR_CONSTANTS;i++) if(!isfinite(d->constants[i])) return ODE_BAD_INPUT;
+    if(d->enabled>>d->dim)return ODE_BAD_INPUT;
     for(int i=0;i<9;i++) {
         if(!memchr(d->text[i],0,EXPR_TEXT)) return ODE_BAD_INPUT;
-        if(d->graph_mask[i]>>d->dim || d->list_mask[i]>>(d->dim+1)) return ODE_BAD_INPUT;
         /* Validate inactive slots too: they can be re-enabled without parsing. */
         if(!isfinite(d->ic[i].x) || fabs(d->ic[i].x)>1e100) return ODE_BAD_INPUT;
         for(int j=0;j<9;j++) if(!isfinite(d->ic[i].y[j]) || fabs(d->ic[i].y[j])>1e100)
@@ -146,7 +159,7 @@ ModelError model_compile(const Document *d,CompiledModel *m)
     if(error.values!=ODE_OK) return error;
     m->kind=d->kind;m->dim=d->dim;m->power=d->power;
     for(int i=0;i<model_equations(d);i++) {
-        ExprScope scope={d->dim,d->kind==EQ_HIGHER,true,true,d->constants};
+        ExprScope scope={d->dim,d->kind==EQ_HIGHER,true,true};
         if(d->kind==EQ_SEPARABLE) {scope.allow_x=i==0;scope.allow_y=i==1;}
         if(d->kind==EQ_LINEAR || d->kind==EQ_BERNOULLI || d->kind==EQ_SECOND)
             scope.allow_y=false;
@@ -199,4 +212,34 @@ bool model_convert_system(Document *d)
     d->kind=EQ_SYSTEM;
     memcpy(d->text,text,sizeof(text));
     return true;
+}
+
+ModelWork model_preflight(const Document *d,const OdeSettings *range)
+{
+    ModelWork plan={.status=ode_validate(range),.family=-1};
+    if(plan.status!=ODE_OK)return plan;
+    if(d->dim<1 || d->dim>ODE_MAX_DIM || d->nic<0 || d->nic>ODE_MAX_IC) {
+        plan.status=ODE_BAD_INPUT;return plan;
+    }
+    /* Include all configured IVPs: Table/Output can select hidden families later. */
+    for(int f=0;f<d->nic;f++)for(int side=0;side<2;side++) {
+        double x=d->ic[f].x,target=side ? range->xmax:range->xmin;
+        plan.family=f;
+        if(!isfinite(x)){plan.status=ODE_BAD_INPUT;return plan;}
+        if((side && x>target) || (!side && x<target))continue;
+        double steps=ceil(fabs(target-x)/range->h);
+        /* No integer conversion of infinity or an unbounded quotient. */
+        if(!isfinite(steps) || steps>range->max_steps) {
+            plan.status=ODE_STEP_LIMIT;return plan;
+        }
+        if(x!=target && x+(side ? range->h:-range->h)==x) {
+            plan.status=ODE_BAD_STEP;return plan;
+        }
+        uint32_t n=(uint32_t)steps;
+        if(n>MODEL_TOTAL_STEPS-plan.steps || n*(unsigned)d->dim>MODEL_TOTAL_WORK-plan.work) {
+            plan.status=ODE_WORK_LIMIT;return plan;
+        }
+        plan.steps+=n;plan.work+=n*(unsigned)d->dim;
+    }
+    return plan;
 }

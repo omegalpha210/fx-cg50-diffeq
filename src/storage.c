@@ -1,6 +1,9 @@
 #include "storage.h"
 #include "table.h"
 #include <errno.h>
+#include <ctype.h>
+#include <math.h>
+#include <stdlib.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stddef.h>
@@ -13,13 +16,13 @@
 #endif
 
 #define RECORD_MAGIC 0x44455131u
-#define RECORD_VERSION 4u
+#define RECORD_VERSION 6u
 
 typedef struct {
     uint32_t magic,version,size,generation,has_recall;
 } RecordHeader;
 
-/* This type describes the version-4 byte layout. No object of this
+/* This type describes the version-6 byte layout. No object of this
    type is allocated; session data is streamed directly from App documents. */
 typedef struct {
     uint32_t magic,version,size,generation,has_recall;
@@ -27,6 +30,20 @@ typedef struct {
     uint32_t checksum;
 } RecordLayout;
 
+/* Frozen v3/v4/v5 ABI. Used only for versioned streaming offsets, never as a
+   live document or full-sized scratch allocation. Constants are migration-only. */
+typedef struct {
+    int kind,dim,nic;
+    char text[ODE_MAX_DIM][EXPR_TEXT];
+    double power,constants[28];
+    InitialCondition ic[ODE_MAX_IC];
+    OdeSettings solver;
+    int solver_custom;
+    ViewWindow view;
+    uint16_t graph_mask[ODE_MAX_IC],list_mask[ODE_MAX_IC];
+    uint8_t color[ODE_MAX_IC][ODE_MAX_DIM];
+    uint8_t field_style,field_color;
+} LegacyDocument;
 typedef struct {
     char path[256];
     RecordHeader header;
@@ -38,6 +55,7 @@ typedef struct {
     const char *path;
     RecordHeader expected;
     Document *current,*recall;
+    unsigned *warnings;
 } RecordRead;
 
 typedef struct {
@@ -105,8 +123,11 @@ static size_t aligned_size(size_t size,size_t alignment)
 }
 static size_t document_size(uint32_t version)
 {
-    /* v4 appends colors; v3 ends after list_mask, including ABI tail padding. */
-    return version==3 ? aligned_size(offsetof(Document,color),_Alignof(Document)):sizeof(Document);
+    /* Legacy sizes include their own ABI tail padding, not new field bytes. */
+    if(version==3)return aligned_size(offsetof(LegacyDocument,color),_Alignof(LegacyDocument));
+    if(version==4)return aligned_size(offsetof(LegacyDocument,field_style),_Alignof(LegacyDocument));
+    if(version==5)return sizeof(LegacyDocument);
+    return sizeof(Document);
 }
 static size_t checksum_offset(uint32_t version)
 {
@@ -118,7 +139,7 @@ static size_t record_size(uint32_t version)
 }
 static bool valid_header(const RecordHeader *header)
 {
-    return header->magic==RECORD_MAGIC && (header->version==3 || header->version==RECORD_VERSION)
+    return header->magic==RECORD_MAGIC && (header->version>=3 && header->version<=RECORD_VERSION)
         && header->size==record_size(header->version) && header->has_recall<=1;
 }
 
@@ -165,6 +186,86 @@ static int slot_probe_native(void *opaque)
     return ok && hash==probe->checksum;
 }
 
+static bool skip_hashed(int fd,size_t size,uint32_t *hash)
+{
+    unsigned char scratch[32];
+    while(size) {
+        size_t n=size<sizeof(scratch) ? size:sizeof(scratch);
+        if(!native_read_hashed(fd,scratch,n,hash))return false;
+        size-=n;
+    }
+    return true;
+}
+static bool legacy_field(int fd,void *out,size_t size,size_t offset,size_t *position,uint32_t *hash)
+{
+    if(offset<*position || !skip_hashed(fd,offset-*position,hash)
+        || !native_read_hashed(fd,out,size,hash))return false;
+    *position=offset+size;return true;
+}
+static bool migrate_expression(char text[EXPR_TEXT],const double constants[28])
+{
+    char result[EXPR_TEXT];size_t used=0;
+    if(!memchr(text,0,EXPR_TEXT))return false;
+    const char *p=text;
+    while(*p) {
+        const char *start=p,*token=start;char value[40];int index=-1;
+        if(isdigit((unsigned char)*p) || *p=='.') {
+            char *end;strtod(p,&end);p=end>p ? end:p+1;
+        } else if(isalpha((unsigned char)*p)) {
+            while(isalnum((unsigned char)*p))p++;
+            if(p-start==1 && *start>='A' && *start<='Z' && *start!='X' && *start!='Y')index=*start-'A';
+            if(p-start==1 && *start=='r')index=26;
+            if(p-start==5 && !memcmp(start,"theta",5))index=27;
+        } else p++;
+        size_t length=(size_t)(p-start);
+        if(index>=0) {
+            if(!isfinite(constants[index]))return false;
+            int n=snprintf(value,sizeof(value),"(%.17g)",constants[index]);
+            if(n<0 || (unsigned)n>=sizeof(value))return false;
+            token=value;length=(size_t)n;
+        }
+        if(length>=sizeof(result)-used)return false;
+        memcpy(result+used,token,length);used+=length;
+    }
+    result[used]=0;memcpy(text,result,used+1);return true;
+}
+static bool read_document(int fd,Document *d,uint32_t version,bool present,uint32_t *hash,unsigned *warnings)
+{
+    memset(d,0,sizeof(*d));
+    if(version==6) {
+        if(!native_read_hashed(fd,d,sizeof(*d),hash))return false;
+        model_sanitize_colors(d);model_sanitize_field(d);return true;
+    }
+    size_t position=0;double constants[28];uint16_t graph[ODE_MAX_IC],list[ODE_MAX_IC];
+#define FIELD(member) do {if(!legacy_field(fd,&d->member,sizeof(d->member),offsetof(LegacyDocument,member),&position,hash))return false;} while(0)
+    FIELD(kind);FIELD(dim);FIELD(nic);FIELD(text);FIELD(power);
+    if(!legacy_field(fd,constants,sizeof(constants),offsetof(LegacyDocument,constants),&position,hash))return false;
+    FIELD(ic);FIELD(solver);FIELD(solver_custom);FIELD(view);
+    if(!legacy_field(fd,graph,sizeof(graph),offsetof(LegacyDocument,graph_mask),&position,hash)
+        || !legacy_field(fd,list,sizeof(list),offsetof(LegacyDocument,list_mask),&position,hash))return false;
+    if(version>=4){FIELD(color);}else model_color_defaults(d);
+    if(version>=5){FIELD(field_style);FIELD(field_color);}else model_field_appearance_defaults(d);
+#undef FIELD
+    if(!skip_hashed(fd,document_size(version)-position,hash))return false;
+    if(!present)return true; /* Unused recall bytes need only checksum validation. */
+    if(d->dim<1 || d->dim>ODE_MAX_DIM || d->nic<0 || d->nic>ODE_MAX_IC)return false;
+    *warnings|=STORAGE_LEGACY;
+    unsigned allowed=(1u<<d->dim)-1;
+    for(int i=0;i<d->nic;i++)d->enabled|=(uint16_t)((graph[i]|(list[i]>>1))&allowed);
+    for(int i=0;i<ODE_MAX_DIM;i++)if(!migrate_expression(d->text[i],constants))
+        *warnings|=STORAGE_EXPRESSION_REVIEW; /* keep original text; parser requires explicit repair */
+    if(d->kind>EQ_GENERAL && d->nic>1){d->nic=1;*warnings|=STORAGE_IC_ADAPTED;}
+    if(d->kind<=EQ_GENERAL && d->nic>1) {
+        int count=1;
+        for(int i=1;i<d->nic;i++) {
+            if(d->ic[i].x!=d->ic[0].x){*warnings|=STORAGE_IC_ADAPTED;continue;}
+            d->ic[count]=d->ic[i];memcpy(d->color[count],d->color[i],sizeof(d->color[count]));count++;
+        }
+        d->nic=count;
+    }
+    model_sanitize_colors(d);model_sanitize_field(d);return true;
+}
+
 static int record_read_native(void *opaque)
 {
     RecordRead *request=opaque;
@@ -181,20 +282,10 @@ static int record_read_native(void *opaque)
         memcpy(&actual,prefix,sizeof(actual));
         ok=same_header(&actual,&request->expected);
     }
-    memset(request->current,0,sizeof(Document));memset(request->recall,0,sizeof(Document));
-    size_t size=document_size(request->expected.version);
-    if(ok)ok=native_read_hashed(fd,request->current,size,&hash)
-        && native_read_hashed(fd,request->recall,size,&hash)
-        && native_read_all(fd,&checksum,sizeof(checksum))
-        && hash==checksum;
+    if(ok)ok=read_document(fd,request->current,actual.version,true,&hash,request->warnings)
+        && read_document(fd,request->recall,actual.version,actual.has_recall!=0,&hash,request->warnings)
+        && native_read_all(fd,&checksum,sizeof(checksum)) && hash==checksum;
     if(close(fd)!=0)ok=false;
-    if(ok) {
-        if(actual.version==3) {
-            model_color_defaults(request->current);model_color_defaults(request->recall);
-        } else {
-            model_sanitize_colors(request->current);model_sanitize_colors(request->recall);
-        }
-    }
     return ok;
 }
 
@@ -339,7 +430,8 @@ static bool probe_slot(const char *directory,int slot,SlotProbe *probe)
 
 static bool load_slot_documents(App *app,const SlotProbe *probe)
 {
-    RecordRead request={probe->path,probe->header,&app->load.current,&app->load.recall};
+    app->load.warnings=0;
+    RecordRead request={probe->path,probe->header,&app->load.current,&app->load.recall,&app->load.warnings};
     if(!run_record_read(&request)
         || model_validate(&app->load.current)!=ODE_OK
         || (probe->header.has_recall && model_validate(&app->load.recall)!=ODE_OK))return false;
@@ -366,6 +458,7 @@ bool storage_load(App *app,const char *directory)
 {
     SlotProbe selected;
     if(!newest_valid_slot(app,directory,&selected))return false;
+    app->migration_warnings=app->load.warnings;
     app->doc=app->load.current;
     app->recall=app->load.recall;
     app->has_recall=selected.header.has_recall!=0;
@@ -434,89 +527,41 @@ static bool finish_export(const char *path,bool ok,bool removable,OdeStatus *sta
     return ok;
 }
 
-bool storage_csv(const Document *document,CompiledModel *model,const char *directory,
-    char *path,unsigned capacity,OdeStatus *status,OdeCancel cancel,void *cancel_context)
+static bool export_table(const Document *document,CompiledModel *model,const char *directory,
+    const char *prefix,char *path,unsigned capacity,OdeStatus *status,OdeCancel cancel,void *cancel_context)
 {
-    *status=ODE_BAD_INPUT;
-    if(document->nic<1)return false;
+    TableIndex index;if(capacity)path[0]=0;
+    *status=table_index_build(document,model,&index,cancel,cancel_context);
+    if(*status!=ODE_OK)return false;
+    if(index.total>CSV_MAX_ROWS){*status=ODE_STEP_LIMIT;return false;}
     *status=ODE_IO_ERROR;
-    if(unique_csv(directory,"DIFFEQ",path,capacity)<0)return false;
-    bool removable=true;size_t used=0;
-    bool ok=append_format(&used,"family,direction,step");
-    for(int i=-1;i<document->dim && ok;i++) {
-        char label[20];model_variable_label(document,i,label,sizeof(label));
-        ok=append_format(&used,",%s",label);
+    if(unique_csv(directory,prefix,path,capacity)<0)return false;
+    bool removable=true;size_t used=0;bool ok=append_format(&used,"'x");
+    for(int column=0;column<index.count && ok;column++) {
+        char label[20];table_column_label(document,&index,column,label,sizeof(label));
+        ok=append_format(&used,",'%s",label);
     }
     ok=ok && append_format(&used,"\n") && append_file(path,used,&removable);
-    unsigned rows=0;*status=ok ? ODE_OK:ODE_IO_ERROR;
-    for(int family=0;family<document->nic && *status==ODE_OK;family++) {
-        if(!document->list_mask[family])continue;
-        for(int direction=-1;direction<=1;direction+=2) {
-            unsigned start=0;
-            for(;;) {
-                table_page(document,model,family,direction,start,&csv_page,cancel,cancel_context);
-                if(csv_page.result.status!=ODE_OK && csv_page.result.status!=ODE_SAMPLE_STOP) {
-                    *status=csv_page.result.status;break;
-                }
-                used=0;
-                for(unsigned row=0;row<csv_page.count;row++) {
-                    if(rows++>=CSV_MAX_ROWS){*status=ODE_STEP_LIMIT;break;}
-                    ok=append_format(&used,"%d,%d,%lu",family+1,direction,
-                        (unsigned long)csv_page.step[row]);
-                    for(int i=0;i<=document->dim && ok;i++) {
-                        if(document->list_mask[family]&(1u<<i))
-                            ok=append_format(&used,",%.17g",csv_page.row[row][i]);
-                        else ok=append_format(&used,",");
-                    }
-                    if(ok)ok=append_format(&used,"\n");
-                    if(!ok){*status=ODE_IO_ERROR;break;}
-                }
-                if(*status==ODE_OK && used && !append_file(path,used,&removable))
-                    *status=ODE_IO_ERROR;
-                if(*status!=ODE_OK || !csv_page.more)break;
-                start+=csv_page.count;
-            }
-            if(*status!=ODE_OK)break;
-        }
-    }
-    return finish_export(path,*status==ODE_OK,removable,status);
-}
-
-bool storage_stat_csv(const Document *document,CompiledModel *model,int family,int direction,
-    const char *directory,char *path,unsigned capacity,OdeStatus *status,
-    OdeCancel cancel,void *cancel_context)
-{
-    *status=ODE_BAD_INPUT;
-    if(family<0 || family>=document->nic || (direction!=1 && direction!=-1)
-        || !document->list_mask[family])return false;
-    *status=ODE_IO_ERROR;
-    if(unique_csv(directory,"DIFFSTAT",path,capacity)<0)return false;
-    bool removable=true;size_t used=0;int columns=0;bool ok=true;
-    for(int i=0;i<=document->dim && ok;i++)if(document->list_mask[family]&(1u<<i)) {
-        char label[20];model_variable_label(document,i-1,label,sizeof(label));
-        ok=append_format(&used,"%s'%s",columns++ ? ",":"",label);
-    }
-    ok=ok && columns<=26 && append_format(&used,"\n")
-        && append_file(path,used,&removable);
-    unsigned start=0,rows=0;*status=ok ? ODE_OK:ODE_IO_ERROR;
-    while(*status==ODE_OK) {
-        table_page(document,model,family,direction,start,&csv_page,cancel,cancel_context);
-        if(csv_page.result.status!=ODE_OK && csv_page.result.status!=ODE_SAMPLE_STOP) {
-            *status=csv_page.result.status;break;
-        }
+    *status=ok ? ODE_OK:ODE_IO_ERROR;
+    for(unsigned start=0;start<index.total && *status==ODE_OK;start+=csv_page.count) {
+        table_read_page(document,model,&index,start,&csv_page,cancel,cancel_context);
+        if(csv_page.result.status!=ODE_OK){*status=csv_page.result.status;break;}
         used=0;
         for(unsigned row=0;row<csv_page.count;row++) {
-            if(rows++>=CSV_MAX_ROWS){*status=ODE_STEP_LIMIT;break;}
-            columns=0;ok=true;
-            for(int i=0;i<=document->dim && ok;i++)if(document->list_mask[family]&(1u<<i))
-                ok=append_format(&used,"%s%.17g",columns++ ? ",":"",csv_page.row[row][i]);
+            for(int column=0;column<=index.count && ok;column++) {
+                if(csv_page.valid[row]&(1u<<column))ok=append_format(&used,"%s%.17g",column ? ",":"",csv_page.row[row][column]);
+                else ok=append_format(&used,",");
+            }
             if(ok)ok=append_format(&used,"\n");
             if(!ok){*status=ODE_IO_ERROR;break;}
         }
-        if(*status==ODE_OK && used && !append_file(path,used,&removable))
-            *status=ODE_IO_ERROR;
-        if(*status!=ODE_OK || !csv_page.more)break;
-        start+=csv_page.count;
+        if(*status==ODE_OK && used && !append_file(path,used,&removable))*status=ODE_IO_ERROR;
     }
     return finish_export(path,*status==ODE_OK,removable,status);
 }
+bool storage_csv(const Document *document,CompiledModel *model,const char *directory,
+    char *path,unsigned capacity,OdeStatus *status,OdeCancel cancel,void *cancel_context)
+{return export_table(document,model,directory,"DIFFEQ",path,capacity,status,cancel,cancel_context);}
+bool storage_stat_csv(const Document *document,CompiledModel *model,const char *directory,
+    char *path,unsigned capacity,OdeStatus *status,OdeCancel cancel,void *cancel_context)
+{return export_table(document,model,directory,"DIFFSTAT",path,capacity,status,cancel,cancel_context);}

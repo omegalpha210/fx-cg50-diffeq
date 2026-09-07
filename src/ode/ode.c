@@ -9,7 +9,7 @@ OdeStatus ode_validate(const OdeSettings *s)
         || !isfinite(s->xmax-s->xmin) || s->max_steps<1 || s->max_steps>100000
         || s->step<1 || s->step>10000 || s->sf<0 || s->sf>100)
         return ODE_BAD_INPUT;
-    if(!isfinite(s->h) || s->h<1e-12) return ODE_BAD_STEP;
+    if(!isfinite(s->h) || s->h<=0) return ODE_BAD_STEP;
     return ODE_OK;
 }
 
@@ -61,7 +61,7 @@ const char *ode_status_text(OdeStatus s)
     static const char *const text[]={"Complete","Cancelled","Page complete",
         "Invalid values/range","h too small for x","Step limit reached",
         "NaN or infinity","Magnitude > 1e100","Math domain / singularity","Storage I/O error",
-        "Valid regions / gaps"};
+        "Valid regions / gaps","Total calculation too large"};
     return (unsigned)s<sizeof(text)/sizeof(text[0]) ? text[s] : "Unknown error";
 }
 bool ode_invalid_region(OdeStatus status)

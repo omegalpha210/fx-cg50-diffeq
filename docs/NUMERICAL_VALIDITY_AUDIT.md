@@ -1,3 +1,5 @@
+> Historical audit for the 671186f rollback milestone. Current TRACE cache, interpolation, preflight and memory evidence supersede the old measurements below: [TRACE_EVENT_AUDIT.md](TRACE_EVENT_AUDIT.md), [SOLVER_SAFETY_AUDIT.md](SOLVER_SAFETY_AUDIT.md), [ACCEPTANCE.md](ACCEPTANCE.md).
+
 # Numerical validity audit
 
 Baseline: 6addf4d. The RK4 state/intermediate/derivative guard at magnitude 1e100
@@ -75,5 +77,10 @@ Physical overflow examples, key latency, LCD Black/Blue contrast and MENU/reentr
 are HARDWARE TEST REQUIRED. Host fixtures cannot establish those outcomes.
 
 
-
-Public beta validation and memory evidence are summarized in [ACCEPTANCE.md](ACCEPTANCE.md).
+Final verification: all 17 host CTest groups with UBSan and strict warnings pass;
+full clean SH compile/link and 13 G3A checks pass. Evidence is recorded in
+[ACCEPTANCE.md](ACCEPTANCE.md). Target BSS is 62,736 versus 62,720 (+16), data
+704 unchanged; the 44,756-byte TRACE buffers, 2,920-byte Document and 13,960-byte
+App are unchanged. No new allocation exceeds 1 KB; no new trajectory array or
+heap allocation was introduced. Compiler frames and address-space margin are
+in [MEMORY_AUDIT.md](MEMORY_AUDIT.md); physical high-water remains unmeasured.

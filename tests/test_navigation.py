@@ -27,8 +27,8 @@ def execute(keys,expect_session):
             assert not slots
 
 # Same-process screen loops exercise actual modal handlers and dispatcher state.
-execute("F1 4 F6 F6 "+"F5 EXIT "*1000+"EXIT EXIT EXIT",False)
-execute("F1 4 "+"F6 F6 F6 EXIT F1 F1 "*100+"EXIT EXIT EXIT",False)
-execute(("F1 4 EXIT EXIT F2 EXIT F3 1 F6 EXIT EXIT F4 1 F6 EXIT EXIT ")*100+"EXIT",False)
+execute("1 4 F6 F6 "+"F5 EXIT "*1000+"EXIT EXIT EXIT",False)
+execute("1 4 "+"F6 F6 F6 EXIT F1 F1 "*100+"EXIT EXIT EXIT",False)
+execute(("1 4 EXIT EXIT 2 EXIT 3 1 F6 EXIT EXIT 4 1 F6 EXIT EXIT ")*100+"EXIT",False)
 
 print("Actual dispatcher: SET 1000, all stages/Graph 100, family round trip 100, no writes passed.")

@@ -78,11 +78,11 @@ int main(void)
     roots=gsolve_search(&d,&m,(GsolveCurve){0,0},GSOLVE_ROOT,0,NULL,NULL);
     assert(roots.status==ODE_OK && roots.count==1);
 
-    d.nic=2;d.ic[1]=d.ic[0];d.graph_mask[0]=1;d.graph_mask[1]=1;
+    d.nic=2;d.ic[1]=d.ic[0];d.enabled=1;d.enabled=1;
     assert(gsolve_curve_count(&d)==2);
     assert(gsolve_curve_at(&d,1,&curve) && curve.family==1 && curve.variable==0);
     d.view.phase=1;assert(gsolve_curve_count(&d)==0);
-    d.view.phase=0;d.graph_mask[0]=0;assert(gsolve_curve_count(&d)==1);
+    d.view.phase=0;d.enabled=0;assert(gsolve_curve_count(&d)==0);
 
     model_defaults(&d,EQ_SECOND,2);d.solver.h=.025;
     ModelError error=model_compile(&d,&m);

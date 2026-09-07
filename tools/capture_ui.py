@@ -11,24 +11,70 @@ executable=root/'build-host/host_app'
 output=root/'docs/ui-review'
 output.mkdir(parents=True,exist_ok=True)
 cases=[('main','Main',''),
-    ('equation','Equation / NEXT','F1 4 NEG A:SUB EXE'),
-    ('parameter','Parameters / GRAPH','F1 4 F6 F6 DOWN DOWN 0 DOT 0 5 EXE'),
-    ('vwindow','V-Window','F1 4 F3 NEG 7 EXE'),
-    ('initial-conditions','Vertical ICs / ADD-DROP','F1 4 F6 F4 DOWN'),
-    ('output','Output matrix','F2 F6 F6 F4 DOWN'),
-    ('graph','Full-size Graph / 2 IC colors','F1 4 F6 F4 DOWN 2 EXE F6 F6'),
-    ('gsolve','G-Solve ROOT result','F2 F6 F6 F6 F5 F1 EXE'),
-    ('table','Numerical Table','F2 F6 F6 F6 F4'),
-    ('zoom','Inline Zoom menu','F2 F6 F6 F6 F2'),
-    ('system9','Nine variables / formula above fields','F4 9 F6 '+ 'DOWN '*8),
-    ('ic9','Nine-state IC scroll','F4 9 F6 F6 '+'DOWN '*9),
-    ('color-chooser','Output / six-color chooser','F2 F6 F6 F4 DOWN F3'),
-    ('trace','TRACE / retained samples','F2 F6 F6 F6 F1 RIGHT'),
-    ('func','FUNC / softkeys only','F1 4 LEFT F2'),
-    ('var','VAR / second page','F4 9 F6 LEFT F1 F6'),
-    ('scalar-prompt','Y-CAL / scalar RUN','F2 F6 F6 F6 F5 F6 F1 EXE 2 DOT 5'),
-    ('graph-settings','Graph settings / INIT','F2 F6 F6 F5 1')]
-sheet=Image.new('RGB',(816,2384),'#e8eef5')
+    ('equation','Equation / NEXT','1 4 NEG A:SUB EXE'),
+    ('parameter','Parameters / GRAPH','1 4 F6 F6 DOWN DOWN 0 DOT 0 5 EXE'),
+    ('vwindow','V-Window','1 4 F3 NEG 7 EXE'),
+    ('initial-conditions','First-order IC / list input','1 1 F6 DOWN S:MUL 0 COMMA 1 S:DIV EXE'),
+    ('output','Output / selected state ON-OFF','2 F6 F6 F4 DOWN RIGHT'),
+    ('graph','Full-size Graph / 2 IC colors','1 1 F6 DOWN S:MUL 0 COMMA 1 S:DIV EXE F6 F6'),
+    ('gsolve','G-Solve ROOT result','2 F6 F6 F6 F5 F1 EXE'),
+    ('table','Numerical Table','2 F6 F6 F6 F4'),
+    ('zoom','Inline Zoom menu','2 F6 F6 F6 F2'),
+    ('system9','Nine variables / formula above fields','4 9 F6 '+ 'DOWN '*8),
+    ('ic9','Nine-state IC scroll','4 9 F6 F6 '+'DOWN '*9),
+    ('color-chooser','Output / six-color chooser','2 F6 F6 F4 DOWN F3'),
+    ('trace','TRACE / Xdot interpolation','2 F6 F6 F6 F1 RIGHT'),
+    ('func','FUNC / softkeys only','1 4 LEFT F2'),
+    ('var','VAR / second page','4 9 F6 LEFT F1 F6'),
+    ('scalar-prompt','Y-CAL / scalar RUN','2 F6 F6 F6 F5 F6 F1 EXE 2 DOT 5'),
+    ('graph-settings','Graph settings / INIT','2 F6 F6 F5')]
+cases += [
+    ('table-limit','Table / last valid row', '1 1 LEFT ACON F2 F2 XOT RIGHTP EXE F6 F6 F6 F4 F2'),
+    ('table-scroll','Table / frozen x', '4 4 F6 F6 F6 F6 F4 RIGHT RIGHT'),
+    ('preflight','Preflight / no calculation', '2 F6 F6 DOWN DOWN 0 DOT 0 0 0 1 EXE F6'),
+    ('trace-follow','TRACE / followed viewport', '2 EXE EXE EXE F1 '+'RIGHT '*160),
+    ('zoom-pan','ZOOM / arrow pan keeps menu', '2 EXE EXE EXE F2 RIGHT')]
+ux_start=len(cases)
+field='1 4 F6 F6 F5 '
+arrow='DOWN DOWN F2 DOWN F3 '
+cases += [
+    ('func-select','SELECT / F2 blank','1 4'),
+    ('func-exit','FUNC EXIT / incomplete draft retained','1 4 LEFT ACON F2 F2 F2 EXIT'),
+    ('trace-fast','TRACE / FAST selected','2 EXE EXE EXE F1 F3 RIGHT'),
+    ('trace-faster','TRACE / FASTER selected','2 EXE EXE EXE F1 F4 RIGHT'),
+    ('field-settings','Graph Settings / appearance only',field+'DOWN DOWN'),
+    ('field-palette','Field / separate six-color chooser',field+arrow+'RIGHT'),
+    ('field-arrow-zero','Arrow / zero slope points right','1 4 0 EXE F6 F6 F5 '+arrow+'EXE EXIT F6'),
+    ('field-arrow-up','Arrow / positive slope','1 4 1 EXE F6 F6 F5 '+arrow+'RIGHT EXE EXIT F6'),
+    ('field-arrow-down','Arrow / negative slope','1 4 NEG 1 EXE F6 F6 F5 '+arrow+'RIGHT RIGHT EXE EXIT F6'),
+    ('field-arrow-max','SF100 / arrows remain visible','1 4 F6 F6 DOWN DOWN DOWN DOWN 1 0 0 EXE F5 '+arrow+'DOWN RIGHT EXE EXIT F6'),
+    ('output-first','Output / y only, no x row','1 4 F6 F6 F4'),
+    ('output-enabled','Output / shared ON-OFF','2 F6 F6 F4 DOWN RIGHT')]
+cases += [
+    ('table-solutions','Table / manual example MID','1 1 F6 DOWN S:MUL 0 COMMA 1 S:DIV EXE F6 F6 F4'),
+    ('table-top','Table / smallest x','1 1 F6 DOWN S:MUL 0 COMMA 1 S:DIV EXE F6 F6 F4 F1'),
+    ('table-bottom','Table / largest x','1 1 F6 DOWN S:MUL 0 COMMA 1 S:DIV EXE F6 F6 F4 F2'),
+    ('table-many','Table / IC columns, frozen x','1 1 F6 DOWN S:MUL 0 COMMA 1 COMMA 2 COMMA 3 COMMA 4 COMMA 5 S:DIV EXE F6 F6 F4 RIGHT RIGHT'),
+    ('ic-second','2nd / one complete vector','2 F6'),
+    ('ic-list-error','IC / malformed list','1 1 F6 DOWN S:MUL 0 COMMA S:DIV F6'),
+    ('sf-parameter','Parameters / SF selected','1 4 F6 F6 DOWN DOWN DOWN DOWN')]
+polish_start=len(cases)
+cases += [
+    ('polish-equation-select','Equation SELECT / contextual hint','1 4'),
+    ('polish-equation-edit','Equation EDIT / common hint','1 4 LEFT'),
+    ('polish-ic-edit','IC numeric EDIT / common hint','2 F6 DOWN 2'),
+    ('polish-list-edit','IC list EDIT / common hint','1 1 F6 DOWN S:MUL 0 COMMA 1 S:DIV'),
+    ('polish-vwindow-edit','V-Window EDIT / common hint','2 F3 DOWN DOWN 2'),
+    ('polish-parameter-edit','Parameters EDIT / common hint','2 F6 F6 DOWN DOWN 0 DOT 0 5'),
+    ('polish-sf-first','First-order / SF selected','1 4 F6 F6 DOWN DOWN DOWN DOWN'),
+    ('polish-sf-second','2nd / Step then Max steps','2 F6 F6 DOWN DOWN DOWN 2 EXE'),
+    ('polish-sf-nth','N-th9 / no SF row','3 9 F6 F6 F6'),
+    ('polish-sf-system','SYS9 / no SF row','4 9 F6 F6 F6'),
+    ('polish-field-swatch','Field / Pale Magenta swatch','1 4 F6 F6 F5 DOWN DOWN DOWN F3 DOWN EXE'),
+    ('polish-prev','Graph / semantic PREV','2 F6 F6 F6'),
+    ('polish-ic-full','SYS9 IC / seven rows clear of help','4 9 F6 F6'),
+    ('polish-output-full','SYS9 OUTPUT / seven rows + one hint','4 9 F6 F6 F6 F4')]
+sheet=Image.new('RGB',(816,8+264*((len(cases)+1)//2)),'#e8eef5')
 draw=ImageDraw.Draw(sheet)
 font=ImageFont.load_default()
 for i,(name,label,keys) in enumerate(cases):
@@ -43,4 +89,12 @@ for i,(name,label,keys) in enumerate(cases):
     draw.text((x,y),label,fill='#193857',font=font)
     sheet.paste(im,(x,y+25))
 sheet.save(output/'host-overview.png')
-print('Saved eighteen host framebuffer views to docs/ui-review/. HARDWARE RETEST REQUIRED.')
+for name,start in [('ux-field-overview',ux_start),('polish-overview',polish_start)]:
+    sheet=Image.new('RGB',(816,8+264*((len(cases)-start+1)//2)),'#e8eef5')
+    draw=ImageDraw.Draw(sheet)
+    for i,(filename,label,_) in enumerate(cases[start:]):
+        x=8+(i%2)*404;y=8+(i//2)*264
+        draw.text((x,y),label,fill='#193857',font=font)
+        sheet.paste(Image.open(output/f'{filename}.png'),(x,y+25))
+    sheet.save(output/(name+'.png'))
+print(f'Saved {len(cases)} host framebuffer views to docs/ui-review/. HARDWARE RETEST REQUIRED.')

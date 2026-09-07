@@ -7,10 +7,9 @@ static const char *select_token(int kind)
     static const char *const variables[]={"y1","y2","y3","y4","y5","y6","y7","y8","y9"};
     static const char *const functions[]={"abs(","asin(","acos(","atan(","sinh(","cosh(",
         "tanh(","asinh(","acosh(","atanh("};
-    static const char *const constants[]={"A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","Z","r","theta"};
-    const char *const *list=kind==0 ? variables:(kind==1 ? functions:constants);
-    int count=kind==0 ? 9:(kind==1 ? 10:26);
-    int choice=ui_choose(kind==0 ? "Insert variable":(kind==1 ? "Insert function":"Insert constant"),list,count,0);
+    const char *const *list=kind==0 ? variables:functions;
+    int count=kind==0 ? 9:10;
+    int choice=ui_choose(kind==0 ? "Insert variable":"Insert function",list,count,0);
     return choice<0 ? "":list[choice];
 }
 static const char *physical_token(key_event_t event)
@@ -21,8 +20,10 @@ static const char *physical_token(key_event_t event)
     if(key==KEY_ADD)return event.alpha ? "x":"+";
     if(key==KEY_SUB)return event.alpha ? "y":"-";
     if(key==KEY_NEG)return "-";
-    if(key==KEY_MUL)return "*";
-    if(key==KEY_DIV || key==KEY_FRAC)return "/";
+    if(key==KEY_MUL)return event.shift ? "{":"*";
+    if(key==KEY_DIV)return event.shift ? "}":"/";
+    if(key==KEY_FRAC)return "/";
+    if(key==KEY_COMMA)return ",";
     if(key==KEY_POWER)return "^";
     if(key==KEY_SQUARE)return event.shift ? "sqrt(":"^2";
     if(key==KEY_LEFTP)return "(";
@@ -42,11 +43,22 @@ void ui_inline_begin(UiInlineEdit *edit,const char *text,bool replace)
     edit->cursor=(int)strlen(edit->text);edit->active=true;edit->replace=replace;
 }
 bool ui_inline_input(key_event_t event) {return physical_token(event)[0]!=0;}
-int ui_field_complete(int key,bool committed,int *selected,int count)
+int ui_list_complete(int key,bool committed,int *selected,int count)
 {
     if(key!=KEY_EXE)return key;
     if(*selected+1<count){(*selected)++;return 0;}
     return committed ? 0:KEY_F6;
+}
+int ui_field_complete(int key,bool committed,int *selected,int count)
+{
+    if(key==KEY_EXE && !committed)return KEY_F6;
+    return ui_list_complete(key,committed,selected,count);
+}
+int ui_equation_variables(const Document *d)
+{
+    if(d->kind==EQ_HIGHER)return d->dim-1;
+    if(d->kind==EQ_SYSTEM)return d->dim;
+    return 0;
 }
 bool ui_field_select(UiInlineEdit *edit,key_event_t event,const char *value,int *selected,int count)
 {
@@ -71,7 +83,6 @@ void ui_inline_insert(UiInlineEdit *edit,const char *token)
     memmove(edit->text+edit->cursor+n,edit->text+edit->cursor,len-(unsigned)edit->cursor+1);
     memcpy(edit->text+edit->cursor,token,n);edit->cursor+=(int)n;
 }
-void ui_inline_constant(UiInlineEdit *edit) {ui_inline_insert(edit,select_token(2));}
 int ui_inline_key(UiInlineEdit *edit,key_event_t event)
 {
     int key=event.key;
@@ -88,12 +99,7 @@ int ui_inline_key(UiInlineEdit *edit,key_event_t event)
     const char *token=physical_token(event);
     if(key==KEY_F1)token=select_token(0);
     if(key==KEY_F2)token=select_token(1);
-    if(key==KEY_F3)token=select_token(2);
-    if(key==KEY_OPTN) {
-        const char *const items[]={"Insert function","Insert private constant"};
-        int choice=ui_choose("Numeric input",items,2,0);
-        if(choice>=0)token=select_token(choice+1);
-    }
+    if(key==KEY_OPTN)token=select_token(1);
     ui_inline_insert(edit,token);
     return 0;
 }
@@ -152,7 +158,7 @@ bool ui_edit(const char *title,char *text,unsigned capacity,int position)
         ui_line(12+w,53+row*16,12+w,65+row*16,UI_TEAL);
         ui_text(8,151,UI_MUTED,"Use * for products; functions need ( ).");
         ui_text(8,169,UI_MUTED,"Radians.  %d / %u characters",(int)strlen(edit.text),limit-1);
-        ui_softkeys("VAR","FUNC","CONST","CLEAR","DEL","OK");dupdate();
+        ui_softkeys("VAR","FUNC","","CLEAR","DEL","OK");dupdate();
         key_event_t event=ui_getkey();
         if(event.key==KEY_UP)edit.cursor=edit.cursor>=40 ? edit.cursor-40:0;
         else if(event.key==KEY_DOWN) {
@@ -165,12 +171,12 @@ bool ui_edit(const char *title,char *text,unsigned capacity,int position)
         if(strlen(edit.text)>=limit)ui_message("Input limit","Expression is full (191 characters).");
     }
 }
-bool ui_number(const char *title,double *value,const double *constants)
+bool ui_number(const char *title,double *value)
 {
     char text[EXPR_TEXT];snprintf(text,sizeof(text),"%.12g",*value);
     for(;;) {
         if(!ui_edit(title,text,sizeof(text),-1)) return false;
-        ExprProgram p;ExprError e=expr_compile(text,(ExprScope){0,false,false,false,constants},&p);
+        ExprProgram p;ExprError e=expr_compile(text,(ExprScope){0,false,false,false},&p);
         double result=0;ExprStatus status=e.status;
         if(status==EXPR_OK) status=expr_eval(&p,0,NULL,0,&result);
         if(status==EXPR_OK && isfinite(result)) {*value=result;return true;}

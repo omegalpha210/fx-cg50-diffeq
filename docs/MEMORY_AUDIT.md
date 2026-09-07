@@ -1,3 +1,5 @@
+> Historical beta.1 memory audit. Current beta.2 section sizes and validation are in [ACCEPTANCE.md](ACCEPTANCE.md).
+
 # Target memory boundary
 
 The validated source baseline has SH data 704 bytes, BSS 62,736 bytes, Document

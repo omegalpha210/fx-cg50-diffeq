@@ -5,9 +5,10 @@ typedef struct {
     Document doc,recall;
     union {
         CompiledModel model;
-        struct {Document current,recall;} load;
+        struct {Document current,recall;unsigned warnings;} load;
     };
     bool has_recall,dirty;
+    unsigned migration_warnings;
 } App;
 
 typedef enum {
@@ -15,12 +16,10 @@ typedef enum {
     APP_SCREEN_FIRST_ORDER,
     APP_SCREEN_DIMENSION,
     APP_SCREEN_EQUATION,
-    APP_SCREEN_SETTINGS,
     APP_SCREEN_PARAMETERS,
     APP_SCREEN_OUTPUT,
     APP_SCREEN_VWINDOW,
     APP_SCREEN_GRAPH_SETTINGS,
-    APP_SCREEN_CONSTANTS,
     APP_SCREEN_INITIAL_CONDITIONS,
     APP_SCREEN_CALCULATE,
     APP_SCREEN_GRAPH,

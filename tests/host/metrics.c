@@ -1,15 +1,20 @@
 #include "ode.h"
+#include "model.h"
 #include "gsolve.h"
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
+static unsigned long rhs_calls;
+unsigned long host_rhs_calls(void){return rhs_calls;}
+unsigned long host_solves(void);
 static unsigned long solves,searches,reads,writes,opens,closes;
 void __cyg_profile_func_enter(void *function,void *caller)
 {
     (void)caller;
     /* Function-address comparison is the compiler instrumentation ABI. */
     if(function==(void *)(uintptr_t)ode_integrate)solves++;
+    if(function==(void *)(uintptr_t)model_rhs)rhs_calls++;
     if(function==(void *)(uintptr_t)gsolve_search ||
        function==(void *)(uintptr_t)gsolve_intersections)searches++;
 }
@@ -27,3 +32,5 @@ void host_metrics_print(void)
     printf("METRICS solves=%lu searches=%lu reads=%lu writes=%lu opens=%lu closes=%lu\n",
         solves,searches,reads,writes,opens,closes);
 }
+
+unsigned long host_solves(void){return solves;}

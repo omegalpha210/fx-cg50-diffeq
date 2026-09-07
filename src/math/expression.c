@@ -80,15 +80,6 @@ static void primary(Parser *p)
     }
     if(!strcmp(name,"pi")) { number(p,3.14159265358979323846); return; }
     if(!strcmp(name,"e")) { number(p,2.71828182845904523536); return; }
-    int constant=-1;
-    if(len==1 && name[0]>='A' && name[0]<='Z') constant=name[0]-'A';
-    if(!strcmp(name,"r")) constant=26;
-    if(!strcmp(name,"theta")) constant=27;
-    if(constant>=0) {
-        if(!p->scope.constants) fail(p,EXPR_VARIABLE);
-        else number(p,p->scope.constants[constant]);
-        return;
-    }
     static const char *const names[]={"sin","cos","tan","exp","ln","log","sqrt","abs",
         "asin","acos","atan","sinh","cosh","tanh","asinh","acosh","atanh"};
     int op=-1;

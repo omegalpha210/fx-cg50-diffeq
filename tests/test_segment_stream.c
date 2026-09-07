@@ -71,7 +71,7 @@ int main(void)
     GsolveResults roots=gsolve_search(&d,&m,curve,GSOLVE_ROOT,0,NULL,NULL);
     assert(roots.status==ODE_OK && roots.has_invalid && !roots.count); /* no false crossing across gap */
     assert(gsolve_ycal(&d,&m,curve,0,&p,NULL,NULL)==ODE_DIVERGED);
-    d.nic=2;d.ic[1]=d.ic[0];d.graph_mask[1]=1;
+    d.nic=2;d.ic[1]=d.ic[0];d.enabled=1;
     roots=gsolve_intersections(&d,&m,curve,(GsolveCurve){1,0},NULL,NULL);
     assert(roots.status==ODE_OK && roots.has_invalid && roots.count==0);
     d.nic=1;

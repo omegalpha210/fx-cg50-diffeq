@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <stdio.h>
 static key_event_t events[16];
+static key_event_t direct[4];
+static int direct_next,direct_length;
 static int length,next,menu_count,timers,starts,stops,held=1;
 static volatile int *timer_flag;
 static keydev_transform_t transform;
@@ -12,7 +14,7 @@ keydev_transform_t keydev_transform(keydev_t *d) {(void)d;return transform;}
 void keydev_set_transform(keydev_t *d,keydev_transform_t t) {(void)d;transform=t;}
 int keydown(int key) {(void)key;return held;}
 static key_event_t event(int key) {return (key_event_t){.type=KEYEV_DOWN,.key=(unsigned)key,.mod=1};}
-key_event_t getkey(void) {return event(KEY_5);}
+key_event_t getkey(void) {return direct_next<direct_length ? direct[direct_next++]:event(KEY_5);}
 key_event_t getkey_opt(int options,volatile int *timeout)
 {
     assert(timeout);
@@ -42,6 +44,10 @@ int main(void)
     assert(ui_cancel(NULL) && menu_count==0);
     assert(ui_getkey().key==KEY_5 && menu_count==1);
     assert(ui_getkey().key==KEY_5 && menu_count==1);
+    direct[0]=event(KEY_EXIT);direct[0].type=KEYEV_HOLD;direct[1]=direct[0];
+    direct[2]=event(KEY_ADD);direct[2].alpha=1;direct[3]=event(KEY_EXE);direct_length=4;
+    first=ui_getkey();assert(first.key==KEY_ADD && first.alpha && direct_next==3);
+    assert(ui_getkey().key==KEY_EXE && direct_next==4); /* no broad flush */
     /* Saturation cancels, retains order, and leaves unread native events. */
     length=9;next=0;for(int i=0;i<9;i++)events[i]=event(KEY_RIGHT);
     assert(ui_cancel(NULL) && next==8);

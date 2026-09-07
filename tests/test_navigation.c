@@ -9,10 +9,10 @@ int main(void)
     for(int iteration=0;iteration<1000;iteration++) {
         assert(navigation.current==APP_SCREEN_MAIN);
 
-        app_navigation_open(&navigation,APP_SCREEN_SETTINGS);
-        app_navigation_open(&navigation,APP_SCREEN_CONSTANTS);
+        app_navigation_open(&navigation,APP_SCREEN_PARAMETERS);
+        app_navigation_open(&navigation,APP_SCREEN_GRAPH_SETTINGS);
         app_navigation_back(&navigation);
-        assert(navigation.current==APP_SCREEN_SETTINGS);
+        assert(navigation.current==APP_SCREEN_PARAMETERS);
         app_navigation_back(&navigation);
 
         app_navigation_open(&navigation,APP_SCREEN_FIRST_ORDER);

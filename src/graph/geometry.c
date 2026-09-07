@@ -60,3 +60,40 @@ bool graph_zoom(ViewWindow *v,double factor,double dx,double dy)
         || !isfinite(next.xmax-next.xmin) || !isfinite(next.ymax-next.ymin)) return false;
     *v=next;return true;
 }
+
+bool graph_follow_window(ViewWindow *v,double x)
+{
+    double span=v->xmax-v->xmin;
+    if(v->phase || !isfinite(x))return false;
+    if(x>v->xmax-.1*span)return graph_zoom(v,1,.2,0);
+    if(x<v->xmin+.1*span)return graph_zoom(v,1,-.2,0);
+    return false;
+}
+
+int graph_field_color(unsigned color)
+{
+    /* gint C_RGB uses 0..31 channels, not RGB888. Opaque field-only presets. */
+    static const int palette[]={C_RGB(17,21,27),C_RGB(27,17,17),C_RGB(12,23,24),
+        C_RGB(25,17,25),C_RGB(24,21,9),C_RGB(18,18,18)};
+    return palette[color<FIELD_COLORS ? color:0];
+}
+bool graph_field_direction(const ViewWindow *v,double slope,double *dx,double *dy)
+{
+    double rx=v->xmax-v->xmin,ry=v->ymax-v->ymin;
+    if(!isfinite(slope) || !isfinite(rx) || !isfinite(ry) || rx<=0 || ry<=0)return false;
+    if(slope==0){*dx=1;*dy=0;return true;}
+    /* Normalize (W/rx, -slope*H/ry) without overflowing intermediate products.
+       Mantissas stay small; exponent differences also cover subnormal spans. */
+    int ex,ey,ef;
+    double mx=frexp(rx,&ex),my=frexp(ry,&ey),mf=frexp(slope,&ef);
+    double t=mf*mx/my*(PLOT_BOTTOM-PLOT_TOP)/(PLOT_RIGHT-PLOT_LEFT);
+    int exponent=ef+ex-ey;
+    if(exponent>=0) {
+        double inverse=ldexp(1/fabs(t),-exponent),norm=hypot(inverse,1);
+        *dx=inverse/norm;*dy=-copysign(1/norm,t);
+    } else {
+        t=ldexp(t,exponent);double norm=hypot(1,t);
+        *dx=1/norm;*dy=-t/norm;
+    }
+    return true;
+}

@@ -1,84 +1,110 @@
-# TRACE event audit (baseline 06a491e)
+# TRACE event, cache and auto-follow audit
 
-## CONFIRMED ROOT CAUSE
+Current base: `f7e1093`; stride/field implementation: `1f354de`. Earlier cache/auto-follow milestone: `1ad95d8` (rollback `671186f` remains in history).
+Current behavior is verified by production-source host tests and SH compilation;
+physical key timing and LCD behavior remain **HARDWARE TEST REQUIRED**.
 
-Source ui_trace called graph_render, graph_highlight_curve and ode_integrate on
-every directional move and timer wake. Those calls polled ui_cancel. In 06a491e,
-ui_cancel returned true when its eight-event retained-input queue became full,
-even if every event was a normal directional repeat. graph_render had already
-cleared VRAM and then displayed the resulting ODE_CANCELLED partial curve. EXIT
-could remain behind those repeats. This exactly establishes a normal-repeat to
-cancel/partial/starvation code path; elimination of the physical report still
-requires a device retest. It is not a RAM or CPU-overload diagnosis.
+## Movement and viewport
 
-## CONTRIBUTING FACTOR
+The previous code moved to the next retained RK4 sample. Long trajectories used
+sparse retained points, so one key could move much farther than a screen pixel.
+TRACE advances by the existing fractional `model_xdot()` value `(Xmax-Xmin)/378`
+multiplied by the local stride: F2 NORMAL=1, F3 FAST=2, F4 FASTER=3. It linearly
+interpolates connected cached states. The mode starts at NORMAL on every entry
+and is not serialized. A button changes only that small local value and its
+outline: x, curve, blink phase, window, h, Step and solve count stay unchanged.
+One effective arrow computes one target, with no synthesized keys or Xdot rounding.
+A nonfinite or unrepresentable target is rejected before cache fallback. Phase
+TRACE uses the same independent-x stride and retains family selection; phase
+auto-follow/extension remains disabled. This changes navigation spacing, not
+numerical accuracy or the repeat interval.
 
-Installed gint keydev.c generates KEYEV_HOLD with a default 400 ms initial delay
-and 40 ms interval (25/s); its native queue has 32 slots. No application trace
-acceleration existed. Repeated full integration and redraw made eight pending
-events reachable. TRACE clamped x to the current view/solver intersection; it
-did not extend the domain. Graph arrow pan separately updates V-Window and calls
-model_sync_solver_window, extending the integration domain only in AUTO mode.
+Entering the outer 10% of the X viewport requests a 20% horizontal pan via the
+same `graph_zoom` geometry used by Graph, G-Solve and ZOOM arrow pan. UP/DOWN still
+selects visible curves; it never pans TRACE. Selection preserves x where the new
+curve has valid cached data. Blink phase and current pointer are retained through
+successful pan. EXIT restores the current committed viewport, not the original
+viewport before intentional pan. Graph/ZOOM pan and AUTO/ORIG never change h.
 
-## FIX
+## Bounded cache and numerical meaning
 
-TRACE now prepares one selected-IVP cache in bounded scratch, with at most 129
-exact RK4 samples in each direction, and a one-bit selected-curve raster mask.
-Ordinary LEFT/RIGHT moves between retained canonical samples; blink and movement
-perform no RK4 calls. For very long trajectories the retained Step grid is
-decimated to fit the cap (coordinates show the actual retained x). X= still
-performs one explicit exact query. Changing the selected curve may prepare it
-once. No interpolation changes numerical results and no full framebuffer copy
-is allocated. The sample budget does not limit the number of ICs/states.
+A total of 258 `TracePoint` slots is shared by enabled IVP families. Each family
+receives two branches with `floor(258 / (2 * enabled_families))` slots per branch:
+129 for one IC, 14 for nine. Each point holds x and at most nine states. Capture
+uses a bounded stride, always retaining the first and last accepted sample.
+Explicit link flags mark segment starts; interpolation and cached polylines never
+bridge a validity gap. Replacing the last full slot conservatively retains a
+broken link. Invalid RK4 stages cannot enter the cache.
 
-Preparing scratch never alters plot VRAM. Usable finite points are published even
-when a numerical guard stops a branch; explicit cancellation discards preparation
-and leaves the graph untouched. A cache without usable points remains unavailable. A reversible XOR mask and
-crosshair plus a saved 19-row footer restore every plot pixel on EXIT. TRACE is
-a bounded Graph mode, so EXIT restores softkeys without a dispatcher redraw.
-TRACE stays within its calculated domain; the already-working Graph pan/auto
-extension remains separate, with no repeat-triggered extension thrashing.
+Displayed TRACE y values and cached pan curves are approximations, especially for
+many ICs, long domains or rapid oscillation. They are not fresh RK4 evaluations.
+F1 x= performs an explicit integration from the original IC, using the runtime
+extent and unchanged h. This also works after moving outside a manual Solver
+range. Normal Graph and G-Solve still use their existing streamed numerical paths.
+The selected XOR mask is restricted to actual base-color pixels of the canonical
+plot, preventing sparse cache geometry from drawing synthetic highlight strokes
+on white. Black's alternate remains Blue. EXIT restores all changed pixels.
 
-TRACE polling coalesces directional repeats to one intent and gives EXIT/MENU/
-BACK priority. Ordinary repeats never return solver cancellation. A custom
-gint repeat profile uses 400 ms then constant 125 ms (8/s), restores the previous
-profile on exit and does not mutate gint's global standard-repeat intervals.
-This conservative ceiling reduces the previous 25/s input load; real target
-latency/tuning is unmeasured, not inferred from host timing. Timers are stopped
-on every return; MENU retains the normal OS-world mechanism.
+## Runtime extension and cancellation transaction
 
-## HOST VERIFICATION
+The initial cache covers the current Solver range. A pan beyond it, or a TRACE
+step at a narrower manual range boundary, requests a range extended by half a
+viewport beyond the requested edge. Already computed range is retained. A later
+pan inside that range only rebuilds axes/slope field and cached polylines; it does
+not integrate. One synchronous extension can run at a time. At a numerical guard,
+TRACE stops or uses a separately supplied trusted segment; RK4 never invents a
+restart beyond a failed step.
 
-trace_repeat simulates 50 HOLD events (two seconds at the previous 25/s rate)
-for both LEFT and RIGHT, then immediate EXIT. It checks no Partial: Cancelled,
-zero additional movement/blink integration, immediate Graph bar and exact plot
-hash restoration. It also repeats entry/exit, blink and curve switches 100 times
-and checks Graph pan past the original domain. All 17 host/UBSan groups pass;
-color tests also verify six exact rendered colors and distinct black highlights. Target-branch key_lifecycle
-feeds a pending repeat flood followed by EXIT and verifies priority/coalescing,
-bounded repeat intervals and restoration, released-HOLD discard, deferred MENU
-priority, plus 100 balanced timer lifetimes. MENU during preparation leaves the
-plot intact and retries the cache safely on resume.
+An extension preflights all configured IC paths before capture. It recomputes the
+requested range from original ICs with the existing RK4/provider, rather than
+continuing from rounded/interpolated cache values. Each successful RK4 step polls
+cancellation. The old canonical plot and sample cache remain intact while the new
+samples are staged. Success publishes the fixed-size cache, then performs a
+bounded pixel/RHS redraw. Cancellation or a work-limit failure discards staging;
+old cache, document window, manual parameters and VRAM remain unchanged.
 
-## HARDWARE RETEST REQUIRED
+The staging array is a **union with the pre-existing overlay storage**: a 9,504-byte
+bit mask plus 14,592-byte footer. Before staging, XOR/pointer/footer overlays are
+restored to VRAM, so that memory can be reused. After success or cancellation,
+the footer is recaptured from the canonical plot and the selected mask rebuilt.
+There is no added framebuffer, heap allocation, or second permanent trajectory
+array. A compile-time assertion bounds staging to the existing 24,096 bytes.
+The committed cache remains 21,168 bytes on SH. The earlier auto-follow milestone
+added 496 BSS bytes; this stride/field milestone adds 16 total linker BSS bytes.
+The Document is now version 5, but its two new field bytes fit prior tail padding:
+SH Document remains 2,920 bytes, App 13,960 bytes and the work union is unchanged.
+Cached redraw streams the field once, polls queued EXIT/MENU each column, and
+finishes the bounded raster commit before returning; it allocates no field cache.
 
-Hold LEFT and RIGHT for 2-5 seconds, release and immediately EXIT. Verify complete
-graph, no partial/cancel, immediate control response, curve switching, blink,
-X=, MENU resume and panning. The host adapters do not emulate keyscan timing,
-LCD, native gint MENU or OS scheduling. The fixed TRACE buffers total 44,756 bytes, without heap allocation. Static memory and cache costs are measured
-in MEMORY_AUDIT.md; no claim of physical runtime high-water is made.
+AUTO Solver ranges follow committed view changes through the existing sync
+helper. Manual Solver xmin/xmax remain byte-for-byte unchanged; only the temporary
+TRACE extent grows. h, Step and Max Steps remain unchanged in both modes.
 
+## Input ownership and evidence
 
-## Follow-up against 6addf4d
+The earlier repeat regression treated a full event queue as cancellation after
+clearing graph VRAM. That path remains removed. `ui_trace_cancel` coalesces repeat
+intent and prioritizes EXIT/MENU/F6. Ordinary arrows do not cancel integration.
+The target repeat override remains 400 ms then 125 ms with no acceleration; it is
+restored when TRACE exits. The existing single blink timer lifecycle is unchanged.
 
-Black's alternate is now Blue through the shared graph_highlight_color helper;
-other TRACE colors keep their XOR mappings. A two-byte highlight XOR value fits
-alongside existing static objects; cache/mask/footer sizes are unchanged.
+- `test_trace.py`: 50 holds each way, 100 blinks, 100 curve-switch and entry cycles;
+  no move/blink solves and exact plot restoration before any pan.
+- `test_trace_cache.c`: fractional movement, analytic interpolation check,
+  cancellation after capture has begun, identical old VRAM/cache/view on failure,
+  cache-only subsequent pan, manual range preservation, nine ICs × nine states,
+  and a single enabled late-index family.
+- `test_safety_ui.py`: 310 pixel moves in each direction past x=±10, at most two
+  extension passes, same-x switching/blink, exact x= beyond manual range,
+  unchanged manual range/h on return, persistent ZOOM arrow pan.
+- `test_key_lifecycle.c`: production target input/cancel/timer branches, pending
+  repeats, EXIT/MENU priority and re-entry policy. This is not OS emulation.
+- `test_ux_field.py`: fixed Xdot=.025, x=.6, both directions at 1/2/3×; mode
+  changes without movement/solves, fresh NORMAL, 260 repeated FAST/FASTER moves,
+  curve switching/blinks, numerical/work boundaries and normal EXIT restoration.
+- `test_field.c`: field/TRACE overlay exact framebuffer restoration, including
+  valid solution data beside invalid field grid points.
+- Existing segmented provider tests still prove gap safety and Black↔Blue.
 
-Numerical invalidity no longer rejects both branches. NULL delimiters reset mask
-continuity, finite retained points remain navigable, and a failed boundary move
-can show TRACE: invalid region. Independent exact x= queries reject unreachable
-values. Cancellation of an exact query routes pending EXIT/MENU through the same
-priority handler before waiting again, avoiding a stranded control event.
-See [NUMERICAL_VALIDITY_AUDIT.md](NUMERICAL_VALIDITY_AUDIT.md) for the IC-connected
-prefix guarantee and synthetic post-gap fixture boundary.
+See [ACCEPTANCE.md](ACCEPTANCE.md) for build/hash/memory and
+[HARDWARE_RETEST.md](HARDWARE_RETEST.md) for physical follow-up.

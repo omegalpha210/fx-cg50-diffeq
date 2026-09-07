@@ -76,7 +76,13 @@ void dupdate(void)
     if(frame>limit) {fputs("Excess UI frames\n",stderr);exit(2);}
 }
 #ifndef DIFFEQ_TEST_NATIVE_KEYS
-key_event_t pollevent(void) {return (key_event_t){.type=KEYEV_NONE};}
+static unsigned poll_remaining;
+void host_cancel_after(unsigned polls){poll_remaining=polls;}
+key_event_t pollevent(void)
+{
+    if(poll_remaining && --poll_remaining==0)return (key_event_t){.key=KEY_EXIT,.type=KEYEV_DOWN};
+    return (key_event_t){.type=KEYEV_NONE};
+}
 key_event_t getkey(void)
 {
     static const char *cursor;
@@ -96,7 +102,7 @@ key_event_t getkey(void)
     static const struct Key keys[]={
 #define K(name) {#name,KEY_##name}
         K(F1),K(F2),K(F3),K(F4),K(F5),K(F6),K(LEFT),K(RIGHT),K(UP),K(DOWN),K(EXIT),K(EXE),K(OPTN),
-        K(XOT),K(LOG),K(LN),K(SIN),K(COS),K(TAN),K(POWER),K(SQUARE),K(DEL),K(ACON),
+        K(XOT),K(LOG),K(LN),K(SIN),K(COS),K(TAN),K(POWER),K(SQUARE),K(DEL),K(ACON),K(COMMA),
         K(LEFTP),K(RIGHTP),K(NEG),K(SUB),K(ADD),K(MUL),K(DIV),K(EXP),K(DOT),
         K(0),K(1),K(2),K(3),K(4),K(5),K(6),K(7),K(8),K(9)
 #undef K

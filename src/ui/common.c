@@ -67,7 +67,7 @@ key_event_t ui_trace_key(UiBlink *blink)
 #endif
     return event;
 }
-key_event_t ui_getkey(void)
+static key_event_t take_key(void)
 {
 #ifdef FXCG50
     while(pending_count) {
@@ -82,6 +82,15 @@ key_event_t ui_getkey(void)
     }
 #endif
     return getkey();
+}
+key_event_t ui_getkey(void)
+{
+    for(;;) {
+        key_event_t event=take_key();
+        /* One physical EXIT closes one layer. Keep other queued input intact. */
+        if(event.type==KEYEV_HOLD && event.key==KEY_EXIT)continue;
+        return event;
+    }
 }
 void ui_rect(int x,int y,int w,int h,int color)
 { drect(UI_X+x,UI_Y+y,UI_X+x+w-1,UI_Y+y+h-1,color); }
@@ -125,12 +134,6 @@ void ui_softkeys(const char *a,const char *b,const char *c,const char *d,const c
         ui_text(i*64+(63-w)/2,202,foreground,"%s",keys[i]);
     }
 }
-void ui_stage_softkeys(int stage)
-{
-    ui_softkeys(stage==0 ? "VAR":"PREV",stage==0 ? "FUNC":(stage==1 ? "":"INIT"),
-        "V-WIN",stage==0 ? "":(stage==1 ? "ADD":"OUTPUT"),
-        stage==0 ? "":(stage==1 ? "DROP":"SET"),stage==2 ? "GRAPH":"NEXT");
-}
 void ui_short(char *out,unsigned capacity,const char *text,int width)
 {
     snprintf(out,capacity,"%s",text);
@@ -162,6 +165,15 @@ void ui_field(int row,const char *label,const char *value,bool selected)
     char short_value[192];ui_short(short_value,sizeof(short_value),value,226);
     ui_text(138,y,selected ? C_WHITE:UI_INK,"%s",short_value);
     if(!selected)ui_line(10,y+17,374,y+17,UI_LINE);
+}
+void ui_form_hint(const UiInlineEdit *edit,const char *context)
+{
+    const char *text=edit && edit->active ? UI_EDIT_HINT:context;
+    if(text && text[0])ui_text(8,184,UI_MUTED,"%s",text);
+}
+void ui_color_swatch(int x,int y,int color)
+{
+    ui_rect(x,y,29,13,UI_INK);ui_rect(x+2,y+2,25,9,color);
 }
 void ui_message(const char *title,const char *message)
 {
@@ -211,7 +223,7 @@ int ui_choose(const char *title,const char *const *items,int count,int selected)
             char number[16];snprintf(number,sizeof(number),"%d",page*7+row+1);
             ui_field(row,number,items[page*7+row],page*7+row==selected);
         }
-        ui_text(8,184,UI_MUTED,"Up/Down: select   EXE: open");
+        ui_form_hint(NULL,"EXE: open");
         ui_softkeys("",count>7 ? "PG-":"",count>7 ? "PG+":"","","","OPEN");dupdate();
         int key=ui_getkey().key;
         if(key==KEY_UP) selected=(selected+count-1)%count;

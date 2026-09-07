@@ -23,7 +23,7 @@ int gsolve_curve_count(const Document *d)
     int count=0;
     for(int family=0;family<d->nic;family++)
         for(int variable=0;variable<d->dim;variable++)
-            if(d->graph_mask[family]&(1u<<variable))count++;
+            if(d->enabled&(1u<<variable))count++;
     return count;
 }
 bool gsolve_curve_at(const Document *d,int ordinal,GsolveCurve *curve)
@@ -31,7 +31,7 @@ bool gsolve_curve_at(const Document *d,int ordinal,GsolveCurve *curve)
     if(!curve || ordinal<0)return false;
     for(int family=0;d && !d->view.phase && family<d->nic;family++)
         for(int variable=0;variable<d->dim;variable++)
-            if(d->graph_mask[family]&(1u<<variable)) {
+            if(d->enabled&(1u<<variable)) {
                 if(ordinal--==0){*curve=(GsolveCurve){family,variable};return true;}
             }
     return false;
@@ -42,7 +42,7 @@ static bool valid_curve(const Document *d,GsolveCurve curve)
 {
     return d && !d->view.phase && curve.family>=0 && curve.family<d->nic
         && curve.variable>=0 && curve.variable<d->dim
-        && (d->graph_mask[curve.family]&(1u<<curve.variable));
+        && (d->enabled&(1u<<curve.variable));
 }
 static bool search_domain(const Document *d,double *xmin,double *xmax)
 {

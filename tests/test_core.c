@@ -54,7 +54,7 @@ int main(void)
     assert(r.status==ODE_NONFINITE && r.steps==0 && r.y[0]==y[0]);
     r=ode_integrate(logistic,NULL,1,0,y,1,&s,NULL,NULL,cancel,NULL);
     assert(r.status==ODE_CANCELLED && r.steps==0);
-    s.h=1e-15; assert(ode_validate(&s)==ODE_BAD_STEP);
+    s.h=1e-15; assert(ode_validate(&s)==ODE_OK);
     s.h=.1; s.xmax=s.xmin; assert(ode_validate(&s)==ODE_BAD_INPUT);
     puts("All solver checks passed.");
     return 0;

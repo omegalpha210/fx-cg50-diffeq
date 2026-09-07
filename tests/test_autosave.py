@@ -13,12 +13,12 @@ def execute(keys,directory):
 with tempfile.TemporaryDirectory(dir='.') as directory:
     execute('F6 EXE',directory)
     assert not list(Path(directory).glob('DIFFEQ?.dat'))
-    execute('F1 4 NEG A:SUB F6 F6 F6 EXIT EXIT EXIT EXIT EXIT EXIT',directory)
+    execute('1 4 NEG A:SUB F6 F6 F6 EXIT EXIT EXIT EXIT EXIT EXIT',directory)
     assert not list(Path(directory).glob('DIFFEQ?.dat'))
-    execute('F1 4 NEG A:SUB F6 F6 F6 EXIT EXIT EXIT EXIT EXIT F6 EXE',directory)
+    execute('1 4 NEG A:SUB F6 F6 F6 EXIT EXIT EXIT EXIT EXIT F6 EXE',directory)
     slots={p.name:p.read_bytes() for p in Path(directory).glob('DIFFEQ?.dat')}
     assert slots
-    cold=execute('F1 4',directory)
+    cold=execute('1 4',directory)
     assert 'TEXT 144 57 sin(x)-y\n' in cold and 'TEXT 144 57 -y\n' not in cold
     assert 'reads=0 writes=0 opens=0 closes=0' in cold
     restored=execute('F5 2 F1',directory)

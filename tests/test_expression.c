@@ -4,8 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 static ExprProgram p;
-static double constants[EXPR_CONSTANTS];
-static ExprScope scope={9,false,true,true,constants};
+static ExprScope scope={9,false,true,true};
 static double value(const char *text)
 {
     double y[]={2,3,4,5,6,7,8,9,10},v;
@@ -23,7 +22,8 @@ int main(void)
     assert(fabs(value("asin(1)+acos(0)+atan(1)")-3.92699081698724154808)<1e-14);
     assert(fabs(value("sinh(0)+cosh(0)+tanh(0)+asinh(0)+acosh(1)+atanh(0)")-1)<1e-14);
     assert(value("y1+y9+x+y")==16);
-    constants[0]=7; assert(value("A*y")==14);
+    assert(expr_compile("A*y",scope,&p).status==EXPR_VARIABLE);
+    assert(expr_compile("r+theta",scope,&p).status==EXPR_VARIABLE);
     scope.derivatives=true; assert(value("y1")==3);
     assert(expr_compile("y9",scope,&p).status==EXPR_VARIABLE);
     scope.derivatives=false; scope.allow_y=false;

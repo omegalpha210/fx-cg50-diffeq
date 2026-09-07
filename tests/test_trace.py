@@ -11,7 +11,7 @@ def run(keys):
   return p.stdout
 def lastplot(out): return re.findall(r'^PLOT (\w+)',out,re.M)[-1]
 def solves(out): return int(re.findall(r'solves=(\d+)',out)[-1])
-graph='F2 F6 F6 F6 '
+graph='2 F6 F6 F6 '
 base=run(graph)
 enter=run(graph+'F1 ')
 for direction in ['LEFT','RIGHT']:

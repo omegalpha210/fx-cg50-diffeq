@@ -4,6 +4,25 @@
 #include "trace.h"
 #include <math.h>
 #include <stdio.h>
+static bool pan_key(ViewWindow *view,int key)
+{
+    if(key==KEY_LEFT)return graph_zoom(view,1,-.2,0);
+    if(key==KEY_RIGHT)return graph_zoom(view,1,.2,0);
+    if(key==KEY_UP)return graph_zoom(view,1,0,.2);
+    if(key==KEY_DOWN)return graph_zoom(view,1,0,-.2);
+    return false;
+}
+static bool accept_window(Document *d,ViewWindow before,OdeSettings solver)
+{
+    model_sync_solver_window(d);
+    ModelWork plan=model_preflight(d,&d->solver);
+    if(plan.status==ODE_OK)return true;
+    d->view=before;d->solver=solver;
+    ui_rect(0,198,384,18,UI_BLUE);
+    ui_text(7,202,C_WHITE,"Too many steps: increase h / Max Steps");dupdate();
+    int key;do {key=ui_getkey().key;}while(key!=KEY_EXE && key!=KEY_EXIT);
+    return false;
+}
 static bool graph_more(App *a,GraphResult last)
 {
     const char *const choices[]={"Phase plot: toggle","Phase horizontal state","Phase vertical state",
@@ -36,22 +55,22 @@ static bool graph_more(App *a,GraphResult last)
     }
     return false;
 }
-static bool trace_value(const UiInlineEdit *edit,const double *constants,double *value)
+static bool trace_value(const UiInlineEdit *edit,double *value)
 {
     ExprProgram program;
-    ExprError error=expr_compile(edit->text,(ExprScope){0,false,false,false,constants},&program);
+    ExprError error=expr_compile(edit->text,(ExprScope){0,false,false,false},&program);
     return error.status==EXPR_OK && expr_eval(&program,0,NULL,0,value)==EXPR_OK && isfinite(*value);
 }
 void ui_trace(App *a)
 {
-    Document *d=&a->doc;int count=0,selected=0,prepared=-1;
+    Document *d=&a->doc;int count=0,selected=0,prepared=-1,stride=1;
     if(d->view.phase) {for(int i=0;i<d->nic;i++)if(graph_family_enabled(d,i))count++;}
     else count=gsolve_curve_count(d);
     if(count<1)return;
     TracePoint point={0};point.x=d->ic[0].x;
     UiInlineEdit edit={0};UiBlink blink;ui_blink_start(&blink);
     ui_trace_input(true);trace_overlay_begin();
-    bool valid=false,input_error=false,boundary=false;
+    bool valid=false,input_error=false,boundary=false;OdeStatus follow_error=ODE_OK;
     for(;;) {
         trace_overlay_restore();
         GsolveCurve curve={0,0};
@@ -63,7 +82,8 @@ void ui_trace(App *a)
         if(prepared!=selected) {
             /* Capture into bounded scratch without modifying any graph pixel.
                A cancelled preparation never replaces the complete plot. */
-            valid=trace_prepare(d,&a->model,curve.family,curve.variable);
+            valid=prepared<0 ? trace_prepare(d,&a->model,curve.family,curve.variable):
+                trace_select(d,curve.family,curve.variable);
             if(valid)trace_point_near(point.x,&point);
             prepared=selected;
         }
@@ -76,20 +96,28 @@ void ui_trace(App *a)
             ui_text(8,184,UI_BLUE,"IC%d x=%.7g %s=%.7g",curve.family+1,point.x,label,point.y[curve.variable]);
         } else ui_text(8,184,UI_BLUE,"Trace unavailable; graph retained");
         if(boundary) {
-            ui_rect(0,179,384,19,C_WHITE);ui_text(8,184,UI_BLUE,"TRACE: invalid region");
+            ui_rect(0,179,384,19,C_WHITE);ui_text(8,184,UI_BLUE,follow_error==ODE_STEP_LIMIT || follow_error==ODE_WORK_LIMIT ?
+                "TRACE: too many steps; increase h":"TRACE: Numerical limit");
         }
         if(input_error)ui_softkeys("Invalid x","","","","","OK");
-        else ui_softkeys("x=","","","","","BACK");
+        else if(edit.active)ui_softkeys("x=","","","","","BACK");
+        else {
+            ui_softkeys("x=","NORMAL","FAST","FASTER","","BACK");
+            int left=64*stride+1;
+            ui_line(left,199,left+61,199,C_WHITE);ui_line(left,215,left+61,215,C_WHITE);
+            ui_line(left,199,left,215,C_WHITE);ui_line(left+61,199,left+61,215,C_WHITE);
+        }
         dupdate();
         key_event_t event=edit.active ? ui_getkey():ui_trace_key(&blink);int key=event.key;
         if(edit.active) {
             if(key==KEY_EXE || key==KEY_EXIT || key==KEY_F6) {
                 double value;
-                if(!trace_value(&edit,d->constants,&value)){input_error=true;continue;}
+                if(!trace_value(&edit,&value)){input_error=true;continue;}
                 input_error=false;
-                value=fmax(fmax(d->solver.xmin,d->view.xmin),fmin(fmin(d->solver.xmax,d->view.xmax),value));
+                const OdeSettings *extent=valid ? trace_extent():&d->solver;
+                value=fmax(fmax(extent->xmin,d->view.xmin),fmin(fmin(extent->xmax,d->view.xmax),value));
                 OdeResult r=ode_integrate(model_rhs,&a->model,d->dim,d->ic[curve.family].x,
-                    d->ic[curve.family].y,value,&d->solver,NULL,NULL,ui_trace_cancel,NULL);
+                    d->ic[curve.family].y,value,extent,NULL,NULL,ui_trace_cancel,NULL);
                 if(r.status==ODE_CANCELLED) {
                     int control=ui_trace_key(&blink).key;
                     if(control==KEY_EXIT || control==KEY_F6)break;
@@ -103,6 +131,7 @@ void ui_trace(App *a)
             continue;
         }
         if(key==KEY_EXIT || key==KEY_F6)break;
+        if(key>=KEY_F2 && key<=KEY_F4){stride=key-KEY_F2+1;continue;}
         if(key==KEY_MENU && !valid)prepared=-1;
         if(key==KEY_F1 || ui_inline_input(event)) {
             boundary=false;
@@ -110,8 +139,26 @@ void ui_trace(App *a)
             ui_inline_begin(&edit,text,true);
             if(key!=KEY_F1)ui_inline_key(&edit,event);
         }
-        if(valid && (key==KEY_LEFT || key==KEY_RIGHT))
-            boundary=!trace_move(point.x,key==KEY_LEFT ? -1:1,&point) && trace_has_invalid();
+        if(valid && (key==KEY_LEFT || key==KEY_RIGHT)) {
+            TracePoint next=point;trace_overlay_restore();
+            int direction=key==KEY_LEFT ? -1:1;
+            double dx=stride*model_xdot(&d->view),target=point.x+direction*dx;
+            if(!isfinite(target) || target==point.x){boundary=true;follow_error=ODE_BAD_STEP;continue;}
+            bool moved=trace_step(point.x,direction,dx,&next);
+            boundary=!moved && trace_direction_invalid(direction);follow_error=ODE_OK;
+            if(moved || (!d->view.phase && !boundary)) {
+                OdeStatus status=trace_follow(d,&a->model,moved ? next.x:target);
+                if(status==ODE_CANCELLED) {
+                    int control=ui_trace_key(&blink).key;
+                    if(control==KEY_EXIT || control==KEY_F6)break;
+                    continue;
+                }
+                if(status==ODE_OK){
+                    if(!moved)trace_step(point.x,direction,dx,&next);
+                    point=next;a->dirty=true;
+                } else {boundary=true;follow_error=status;}
+            }
+        }
         if(key==KEY_UP){selected=(selected+count-1)%count;boundary=false;}
         if(key==KEY_DOWN){selected=(selected+1)%count;boundary=false;}
     }
@@ -162,7 +209,7 @@ static bool gsolve_input(App *a,GsolveCurve curve,const char *label,double *valu
         key_event_t event=ui_blink_key(&blink);int key=event.key;
         if(key==KEY_EXE || key==KEY_F6 || (key==KEY_EXIT && edit.active)) {
             double number;
-            if(!trace_value(&edit,a->doc.constants,&number)){error=true;continue;}
+            if(!trace_value(&edit,&number)){error=true;continue;}
             *value=number;error=false;edit.active=false;
             if(key==KEY_EXIT)continue;
             ui_blink_stop(&blink);return true;
@@ -269,12 +316,10 @@ static void gsolve_menu(App *a,GraphResult *last)
         dupdate();int key=ui_getkey().key,operation=-1;
         if(key==KEY_EXIT)return;
         if(key==KEY_F6){page=1-page;continue;}
-        if(key==KEY_LEFT)graph_zoom(&a->doc.view,1,-.2,0);
-        if(key==KEY_RIGHT)graph_zoom(&a->doc.view,1,.2,0);
-        if(key==KEY_UP)graph_zoom(&a->doc.view,1,0,.2);
-        if(key==KEY_DOWN)graph_zoom(&a->doc.view,1,0,-.2);
-        if(key==KEY_LEFT || key==KEY_RIGHT || key==KEY_UP || key==KEY_DOWN)
-            {model_sync_solver_window(&a->doc);a->dirty=true;*last=graph_render(&a->doc,&a->model,false);}
+        ViewWindow before=a->doc.view;OdeSettings solver=a->doc.solver;
+        bool panned=pan_key(&a->doc.view,key);
+        if(panned && accept_window(&a->doc,before,solver))
+            {a->dirty=true;*last=graph_render(&a->doc,&a->model,false);}
         if(page==0 && key>=KEY_F1 && key<=KEY_F5)operation=key-KEY_F1;
         if(page==1 && (key==KEY_F1 || key==KEY_F2))operation=key==KEY_F1 ? 5:6;
         if(operation>=0) {
@@ -296,11 +341,13 @@ UiGraphAction ui_graph(App *a,bool first)
             result=graph_render(&a->doc,&a->model,first);first=false;redraw=false;
         }
         if(zoom_menu)ui_softkeys("IN","OUT","AUTO","ORIG","","");
-        else ui_softkeys("TRACE","ZOOM","V-WIN","TABLE","G-SLV","BACK");
+        else ui_softkeys("TRACE","ZOOM","V-WIN","TABLE","G-SLV","PREV");
         dupdate();
         key_event_t event=ui_getkey();int key=event.key;
         if(zoom_menu) {
             if(key==KEY_EXIT){zoom_menu=false;continue;}
+            ViewWindow before=a->doc.view;OdeSettings solver=a->doc.solver;
+            redraw=pan_key(&a->doc.view,key);
             if(key==KEY_F4) {model_window_defaults(&a->doc.view);redraw=true;}
             if(key==KEY_F1 || key==KEY_F2) {
                 redraw=graph_zoom(&a->doc.view,key==KEY_F1 ? .67:1.5,0,0);
@@ -316,7 +363,7 @@ UiGraphAction ui_graph(App *a,bool first)
                     while((key=ui_getkey().key)!=KEY_EXE && key!=KEY_EXIT) {}
                 }
             }
-            if(redraw){model_sync_solver_window(&a->doc);a->dirty=true;}
+            if(redraw){redraw=accept_window(&a->doc,before,solver);if(redraw)a->dirty=true;}
             continue;
         }
         if(key==KEY_EXIT || key==KEY_F6)return UI_GRAPH_BACK;
@@ -324,14 +371,12 @@ UiGraphAction ui_graph(App *a,bool first)
         if(key==KEY_F2) {
             zoom_menu=true;continue;
         }
+        ViewWindow before=a->doc.view;OdeSettings solver=a->doc.solver;
         if(key==KEY_ADD)graph_zoom(&a->doc.view,.67,0,0);
         if(key==KEY_SUB)graph_zoom(&a->doc.view,1.5,0,0);
-        if(key==KEY_LEFT)graph_zoom(&a->doc.view,1,-.2,0);
-        if(key==KEY_RIGHT)graph_zoom(&a->doc.view,1,.2,0);
-        if(key==KEY_UP)graph_zoom(&a->doc.view,1,0,.2);
-        if(key==KEY_DOWN)graph_zoom(&a->doc.view,1,0,-.2);
+        pan_key(&a->doc.view,key);
         if(key==KEY_ADD || key==KEY_SUB || key==KEY_LEFT || key==KEY_RIGHT
-            || key==KEY_UP || key==KEY_DOWN){model_sync_solver_window(&a->doc);a->dirty=true;redraw=true;}
+            || key==KEY_UP || key==KEY_DOWN){redraw=accept_window(&a->doc,before,solver);if(redraw)a->dirty=true;}
         if(key==KEY_F3)return UI_GRAPH_VWINDOW;
         if(key==KEY_F4)return UI_GRAPH_TABLE;
         /* A bounded softkey submenu, not a dispatcher screen re-entry. */

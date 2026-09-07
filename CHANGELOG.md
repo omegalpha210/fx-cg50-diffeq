@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.9.0-beta.2 — Graph exploration and visual documentation
+
+- Ordinary SELECT EXE now runs NEXT/GRAPH/DONE from any row. EDIT EXE commits and
+  selects the next visible field; EXIT commits/stays. FUNC is shown in EDIT,
+  VAR only in relevant modes, and Main uses digits1–4 or arrow selection.
+- First-order initial values use one common x0 and `y0={...}` for up to nine
+  solutions. Higher-order/SYS input shows one complete initial-state vector.
+- OUTPUT now has a single dependent-state ON/OFF setting shared by graph, TRACE,
+  G-Solve, Table and CSV. x is always the first Table/CSV column. The existing six
+  solution colors are retained; F3 opens the color chooser.
+- Slope fields have Segment/Arrow styles and six pale colors, with Arrow/Pale Blue
+  defaults. Graph Settings shows a real color swatch. SF density appears only in
+  scalar first-order Parameters; unsupported modes and their INIT preserve it.
+- TRACE adds NORMAL/FAST/FASTER, interpolated movement and viewport following,
+  retaining cancellation and bounded-cache behavior during extension.
+- Table combines both integration directions in ascending x. TOP/BTM/MID jump to
+  reachable ends or the center, while horizontal scrolling keeps x fixed. Valid
+  terminal samples remain visible and numerical ends use inline notices.
+- Preflight checks reject excessive RK4 work before calculation, with guidance
+  for h and Max steps. Numerical failures preserve valid computed regions.
+- Shared EDIT hints, clearer IC/OUTPUT help and magenta Graph PREV complete the
+  calculator UI polish. Graph PREV returns to Parameters; submenus keep their controls.
+- New visual README in English and Korean, using original icons and eight
+  reproducible captures from the app renderer.
+
+
+Session format v6 reads same-device v3/v4/v5 records. Review migration notes before upgrading.
+
 ## v0.9.0-beta.1 — Initial public beta
 
 - Native fx-CG50 ODE graphing: seven equation modes, 1–9 states/orders, bidirectional RK4.
