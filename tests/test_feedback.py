@@ -23,7 +23,7 @@ def rgb565(value):return bytes([(value>>11&31)*255//31,(value>>5&63)*255//63,(va
 
 # Ordinary fields: EDIT EXE advances once; EXIT commits/stays; last selected runs.
 forms=[('2','DIFF EQ / Linear 2nd',3),('2 F6','Initial Conditions',3),
- ('2 F6 F6','Parameter',6),('2 F3','View Window',7),('3','Order (1-9)',1)]
+ ('2 F6 F6','Parameter',6),('2 F6 F6 F3','View Window',7),('3','Order (1-9)',1)]
 for prefix,title,count in forms:
     assert plot(run(prefix+' EXE'))==plot(run(prefix+' F6'))
     if count>1:assert plot(run(prefix+' 2 EXE'))==plot(run(prefix+' 2 EXIT DOWN'))
@@ -34,10 +34,10 @@ for prefix,title,count in forms:
     assert plot(run(last+'2 EXE'))==plot(run(last+'2 EXIT'))
     assert plot(run(last+'2 EXE EXE'))==plot(run(last+'2 EXIT F6'))
     assert plot(run(last+'EXE'))==plot(run(last+'F6'))
-for prefix in ['2','2 F6','2 F6 F6','2 F3']:
+for prefix in ['2','2 F6','2 F6 F6','2 F6 F6 F3']:
     for accept in ['EXE','EXIT']:
         assert plot(run(prefix+' SIN '+accept+' EXE'))==plot(run(prefix+' SIN'))
-for prefix,actions in [('2',['F3','F6']),('2 F6',['F1','F3','F6']),
+for prefix,actions in [('2',['F6']),('2 F6',['F6']),
  ('2 F6 F6',['F1','F3','F4','F5','F6'])]:
     for action in actions:
         assert plot(run(prefix+' SIN '+action+' EXE'))==plot(run(prefix+' SIN'))
@@ -68,16 +68,16 @@ for entry,count in [('3 9 F6',8),('4 9 F6',9)]:
 # Main F1-F4 have neither labels nor actions; digits and selection remain.
 assert plot(run('F1 F2 F3 F4'))==plot(run(''))
 for n in range(1,5):assert plot(run(str(n)))==plot(run('DOWN '*(n-1)+'EXE'))
-assert plot(run('5 6'))==plot(run(''))
+assert 'Recall' in tail(run('5')) and 'Save current session?' in tail(run('6'))
 assert 'Recall saved session' in run('')
 # Current semantic stage colors and OUTPUT-specific styles.
-for keys,colors in [('2',[None,None,0xfc40,None,None,0x07ff]),
- ('2 F6',[0xf81f,None,0xfc40,None,None,0x07ff]),
- ('2 F6 F6',[0xf81f,None,0xfc40,None,0x37e6,0xf800])]:
+for keys,colors in [('2',[None,None,None,None,None,0x07ff]),
+ ('2 F6',[None,None,None,None,None,0x07ff]),
+ ('2 F6 F6',[0xffe0,0,None, None,0x37e6,0xf800])]:
     _,rgb=run(keys,image=True)
     for i,color in enumerate(colors):
         if color is not None:assert pixel(rgb,7+i*64,203)==rgb565(color)
-    assert plot(run(keys+' DOWN F3 EXIT'))==plot(run(keys+' DOWN'))
+    assert plot(run(keys+(' DOWN F3 EXIT' if keys=='2 F6 F6' else ' DOWN F3')))==plot(run(keys+' DOWN'))
 output='2 F6 F6 F4 '
 assert plot(run(output+'EXE'))==plot(run(output+'DOWN'))
 assert 'Curve color' not in run(output+'EXE EXE EXE')
@@ -86,7 +86,7 @@ modified=output+'DOWN RIGHT '
 assert 'Output selection' in tail(run(modified+'EXE'))
 assert 'Parameter' in tail(run(modified+'EXE EXE'))
 _,rgb=run(output+'DOWN',image=True)
-assert pixel(rgb,7,203)==rgb565(0x1a98) and pixel(rgb,135,203)==bytes([255,255,255])
+assert pixel(rgb,7,203)==rgb565(0xffe0) and pixel(rgb,135,203)==bytes([255,255,255])
 region={pixel(rgb,x,y) for x in range(134,197) for y in range(205,217)}
 for color in [0xf800,0xfc40,0x37e6,0x07ff,0xf81f]:assert rgb565(color) in region
 assert 'Curve color' not in run(output+'DOWN RIGHT')
@@ -96,24 +96,24 @@ for color,moves in zip([0x001f,0xf800,0xf81f,0,0x07ff,0x37e6],choices):
     chosen=output+'F3 '+moves+' EXE '
     _,rgb=run(chosen,image=True);assert pixel(rgb,334,38)==rgb565(color)
     assert plot(run(chosen+'F3 DOWN EXIT'))==plot(run(chosen))
-    assert plot(run(chosen+'F1 F2 F1 F2'))==plot(run(chosen))
-    assert plot(run(chosen+'EXIT F1 F1 F6 F6 F4'))==plot(run(chosen))
+    assert plot(run(chosen+'F2 F4 F2 F4'))==plot(run(chosen))
+    assert plot(run(chosen+'EXIT EXIT EXIT F6 F6 F4'))==plot(run(chosen))
 soak=run(output+'DOWN '+('F3 DOWN EXIT F3 EXE '*100))
 assert plot(soak)==plot(run(output+'DOWN'))
 with tempfile.TemporaryDirectory() as directory:
     chosen=output+'F3 DOWN LEFT LEFT EXE '
     baseline=run(chosen,directory)
-    run(chosen+'EXIT EXIT EXIT EXIT F6 EXE',directory)
-    restored=run('F5 2 F1 F6 F6 F4',directory)
+    run(chosen+'EXIT EXIT EXIT EXIT 6 EXE EXE',directory)
+    restored=run('5 2 F1 F6 F6 F4',directory)
     assert plot(restored)==plot(baseline)
-    recalled=run(chosen+'EXIT F6 EXIT EXIT EXIT EXIT F5 1 F6 F6 F4',directory)
+    recalled=run(chosen+'EXIT F6 EXIT EXIT EXIT EXIT 5 1 F6 F6 F4',directory)
     assert plot(recalled)==plot(baseline)
 # INIT restores factory values + first selector; Output includes every IC color.
-assert plot(run('2 F3 DOWN DOWN 2 EXIT F1'))==plot(run('2 F3'))
-assert plot(run('2 F6 F6 DOWN DOWN DOWN 2 EXIT F2 F4'))==plot(run('2 F6 F6'))
-assert plot(run(output+'DOWN RIGHT F3 DOWN EXE F4'))==plot(run(output))
+assert plot(run('2 F6 F6 F3 DOWN DOWN 2 EXIT F1'))==plot(run('2 F6 F6 F3'))
+assert plot(run('2 F6 F6 DOWN DOWN DOWN 2 EXIT F1'))==plot(run('2 F6 F6'))
+assert plot(run(output+'DOWN RIGHT F3 DOWN EXE F1'))==plot(run(output))
 settings='2 F6 F6 F5 '
-assert plot(run(settings+'LEFT DOWN LEFT F4'))==plot(run(settings))
+assert plot(run(settings+'LEFT DOWN LEFT F1'))==plot(run(settings))
 assert plot(run(settings+'EXE'))==plot(run(settings+'F6'))
 assert plot(run('2 F6 '+('F4 F5 '*100)))==plot(run('2 F6'))
 assert plot(run('1 4 F6 '+('F4 F5 '*100)))==plot(run('1 4 F6'))

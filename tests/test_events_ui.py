@@ -1,4 +1,4 @@
-"""Production Event/SOLVE/Info UI and navigation; no calculator emulation."""
+"""Production Event/ADV/Info UI and navigation; no calculator emulation."""
 import os,re,subprocess,sys,tempfile
 from pathlib import Path
 app=str(Path(sys.argv[1]).resolve())
@@ -13,8 +13,8 @@ def tail(out):return out[out.rfind('\nKEY '):]
 def bar(out):return re.findall(r'TEXT \d+ 206 ([^\n]*)',tail(out))[-6:]
 def metrics(out):return re.findall(r'METRICS ([^\n]+)',out)[-1]
 params='1 4 A:SUB EXE F6 DOWN 1 EXE F6 '
-assert bar(run(params))==['PREV','SOLVE','V-WIN','OUTPUT','SET','GRAPH']
-assert bar(run(params+'F2'))==['EVENT','INFO','','INIT','','']
+assert bar(run(params))==['INIT','ADV','V-WIN','OUTPUT','SET','GRAPH']
+assert bar(run(params+'F2'))==['EVENT','INFO','','','','']
 assert metrics(run(params))==metrics(run(params+('F2 F2 EXIT EXIT '*100)))
 assert 'No solver run yet' in run(params+'F2 F2')
 event=params+'F2 F1 '
@@ -54,11 +54,11 @@ for method in ['', 'DOWN DOWN RIGHT ']:
     else:assert 'Rejected' not in work and 'Steps' in work
     # Explicit SAVE/RCL; v10 config survives, runtime report does not.
     with tempfile.TemporaryDirectory() as directory:
-        run(setting+'F6 EXIT '+('EXIT '*5)+'F6 EXE',directory)
-        loaded=run('F5 2 F1 F6 F6 F2 F1',directory)
+        run(setting+'F6 EXIT '+('EXIT '*5)+'6 EXE EXE',directory)
+        loaded=run('5 2 F1 F6 F6 F2 F1',directory)
         assert all(x in tail(loaded) for x in ['y-10','RISING','STOP','ON'])
-        assert 'No solver run yet' in run('F5 2 F1 F6 F6 F2 F2',directory)
-# INIT moved into SOLVE and retains the chosen method.
-reset=tail(run(params+'DOWN DOWN RIGHT DOWN 2 EXIT F2 F4'))
+        assert 'No solver run yet' in run('5 2 F1 F6 F6 F2 F2',directory)
+# INIT moved into ADV and retains the chosen method.
+reset=tail(run(params+'DOWN DOWN RIGHT DOWN 2 EXIT F1'))
 assert 'RK45' in reset and 'TEXT 144 101 0.1\n' in reset
-print('Event UI: SOLVE/INIT, expression/FUNC/VAR, validation, STOP Graph/Table/TRACE, read-only INFO, SAVE/RCL and navigation stress passed.')
+print('Event UI: ADV/INIT, expression/FUNC/VAR, validation, STOP Graph/Table/TRACE, read-only INFO, SAVE/RCL and navigation stress passed.')

@@ -39,7 +39,7 @@ for entry in ['3 9 F6','4 9 F6']:
         assert plot(run(base+' F1 EXE'))==plot(run(base+' EXE'))
 
 # Fixed Xdot=.025, independently selected x=.6. Mode changes are only button state.
-graph='2 F3 DOWN DOWN DOWN 0 DOT 0 2 5 EXE EXIT EXE EXE EXE '
+graph='2 F6 F6 F3 DOWN DOWN DOWN 0 DOT 0 2 5 EXE EXIT EXE '
 trace=graph+'F1 F1 0 DOT 6 EXE '
 base=run(trace)
 for key,multiple in [('F2',1),('F3',2),('F4',3)]:
@@ -71,7 +71,7 @@ assert 'TEXT 20 79 Density' not in run(settings)
 assert 'Private constants' not in run(settings+'EXIT OPTN')
 for entry in ['2','3 1 F6','3 9 F6','4 1 F6','4 9 F6']:
     assert 'Slope Field' not in tail(run(entry+' F6 F6 F5'))
-changed=sf+'2 4 EXIT F5 DOWN DOWN F1 DOWN F3 RIGHT EXE '
+changed=sf+'2 4 EXIT F5 DOWN DOWN LEFT DOWN F3 RIGHT EXE '
 assert all(s in tail(run(changed)) for s in ['Segment','Pale Red'])
 for name,moves in zip(['Pale Blue','Pale Red','Pale Cyan','Pale Magenta','Pale Gold','Gray'],
                       ['', 'RIGHT', 'RIGHT RIGHT', 'DOWN', 'DOWN RIGHT', 'DOWN RIGHT RIGHT']):
@@ -79,28 +79,28 @@ for name,moves in zip(['Pale Blue','Pale Red','Pale Cyan','Pale Magenta','Pale G
     assert name in tail(run(choice))
     assert plot(run(choice+'F3 DOWN EXIT'))==plot(run(choice))
 assert plot(run(changed+'F3 DOWN EXIT'))==plot(run(changed))
-assert plot(run(changed+'F4'))==plot(run(settings))
+assert plot(run(changed+'F1'))==plot(run(settings))
 # Direct return restores the SF selector; appearance INIT preserves SF=24.
-assert plot(run(changed+'F4 EXIT'))==plot(run(sf+'2 4 EXIT'))
+assert plot(run(changed+'F1 EXIT'))==plot(run(sf+'2 4 EXIT'))
 assert 'TEXT 144 145 24\n' in tail(run(changed+'EXIT'))
-assert 'TEXT 144 145 12\n' in tail(run(changed+'EXIT F2 F4'))
-assert all(s in tail(run(changed+'EXIT F2 F4 F5')) for s in ['Segment','Pale Red'])
-assert all(s in tail(run(changed+'EXIT F4 F4 EXIT F5')) for s in ['Segment','Pale Red'])
+assert 'TEXT 144 145 12\n' in tail(run(changed+'EXIT F1'))
+assert all(s in tail(run(changed+'EXIT F1 F5')) for s in ['Segment','Pale Red'])
+assert all(s in tail(run(changed+'EXIT F4 F1 EXIT F5')) for s in ['Segment','Pale Red'])
 for invalid in ['NEG 1','1 0 1','1 DOT 5']:
     assert 'Invalid ' in run(sf+invalid+' EXE')
 for value in ['0','1','1 0 0']:
     assert 'Invalid ' not in run(sf+value+' EXE F5')
 with tempfile.TemporaryDirectory() as directory:
-    run(changed+'EXIT EXIT EXIT EXIT EXIT F6 EXE',directory)
-    restored=run('F5 2 F1 F6 F6 F5',directory)
+    run(changed+'EXIT EXIT EXIT EXIT EXIT 6 EXE EXE',directory)
+    restored=run('5 2 F1 F6 F6 F5',directory)
     assert all(s in tail(restored) for s in ['Segment','Pale Red'])
-    assert 'TEXT 144 145 24\n' in tail(run('F5 2 F1 F6 F6',directory))
+    assert 'TEXT 144 145 24\n' in tail(run('5 2 F1 F6 F6',directory))
 # Mode changes preserve global appearance and the existing SF setting.
 out=run(changed+'EXIT EXIT EXIT EXIT EXIT 2 EXIT 1 4 F6 F6 F5')
 assert all(s in tail(out) for s in ['Segment','Pale Red'])
 
 output='2 F6 F6 F4 '
-assert bar(run(output))==['','','COLOR','INIT','','DONE']
+assert bar(run(output))==['INIT','','COLOR','','','DONE']
 assert 'TEXT 20 35 y\n' in tail(run(output))
 assert all(s not in tail(run(output)) for s in ['CSV X','Fixed','TEXT 20 35 x\n','G L'])
 assert plot(run(output+'F1 F2'))==plot(run(output))

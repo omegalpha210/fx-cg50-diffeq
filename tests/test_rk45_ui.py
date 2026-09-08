@@ -26,9 +26,9 @@ for entry,scalar in [('1 4',True),('2',False),('3 9 F6',False),('4 9 F6',False)]
     edited=adaptive+'DOWN DOWN 1 EXP NEG 7 EXE 1 EXP NEG 1 0 EXIT '
     back=tail(run(edited+'UP UP UP LEFT RIGHT'))
     assert 'TEXT 144 123 1e-07\n' in back and 'TEXT 144 145 1e-10\n' in back
-    initialized=tail(run(edited+'F2 F4'))
+    initialized=tail(run(edited+'F1'))
     assert 'TEXT 144 79 RK45\n' in initialized and 'TEXT 144 123 1e-06\n' in initialized
-    last=tail(run(adaptive+'DOWN '*20))
+    last=tail(run(adaptive+'UP UP UP'))
     assert 'Max steps' in last and 'Accepted + rejected attempts per path' in last
     if scalar:assert 'TEXT 20 145 SF\n' in last and 'TEXT 20 167 Max steps\n' in last
     else:assert 'SF\n' not in last
@@ -59,8 +59,8 @@ with tempfile.TemporaryDirectory() as directory:
     out=run(graph+'F4 F5',directory)
     assert 'STAT data saved' in out and list(Path(directory).glob('DIFFSTAT*.csv'))
 with tempfile.TemporaryDirectory() as directory:
-    run(params+'DOWN DOWN 1 EXP NEG 7 EXE EXIT EXIT EXIT EXIT F6 EXE',directory)
-    out=tail(run('F5 2 F1 F6 F6',directory))
+    run(params+'DOWN DOWN 1 EXP NEG 7 EXE EXIT EXIT EXIT EXIT 6 EXE EXE',directory)
+    out=tail(run('5 2 F1 F6 F6',directory))
     assert 'TEXT 144 79 RK45\n' in out and 'TEXT 144 123 1e-07\n' in out
 phase='4 2 F6 F6 F6 DOWN DOWN RIGHT F6 F4 F2 '
 out=run(phase+'F5 F2 F3')

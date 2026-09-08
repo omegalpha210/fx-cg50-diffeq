@@ -44,14 +44,18 @@ void ui_event(Document *d)
             if(key==KEY_EXE || key==KEY_EXIT || key==KEY_F6 || key==KEY_UP || key==KEY_DOWN) {
                 if(!accept_event(d,&edit))continue;
                 if(key==KEY_EXE || key==KEY_EXIT){ui_field_complete(key,true,&selected,4);continue;}
+                if(key==KEY_UP || key==KEY_DOWN) {
+                    if(key==KEY_UP && selected>0)selected--;
+                    if(key==KEY_DOWN && selected<3)selected++;
+                    continue;
+                }
             } else {
                 if(key!=KEY_OPTN && (key<KEY_F1 || key>KEY_F6))ui_inline_key(&edit,event);
                 continue;
             }
         }
         if(key==KEY_EXIT || key==KEY_F6 || key==KEY_EXE)return;
-        if(key==KEY_UP && selected>0){selected--;continue;}
-        if(key==KEY_DOWN && selected<3){selected++;continue;}
+        if(ui_select_move(key,&selected,4))continue;
         if(selected==1){ui_field_select(&edit,event,d->event.text,&selected,4);continue;}
         if(key!=KEY_LEFT && key!=KEY_RIGHT)continue;
         if(selected==0)d->event.enabled=(uint8_t)!d->event.enabled;

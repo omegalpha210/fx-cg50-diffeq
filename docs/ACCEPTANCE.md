@@ -1,3 +1,45 @@
+# UI/UX polish acceptance — v0.12.0-beta.2
+
+Baseline development12877bc, public9b4ac21 / v0.12.0-beta.1. The installed tools,
+private references and all existing development/public history are preserved.
+
+- **41/41 strict host/UBSan groups PASS**,21.95s local final run; baseline39/39
+  in16.18s. Existing numerical/parser/Event/TRACE/G-Solve/Phase/Table/storage and
+  native-key/lifecycle regressions remain enabled. UI scripts use the new keys.
+- Main1–6, shared EXE/F6 OPEN handler, F1–F5 blank, internal selector retention.
+- SAVE confirmation: NO/EXIT and pre-confirmation have zero file calls; YES/EXE
+  executes the unchanged backend once. Opening-key repeat cannot approve. Failed
+  save returns safely with the SAVE selector retained.
+- INIT Yellow/Black; Parameters F1 preserves method, Event and V-Window. V-WIN
+  preserves appearance/projection/manual solver settings; automatic Xrange still
+  follows TIME geometry. Settings/Output reset only their own documented scope.
+  Graph Settings Style is the requested exception: F1/F2 blank, arrows only;
+  INIT is available on other Settings rows. ADV Black/White contains EVENT/INFO only.
+- SELECT cycles include only visible rows. EDIT cursor, INFO scroll and all
+  data/graph/palette navigation keep their existing policies. All seven ODE types
+  show1/3→2/3→3/3 and return through EXIT; submenus have no progress. V-WIN only
+  appears in Parameters/Graph. EXE help is Blue; only Main's first MENU is Red.
+- Five requested hints measure281/243/247/112/266 pixels in the installed-font
+  host atlas, within368px. Colored glyph masks retain exact original positions.
+  All mode titles clear the reserved40px progress area.
+- **27 target C units**, clean SH compile/link, zero warnings,13/13 G3A checks.
+  Development235448 B; public binary is rebuilt from the exact tag and hashed.
+- SH text206064/data704/BSS71952; BSS/data delta0; maxframe ui_graph2572 B unchanged.
+- Main/Equation/IC/Parameters/Settings/Output/SAVE and existing gallery images
+  regenerated with production handlers. No manual images or emulation claims.
+
+No changes to src/ode, src/math, src/storage.c, src/app_state.c, src/graph or their
+numerical/model/Event/cache headers relative to12877bc. Only UI presentation and
+navigation change; no new session version, buffer, solver or persistence backend.
+**HARDWARE TEST REQUIRED:** all36 new control/LCD/key/reentry checks at the top of
+[HARDWARE_RETEST](HARDWARE_RETEST.md). Host PASS is not physical-device evidence.
+Exact public IDs, hash, timing and download verification are in release VALIDATION.md.
+
+The previous milestone records below are historical; the current control map is
+[USER_GUIDE](USER_GUIDE.md).
+
+---
+
 # Event / Solver Diagnostics acceptance — v0.12.0-beta.1
 
 Baseline development e885230; public v0.11.0-beta.1 / 3892707. Existing installed

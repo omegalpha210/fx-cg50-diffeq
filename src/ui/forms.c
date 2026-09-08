@@ -57,7 +57,7 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
         "Slope-field columns (0-100); 0 = Off","Max RK4 steps per IC / direction",
         "LEFT/RIGHT: RK4 / RK45","RelTol: relative error target","AbsTol: absolute error floor"};
     int selected=state->selected;NumberEdit edit=state->edit;
-    bool solve=state->top!=0;
+    bool advanced=state->top!=0;
     for(;;) {
         int rows[8],count=parameter_rows(d,rows);
         if(selected<0 || selected>=count){selected=count-1;edit.active=false;}
@@ -72,6 +72,7 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
         snprintf(values[6],48,"%s",adaptive ? "RK45":"RK4");
         snprintf(values[7],48,"%.9g",d->adaptive.reltol);snprintf(values[8],48,"%.9g",d->adaptive.abstol);
         ui_frame("Parameter",NULL);
+        ui_progress(advanced ? 0:3);
         for(int row=top;row<count && row<top+7;row++) {
             int item=rows[row];
             ui_field(row-top,labels[item],edit.active && row==selected ? edit.text:values[item],row==selected);
@@ -79,19 +80,17 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
         number_cursor(&edit,selected-top);
         ui_form_hint(&edit,adaptive && field==2 ? "Initial step; RK45 adjusts internally":
             (adaptive && field==5 ? "Accepted + rejected attempts per path":help[field]));
-        if(solve)ui_softkeys("EVENT","INFO","","INIT","","");
-        else ui_softkeys("PREV","SOLVE","V-WIN","OUTPUT","SET","GRAPH");
+        if(advanced)ui_softkeys("EVENT","INFO","","","","");
+        else ui_softkeys("INIT","ADV","V-WIN","OUTPUT","SET","GRAPH");
         dupdate();
         key_event_t event=ui_getkey();int key=event.key;
-        bool initialize=false;
-        if(solve) {
-            if(key==KEY_EXIT){solve=false;continue;}
+        if(advanced) {
+            if(key==KEY_EXIT){advanced=false;continue;}
             if(key==KEY_F1 || key==KEY_F2) {
                 state->selected=selected;state->edit=edit;state->top=1;
                 return key==KEY_F1 ? UI_STAGE_EVENT:UI_STAGE_INFO;
             }
-            if(key!=KEY_F4)continue;
-            initialize=true;solve=false;key=KEY_F2;event.key=KEY_F2;
+            continue;
         }
         if(edit.active) {
             int action=stage_leave(key) || key==KEY_UP || key==KEY_DOWN || key==KEY_F2 ? 1:number_key(&edit,event);
@@ -118,13 +117,18 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
             if(field<=1)d->solver_custom=1;
             edit.active=false;
             if(key==KEY_EXE || key==KEY_EXIT){ui_field_complete(key,true,&selected,count);continue;}
+            if(key==KEY_UP || key==KEY_DOWN) {
+                if(key==KEY_UP && selected>0)selected--;
+                if(key==KEY_DOWN && selected+1<count)selected++;
+                continue;
+            }
         }
         key=ui_field_complete(key,false,&selected,count);event.key=(unsigned)key;
-        if(stage_leave(key)) {
+        if(stage_leave(key) && key!=KEY_F1) {
             state->selected=selected;state->edit=edit;state->top=0;return stage_action(key);
         }
-        if(key==KEY_F2) {
-            if(!initialize){solve=true;continue;}
+        if(key==KEY_F2){advanced=true;continue;}
+        if(key==KEY_F1) {
             int sf=model_field_supported(d) ? 12:d->solver.sf,step=adaptive ? d->solver.step:1;
             d->solver=(OdeSettings){0,1,.1,20000,step,sf};d->solver_custom=0;
             if(adaptive){ode_adaptive_defaults(&d->adaptive);d->adaptive.method=ODE_RK45;}
@@ -133,8 +137,7 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
         }
         if(field==6) {
             if(key==KEY_LEFT || key==KEY_RIGHT)d->adaptive.method=adaptive ? ODE_RK4:ODE_RK45;
-            if(key==KEY_UP && selected>0)selected--;
-            if(key==KEY_DOWN && selected<count-1)selected++;
+            ui_select_move(key,&selected,count);
             continue;
         }
         double current=field==0 ? d->solver.xmin:(field==1 ? d->solver.xmax:(field==2 ? d->solver.h:
@@ -192,8 +195,12 @@ void ui_vwindow(Document *d)
         key=ui_field_complete(key,false,&selected,7);event.key=(unsigned)key;
         if(key==KEY_EXIT || key==KEY_F6)return;
         if(key==KEY_F1){
+            int grid=active->grid,labels=active->labels;
+            int projection=active->phase,px=active->phase_x,py=active->phase_y;
             if(phase){model_phase_window_defaults(active);d->phase_ready=1;}
             else model_window_defaults(active);
+            active->grid=grid;active->labels=labels;active->phase=projection;
+            active->phase_x=px;active->phase_y=py;
             model_sync_solver_window(d);selected=0;continue;
         }
         double current=selected==0 ? active->xmin:(selected==1 ? active->xmax:(selected==2 ? active->xscale:
@@ -218,26 +225,22 @@ void ui_graph_settings(Document *d)
             ui_field(5,"Color",field_names[d->field_color<FIELD_COLORS ? d->field_color:0],selected==3);
             ui_color_swatch(326,142,graph_field_color(d->field_color));
         }
-        ui_form_hint(NULL,selected<2 ? "LEFT/RIGHT: ON/OFF toggle":NULL);
-        if(selected<2)ui_softkeys("","","","INIT","","DONE");
-        else if(selected==2)ui_softkeys("SEG","ARROW","","INIT","","DONE");
-        else ui_softkeys("","","COLOR","INIT","","DONE");
+        ui_form_hint(NULL,selected<2 ? "LEFT/RIGHT: ON/OFF toggle":
+            (selected==2 ? "LEFT/RIGHT: SEGMENT/ARROW toggle":"RIGHT/F3: COLOR"));
+        ui_softkeys(selected==2 ? "":"INIT","",selected==3 ? "COLOR":"","","","DONE");
         dupdate();int key=ui_getkey().key;
         key=ui_field_complete(key,false,&selected,count);
         if(key==KEY_EXIT || key==KEY_F6)return;
-        if(key==KEY_UP && selected>0)selected--;
-        if(key==KEY_DOWN && selected+1<count)selected++;
-        if(key==KEY_F4) {
+        if(ui_select_move(key,&selected,count))continue;
+        if(key==KEY_F1 && selected!=2) {
             view->grid=view->labels=1;model_field_appearance_defaults(d);selected=0;continue;
         }
         if(selected<2) {
             int *value=selected ? &view->labels:&view->grid;
             if(key==KEY_LEFT || key==KEY_RIGHT)*value=!*value;
         } else if(selected==2) {
-            if(key==KEY_F1)d->field_style=FIELD_SEGMENT;
-            if(key==KEY_F2)d->field_style=FIELD_ARROW;
             if(key==KEY_LEFT || key==KEY_RIGHT)d->field_style=(uint8_t)!d->field_style;
-        } else if(key==KEY_LEFT || key==KEY_RIGHT || key==KEY_F3) {
+        } else if(key==KEY_RIGHT || key==KEY_F3) {
             int color=choose_color("Field color",field_names,graph_field_color,d->field_color);
             if(color>=0)d->field_color=(uint8_t)color;
         }
@@ -251,6 +254,7 @@ UiStageAction ui_initial_conditions(Document *d,UiStageState *state)
     for(;;) {
         int page=selected/7;char current[EXPR_TEXT]={0};
         ui_frame("Initial Conditions",NULL);
+        ui_progress(2);
         for(int row=0;row<7 && page*7+row<count;row++) {
             int field=page*7+row;char label[24],value[EXPR_TEXT];
             if(!field)snprintf(label,sizeof(label),"x0");
@@ -263,9 +267,9 @@ UiStageAction ui_initial_conditions(Document *d,UiStageState *state)
         }
         if(scalar)ui_text(10,170,UI_MUTED,"y0: scalar or {values}; at most 10");
         ui_form_hint(&edit,scalar ? "Comma: separator":"One solution: x0 plus all state values");
-        ui_softkeys("PREV","","V-WIN","","","NEXT");dupdate();
+        ui_softkeys("","","","","","NEXT");dupdate();
         key_event_t event=ui_getkey();int key=event.key;
-        if(key==KEY_F2 || key==KEY_F4 || key==KEY_F5)continue;
+        if(key>=KEY_F1 && key<=KEY_F5)continue;
         if(edit.active) {
             int action=stage_leave(key) || key==KEY_UP || key==KEY_DOWN ? 1:number_key(&edit,event);
             if(!action)continue;
@@ -283,9 +287,14 @@ UiStageAction ui_initial_conditions(Document *d,UiStageState *state)
             }
             edit.active=false;
             if(key==KEY_EXE || key==KEY_EXIT){ui_field_complete(key,true,&selected,count);continue;}
+            if(key==KEY_UP || key==KEY_DOWN) {
+                if(key==KEY_UP && selected>0)selected--;
+                if(key==KEY_DOWN && selected+1<count)selected++;
+                continue;
+            }
         }
         key=ui_field_complete(key,false,&selected,count);event.key=(unsigned)key;
-        if(key==KEY_EXIT || key==KEY_F1 || key==KEY_F3 || key==KEY_F6) {
+        if(key==KEY_EXIT || key==KEY_F6) {
             if(key==KEY_F6 && !d->nic){ui_message("Initial values","Enter y0 before continuing.");continue;}
             state->selected=selected;state->edit=edit;return stage_action(key);
         }
@@ -305,7 +314,7 @@ static int choose_color(const char *title,const char *const names[6],int (*color
             ui_rect(x,y,48,22,color((unsigned)i));
         }
         ui_text(84,151,UI_INK,"%s",names[selected]);
-        ui_text(84,165,UI_MUTED,"EXE: select   EXIT: cancel");
+        ui_help(84,165,"EXE: select   EXIT: cancel",false);
         ui_softkeys("","","","","","");dupdate();
         int key=ui_getkey().key;
         if(key==KEY_EXIT)return -1;
@@ -327,15 +336,13 @@ void ui_output(Document *d)
             ui_field(row,label,d->enabled&(1u<<index) ? "ON":"OFF",index==selected);
             ui_color_swatch(326,32+row*22,graph_palette_color(model_color(d,0,index)));
         }
-        if(d->dim-page*7<7)ui_text(8,170,UI_MUTED,"ON/OFF: Graph, Table and CSV");
-        ui_form_hint(NULL,"LEFT/RIGHT: ON/OFF toggle");
-        ui_softkeys("","","COLOR","INIT","","DONE");dupdate();
+        ui_form_hint(NULL,"LEFT/RIGHT: ON/OFF toggle, F3: COLOR");
+        ui_softkeys("INIT","","COLOR","","","DONE");dupdate();
         int key=ui_getkey().key;
         if(key==KEY_EXE){key=ui_list_complete(key,modified,&selected,d->dim);modified=false;}
         if(key==KEY_EXIT || key==KEY_F6)return;
         if(key==KEY_UP || key==KEY_DOWN) {
-            if(key==KEY_UP && selected>0)selected--;
-            if(key==KEY_DOWN && selected+1<d->dim)selected++;
+            ui_select_move(key,&selected,d->dim);
             modified=false;
         }
         if(key==KEY_LEFT || key==KEY_RIGHT){d->enabled^=(uint16_t)(1u<<selected);modified=true;}
@@ -344,6 +351,6 @@ void ui_output(Document *d)
             int color=choose_color("Curve color",curve_names,graph_palette_color,old);
             if(color>=0 && (unsigned)color!=old){model_output_color(d,selected,(unsigned)color);modified=true;}
         }
-        if(key==KEY_F4){model_output_defaults(d);selected=0;modified=false;}
+        if(key==KEY_F1){model_output_defaults(d);selected=0;modified=false;}
     }
 }

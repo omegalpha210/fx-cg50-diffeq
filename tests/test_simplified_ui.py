@@ -24,8 +24,8 @@ for value,canonical in [('0','0'),('{1}','1'),('{0,1}','{0,1}'),('{0,1,-1}','{0,
     entered=ic(value)
     assert 'TEXT 144 57 '+canonical+'\n' in tail(run(entered))
     assert plot(run(entered+'F4 F5'))==plot(run(entered))
-    assert plot(run(entered+'F3 EXIT'))==plot(run(entered))
-    assert plot(run(entered+'F6 F1'))==plot(run(entered))
+    assert plot(run(entered+'F3'))==plot(run(entered))
+    assert plot(run(entered+'F6 EXIT'))==plot(run(entered))
 for value in ['{}','{0,}','{,1}','{0,,1}','{0,1','{0,{1}}','0,1','{1/0}','{0,1,2,3,4,5,6,7,8,9,10}']:
     out=run('1 1 F6 DOWN '+keys(value)+'F6')
     assert 'Initial values' in tail(out) and 'TEXT 14 9 Parameter\n' not in out
@@ -85,8 +85,8 @@ for entry,n,last in [('2',2,"y'0"),('3 9 F6',9,'y(8)0'),('4 9 F6',9,'y9_0')]:
 # Save and restore the list, SF, colors, and the common output bit.
 with tempfile.TemporaryDirectory() as directory:
     prefix=ic('{0,1,-1}')+'F6 DOWN DOWN DOWN DOWN DOWN 2 4 EXIT F4 RIGHT EXIT '
-    run(prefix+'EXIT EXIT EXIT EXIT F6 EXE',directory)
-    assert '{0,1,-1}' in tail(run('F5 2 F1 F6',directory))
-    assert 'TEXT 144 145 24\n' in tail(run('F5 2 F1 F6 F6',directory))
-    assert 'OFF' in tail(run('F5 2 F1 F6 F6 F4',directory))
+    run(prefix+'EXIT EXIT EXIT EXIT 6 EXE EXE',directory)
+    assert '{0,1,-1}' in tail(run('5 2 F1 F6',directory))
+    assert 'TEXT 144 145 24\n' in tail(run('5 2 F1 F6 F6',directory))
+    assert 'OFF' in tail(run('5 2 F1 F6 F6 F4',directory))
 print('List IC physical input/errors/workload, manual two curves, all-state ICs, unified Table navigation/CSV and SAVE passed.')

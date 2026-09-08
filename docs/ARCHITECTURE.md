@@ -2,6 +2,16 @@
 
 The application is native C11. The numerical engine, expression compiler, equation model, graph geometry and UI are independent modules. The target links against installed gint headers and `Gint::Gint`; host tests link the same mathematical core against the host C library.
 
+## UI controls (v0.12 beta.2)
+
+Main digit/EXE/F6 selection shares one handler. SAVE confirmation owns NO/YES and
+calls the existing backend only after a fresh EXE/F6 key. No new app/session state.
+Common UI helpers provide cyclic SELECT movement, right-aligned workflow progress,
+semantic INIT/ADV softkeys and measured key-glyph recoloring. EDIT/data navigation
+are excluded. Parameters retains its existing numerical INIT scope and ADV state;
+V-WIN INIT preserves graph appearance/projection. The numerical/storage source is
+unchanged. Current controls and row-specific Style exception: [USER_GUIDE](USER_GUIDE.md).
+
 ## Events and runtime report (v0.12)
 
 Document appends EventConfig to its frozen v9 prefix. v10 saves current/recall

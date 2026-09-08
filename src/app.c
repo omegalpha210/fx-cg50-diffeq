@@ -195,21 +195,19 @@ static bool accept_equation_edit(Document *document,int selected,const UiInlineE
 
 static ScreenTransition screen_main(App *a,AppUi *ui)
 {
-    static const char *const labels[]={"1  1st","2  2nd","3  N-th","4  SYS","RCL","SAVE"};
+    static const char *const labels[]={"1  1st","2  2nd","3  N-th","4  SYS","5  RCL","6  SAVE"};
     static const char *const descriptions[]={"First-order equation","Linear second-order equation",
         "Higher-order equation (1-9)","First-order system (1-9)",
         "Recall saved session","Save current session"};
     ui_frame("Differential Equation",NULL);
     for(int i=0;i<6;i++)ui_field(i,labels[i],descriptions[i],i==ui->main_selected);
-    ui_text(8,174,UI_MUTED,"MENU: return to MAIN MENU");
-    ui_softkeys("","","","","RCL","SAVE");dupdate();
+    ui_help(8,174,"MENU: return to MAIN MENU, EXE: Enter",true);
+    ui_softkeys("","","","","","OPEN");dupdate();
     int key=ui_getkey().key,choice=-1;
     if(key==KEY_EXIT)return stay();
-    if(key==KEY_UP)ui->main_selected=(ui->main_selected+5)%6;
-    if(key==KEY_DOWN)ui->main_selected=(ui->main_selected+1)%6;
-    if(key==KEY_F5 || key==KEY_F6)choice=key-KEY_F1;
-    if(key==KEY_EXE)choice=ui->main_selected;
-    int digit=ui_digit(key);if(digit>=1 && digit<=4)choice=digit-1;
+    ui_select_move(key,&ui->main_selected,6);
+    if(key==KEY_EXE || key==KEY_F6)choice=ui->main_selected;
+    int digit=ui_digit(key);if(digit>=1 && digit<=6)choice=digit-1;
     if(choice<0)return stay();
     ui->main_selected=choice;
     if(choice==0)return open_screen(APP_SCREEN_FIRST_ORDER);
@@ -233,7 +231,6 @@ static ScreenTransition screen_main(App *a,AppUi *ui)
         use_recall(a);ui->has_session=true;ui->equation_selected=0;
         return open_screen(APP_SCREEN_EQUATION);
     }
-    if(!ui->has_session){ui_message("Save session","No session.");return stay();}
     return open_screen(APP_SCREEN_SAVE);
 }
 
@@ -304,6 +301,7 @@ static ScreenTransition screen_equation(App *a,AppUi *ui)
         char general[80];
         if(!menu) {
             ui_frame(title,formula(document,general,sizeof(general)));
+            ui_progress(1);
             int page=*selected/6,row_offset=1;
             for(int row=0;row<6 && page*6+row<count;row++) {
                 int index=page*6+row;char label[24],value[EXPR_TEXT];
@@ -315,8 +313,8 @@ static ScreenTransition screen_equation(App *a,AppUi *ui)
             }
             ui_form_hint(edit,"EXE: NEXT   LEFT/RIGHT: edit");
         }
-        if(menu)ui_equation_menu(menu,menu_page,variables);
-        else ui_softkeys(variables ? "VAR":"",edit->active ? "FUNC":"","V-WIN","","","NEXT");
+        if(menu){ui_progress(0);ui_equation_menu(menu,menu_page,variables);}
+        else ui_softkeys(variables ? "VAR":"",edit->active ? "FUNC":"","","","","NEXT");
         dupdate();
         key_event_t event=ui_getkey();int key=event.key;
         if(menu) {
@@ -335,13 +333,19 @@ static ScreenTransition screen_equation(App *a,AppUi *ui)
         }
         if((key==KEY_F1 && !variables) || (key==KEY_F2 && !edit->active))continue;
         if(key==KEY_F1 || key==KEY_F2){menu=key==KEY_F1 ? 1:2;menu_page=0;continue;}
-        bool leave=key==KEY_EXIT || key==KEY_F3 || key==KEY_F6;
+        if(key==KEY_F3)continue;
+        bool leave=key==KEY_EXIT || key==KEY_F6;
         if(edit->active) {
             if(leave || key==KEY_UP || key==KEY_DOWN || key==KEY_EXE) {
                 if(!accept_equation_edit(document,*selected,edit))continue;
                 a->dirty=true;edit->active=false;
                 if(key==KEY_EXE || key==KEY_EXIT) {
                     ui_field_complete(key,true,selected,count);continue;
+                }
+                if(key==KEY_UP || key==KEY_DOWN) {
+                    if(key==KEY_UP && *selected>0)(*selected)--;
+                    if(key==KEY_DOWN && *selected+1<count)(*selected)++;
+                    continue;
                 }
             } else {
                 if(key!=KEY_OPTN && key!=KEY_F4 && key!=KEY_F5)ui_inline_key(edit,event);
@@ -361,7 +365,6 @@ static ScreenTransition screen_equation(App *a,AppUi *ui)
             }
             continue;
         }
-        if(key==KEY_F3)return open_screen(APP_SCREEN_VWINDOW);
         if(key==KEY_F6) {
             bool valid=true;
             for(int i=0;i<count;i++) {
@@ -484,6 +487,8 @@ int app_run(void)
             case APP_SCREEN_TRACE:ui_trace(&app);transition=back_screen();break;
             case APP_SCREEN_TABLE:ui_table(&app);transition=back_screen();break;
             case APP_SCREEN_SAVE: {
+                if(!ui_save_confirm()){transition=back_screen();break;}
+                if(!ui.has_session){ui_message("Save session","No session.");transition=back_screen();break;}
                 bool saved=storage_save(&app,DIFFEQ_STORAGE_DIR);if(saved)app.dirty=false;
                 ui_message("Save session",saved ?
                     "Saved equation, settings, ICs and last calculation.":

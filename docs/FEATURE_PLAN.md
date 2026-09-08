@@ -40,6 +40,8 @@ Reference analysis was completed after the verified minimal G3A milestone and wa
 
 Completed in v0.10: SYS2 Phase field/nullclines/equilibria. Completed in v0.11: optional Dormand–Prince RK45 with embedded error control, runtime budgets and full consumer integration; RK4 remains default. See RK45_NUMERICS.md for verification. Completed in v0.12: one Event definition (direction/MARK/STOP), bounded marker/refinement and read-only RK4/RK45 diagnostics; see EVENTS.md. Deferred: solution integral, sweeps, bifurcation/Poincaré, implicit stiff solvers, CAS and FSAL optimization.
 
+Completed in v0.12 beta.2: simplified Main/SAVE confirmation, INIT/ADV, SELECT cycles, three-stage progress and contextual key colors. No numerical or session-format changes.
+
 ## Delivery gates
 
 1. Actual minimal G3A: complete, commit c6a4ba6, 54,172 bytes.

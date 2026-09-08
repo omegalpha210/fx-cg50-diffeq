@@ -11,9 +11,10 @@ executable=root/'build-host/host_app'
 output=root/'docs/ui-review'
 output.mkdir(parents=True,exist_ok=True)
 cases=[('main','Main',''),
+    ('save-confirm','SAVE / explicit confirmation','2 EXIT 6'),
     ('equation','Equation / NEXT','1 4 NEG A:SUB EXE'),
     ('parameter','Parameters / GRAPH','1 4 F6 F6 DOWN DOWN RIGHT'),
-    ('vwindow','V-Window','1 4 F3 NEG 7 EXE'),
+    ('vwindow','V-Window','1 4 F6 F6 F3 NEG 7 EXE'),
     ('initial-conditions','First-order IC / list input','1 1 F6 DOWN S:MUL 0 COMMA 1 S:DIV EXE'),
     ('output','Output / selected state ON-OFF','2 F6 F6 F4 DOWN RIGHT'),
     ('graph','Full-size Graph / 2 IC colors','1 1 F6 DOWN S:MUL 0 COMMA 1 S:DIV EXE F6 F6'),
@@ -36,7 +37,7 @@ cases += [
     ('zoom-pan','ZOOM / arrow pan keeps menu', '2 EXE EXE EXE F2 RIGHT')]
 ux_start=len(cases)
 field='1 4 F6 F6 F5 '
-arrow='DOWN DOWN F2 DOWN F3 '
+arrow='DOWN DOWN DOWN F3 '
 cases += [
     ('func-select','SELECT / F2 blank','1 4'),
     ('func-exit','FUNC EXIT / incomplete draft retained','1 4 LEFT ACON F2 F2 F2 EXIT'),
@@ -64,7 +65,7 @@ cases += [
     ('polish-equation-edit','Equation EDIT / common hint','1 4 LEFT'),
     ('polish-ic-edit','IC numeric EDIT / common hint','2 F6 DOWN 2'),
     ('polish-list-edit','IC list EDIT / common hint','1 1 F6 DOWN S:MUL 0 COMMA 1 S:DIV'),
-    ('polish-vwindow-edit','V-Window EDIT / common hint','2 F3 DOWN DOWN 2'),
+    ('polish-vwindow-edit','V-Window EDIT / common hint','2 F6 F6 F3 DOWN DOWN 2'),
     ('polish-parameter-edit','Parameters EDIT / common hint','2 F6 F6 DOWN DOWN DOWN 0 DOT 0 5'),
     ('polish-sf-first','First-order / SF selected','1 4 F6 F6 DOWN DOWN DOWN DOWN DOWN'),
     ('polish-sf-second','2nd / Step then Max steps','2 F6 F6 DOWN DOWN DOWN DOWN 2 EXE'),
@@ -110,4 +111,11 @@ for name,start in [('ux-field-overview',ux_start),('polish-overview',polish_star
         draw.text((x,y),label,fill='#193857',font=font)
         sheet.paste(Image.open(output/f'{filename}.png'),(x,y+25))
     sheet.save(output/(name+'.png'))
+review=['main','save-confirm','equation','initial-conditions','parameter','field-settings','output','vwindow']
+sheet=Image.new('RGB',(816,8+264*4),'#e8eef5');draw=ImageDraw.Draw(sheet)
+for i,name in enumerate(review):
+    x=8+(i%2)*404;y=8+(i//2)*264
+    draw.text((x,y),name,fill='#193857',font=font)
+    sheet.paste(Image.open(output/(name+'.png')),(x,y+25))
+sheet.save(output/'workflow-overview.png')
 print(f'Saved {len(cases)} host framebuffer views to docs/ui-review/. HARDWARE RETEST REQUIRED.')

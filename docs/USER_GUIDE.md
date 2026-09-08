@@ -1,24 +1,26 @@
-# DIFF EQ 사용 설명서 — v0.12.0-beta.1
+# DIFF EQ 사용 설명서 — v0.12.0-beta.2
 
 기본 RK4와 TRACE·G-Solve·10개 초기값·SYS 2D Phase 기능을 보존하면서
-한 개의 Event Detection과 읽기 전용 Solver Diagnostics를 추가했습니다.
+Main/SAVE 확인, INIT/ADV, 순환 selector와 3단계 진행 표시를 정리했습니다.
 실제 fx-CG50의 새 경로 검증은 **HARDWARE TEST REQUIRED**입니다.
 
 ## 화면별 조작
 
 | 화면 | F1 | F2 | F3 | F4 | F5 | F6 |
 |---|---|---|---|---|---|---|
-| 메인 | — | — | — | — | RCL | SAVE |
-| Equation 기본 bar | VAR (필요한 모드만) | FUNC (EDIT만) | V-WIN | — | — | NEXT |
-| Initial Conditions | PREV | — | V-WIN | — | — | NEXT |
-| Solver Parameters | PREV | SOLVE | V-WIN | OUTPUT | SET | GRAPH (빨강) |
-| SOLVE submenu | EVENT | INFO | — | INIT | — | — |
+| 메인 | — | — | — | — | — | OPEN |
+| Equation 1/3 | VAR (필요한 모드만) | FUNC (EDIT만) | — | — | — | NEXT |
+| Initial Conditions 2/3 | — | — | — | — | — | NEXT |
+| Solver Parameters 3/3 | INIT | ADV | V-WIN | OUTPUT | SET | GRAPH (빨강) |
+| ADV submenu | EVENT | INFO | — | — | — | — |
+| SAVE confirmation | — | — | — | — | NO | YES |
+| V-WIN SELECT | INIT | — | — | — | — | DONE |
 | Event (EDIT) | VAR (필요 시) | FUNC | — | — | — | DONE |
 | Solver Info | — | — | — | — | — | — |
-| Output 종속변수 | — | — | COLOR | INIT | — | DONE |
-| Graph Settings: Grid/Label | — | — | — | INIT | — | DONE |
-| Graph Settings: Style | SEG | ARROW | — | INIT | — | DONE |
-| Graph Settings: Color | — | — | COLOR | INIT | — | DONE |
+| Output 종속변수 | INIT | — | COLOR | — | — | DONE |
+| Graph Settings: Grid/Label | INIT | — | — | — | — | DONE |
+| Graph Settings: Style | — | — | — | — | — | DONE |
+| Graph Settings: Color | INIT | — | COLOR | — | — | DONE |
 | FUNC 1쪽 | ABS | SINH | COSH | TANH | ASINH | 다음 |
 | FUNC 2쪽 | ACOSH | ATANH | — | — | — | 이전 |
 | 그래프 기본 화면 | TRACE | ZOOM | V-WIN | TABLE | G-SLV | PREV (magenta) |
@@ -35,7 +37,9 @@
 
 **[USER REQUESTED ADAPTATION]** 모든 모드는 Equation → F6 NEXT → IC → F6 NEXT →
 Parameters → F6 GRAPH 순서입니다. 일반식은 Equation 상단, 실제 입력 행은 그 아래에 표시됩니다.
-선택 상태에서 UP/DOWN은 이전/다음 입력 행을 선택합니다.
+선택 상태에서 UP/DOWN은 이전/다음 입력 행을 선택하며 처음 UP은 마지막, 마지막 DOWN은 처음으로 순환합니다.
+RK4/RK45와 SF 등 실제 보이는 행만 대상으로 합니다. EDIT 커서, Graph/Phase/ZOOM pan, TRACE,
+G-Solve, Table 데이터/열, 2D palette 및 INFO scroll의 기존 이동 방식은 바꾸지 않습니다.
 **편집 중이 아니면 EXE는 선택 행의 위치와 관계없이 F6 NEXT/GRAPH/DONE/OPEN을 실행합니다.**
 따라서 기본 입력을 사용하면 Equation에서 EXE 세 번으로 Graph에 도달합니다.
 LEFT는 편집 시작·커서 맨 앞, RIGHT는 편집 시작·커서 맨 뒤입니다. 직접 입력은 기존 값을 대체합니다.
@@ -53,22 +57,28 @@ G-Solve의 곡선 선택 등 특수 방향키 동작은 그대로입니다. 팝�
 Graph Settings의 ON/OFF·Style·Color 선택은 문자 입력 EDIT가 아니므로 전용 안내를 씁니다.
 TRACE x=와 X/Y-CAL의 계산 입력은 각 화면에 표시된 기존 조작을 따릅니다.
 
-NEXT/PREV와 사용 가능한 보조 softkey는 draft를 먼저 검증·확정한 뒤 이동합니다.
-F3 V-WIN은 세 단계와 Graph에서 일관됩니다. OUTPUT과 SET은 Parameters에 있습니다.
+NEXT와 사용 가능한 보조 softkey는 draft를 먼저 검증·확정한 뒤 이동합니다.
+Equation/IC의 F3와 IC의 F1은 비어 있으며 동작하지 않습니다. F3 V-WIN은 Parameters와 Graph에만 있습니다.
+EXIT로 Parameters → IC → Equation으로 돌아갑니다. 각 title 오른쪽에 3/3 → 2/3 → 1/3을 표시합니다.
+ADV·FUNC/VAR 등의 submenu와 Graph/보조 화면에는 progress를 표시하지 않습니다. OUTPUT과 SET은 Parameters에 있습니다.
 보조 화면 EXIT는 진입 단계·선택 행으로 복귀합니다. SET은 중간 메뉴 없이 Graph settings를 바로 엽니다. Private Constants는 제거되었습니다. On/Off는 LEFT/RIGHT로 전환하고 EXE로 DONE을 실행합니다.
 PREV는 magenta, NEXT는 cyan, V-WIN은 orange, SET은 bright green입니다.
-실제 계산을 실행하는 F6 GRAPH는 red입니다.
+실제 계산을 실행하는 F6 GRAPH는 red입니다. 모든 INIT는 Yellow/Black, ADV는 Black/White입니다.
+도움말의 EXE 토큰은 Blue이고, 나머지 도움말 색은 유지합니다. Main의 첫 MENU 토큰만 Red입니다.
+문자 위치는 실제 font metrics를 사용하며 EDIT의 기존 확정/이동 semantics는 같습니다.
 
 Graph 기본 F6 PREV는 기존 magenta 스타일이며 Solver Parameters로 돌아갑니다.
 TRACE는 별도 BACK 없이 EXIT로 닫습니다. ZOOM/G-Solve의 기존 bar를 유지하며, 하위 메뉴를 EXIT로 닫으면 PREV가 복원됩니다.
-Main 하단은 `MENU: return to MAIN MENU`이며 MENU의 실제 계산기 Main Menu 복귀 동작은 동일합니다.
+Main 하단은 `MENU: return to MAIN MENU, EXE: Enter`이며 MENU의 실제 계산기 Main Menu 복귀 동작은 동일합니다.
 EXIT 순서는 Graph → Parameters → IC → Equation → subtype/order → Main입니다.
 2nd 및 Main에서 RCL로 연 Equation은 Main으로 돌아갑니다. Main의 EXIT는 Main에 머뭅니다.
 계산기 메뉴에는 **MENU**로 이동합니다. 같은 실행으로 복귀하면 현재 입력을 유지합니다.
 진짜 새 실행은 defaults로 시작하며 저장 파일을 자동으로 읽지 않습니다.
 
-Main의 숫자 **1/2/3/4**는 각각 1st/2nd/N-th/SYS입니다. Main의 F1~F4는 표시도 동작도 없습니다.
-UP/DOWN·EXE 선택과 F5 RCL/F6 SAVE는 유지되며 숫자 5/6은 저장/Recall을 실행하지 않습니다.
+Main의 숫자 **1/2/3/4/5/6**은 각각 1st/2nd/N-th/SYS/RCL/SAVE입니다. F1~F5는 비어 있습니다.
+UP/DOWN으로 선택한 항목은 EXE 또는 **F6 OPEN**으로 엽니다. 숫자 shortcut도 같은 handler를 사용합니다.
+진짜 새 실행은 첫 항목, 내부 복귀는 기존 selector를 유지합니다. Main 하단은
+`MENU: return to MAIN MENU, EXE: Enter`이며 첫 MENU는 Red, EXE는 Blue입니다.
 일반 선택 메뉴는 UP/DOWN, EXE 또는 F6 OPEN, 숫자 shortcut을 지원합니다.
 N-th/SYS 개수는 1~9 한 자리 정수를 입력한 뒤 첫 EXE로 확정하고 **두 번째 EXE 또는 F6 OPEN**으로 엽니다.
 EXIT 편집 확정은 화면에 머뭅니다. 잘못된 값은 오류를 표시합니다.
@@ -160,7 +170,7 @@ Table은 x를 고정한 채 좌우로 y1~y10 열을 이동합니다. 기존 총 
 입력합니다. 이 여러 숫자는 **한 해를 정의하는 하나의 완전한 초기 벡터**입니다. 독립적인 여러
 IC set을 뜻하지 않습니다. 고차/SYS의 새 UI는 한 벡터만 받으며, 상태별 scalar에 목록을 넣지 않습니다.
 전체 원본 매뉴얼의 근거와 일반 Output matrix의 해석 한계는 [IC audit](IC_BEHAVIOR_AUDIT.md)에 있습니다.
-모든 IC 화면의 F4/F5는 비어 있고 동작하지 않습니다. F3 V-WIN, F6 NEXT는 유지됩니다.
+모든 IC 화면의 F1~F5는 비어 있고 동작하지 않습니다. F6 NEXT와 EXIT를 사용합니다.
 
 **Solver Parameters**의 x min/max는 적분 구간입니다. 처음에는 `ceil(V-Window Xmin)`과
 `floor(V-Window Xmax)`이며 사용자가 V-Window/Graph pan/zoom을 조작하면 따라갑니다. TRACE runtime 추적은 이 자동 범위도 변경하지 않습니다. 직접 편집한 범위는 user override로
@@ -169,7 +179,7 @@ Method는 세 번째 행이며 LEFT/RIGHT로 RK4/RK45를 전환합니다. 계산
 RK4는 h → Step → (1차 SF) → Max steps, RK45는 Initial h → RelTol → AbsTol → (1차 SF) → Max steps입니다.
 2nd/N-th/SYS는 차수·변수 개수 1을 포함하여 SF 행이 없습니다. RK45의 숨겨진 Step은 사용하지 않습니다.
 UP/DOWN, 편집 EXE의 다음 행, 선택 행 도움말도 표시되는 행만 따릅니다.
-Parameter F2 SOLVE → F4 INIT는 Method를 유지하고 자동 범위 추종, h=.1, Max Steps=20000을 복구합니다.
+Parameter F1 INIT는 Method를 유지하고 자동 범위 추종, h=.1, Max Steps=20000을 복구합니다.
 RK4에서는 Step=1, RK45에서는 RelTol=1e-6/AbsTol=1e-9로 복구하며 다른 방식의 숨겨진 설정은 보존합니다.
 1차에서는 SF도 12로 복구하며, 고차/SYS에서는 숨겨진 SF 값을 보존합니다.
 예를 들어 SF=20 → 2nd → INIT → 1st에서도 20입니다. SAVE/RCL도 숨겨진 SF를 보존하며
@@ -179,8 +189,8 @@ Xdot은 `(Xmax-Xmin)/378`이며 Xdot 편집은 Xmax를 변경합니다.
 
 **OUTPUT에는 종속변수만 표시합니다.** 1차는 y, 2차는 y/y', N-th는 각 도함수, SYS는 y1~ym입니다.
 x 행과 CSV X control은 없습니다. **LEFT/RIGHT는 선택 변수의 ON/OFF**, UP/DOWN은 행 이동입니다.
-하단 안내는 `LEFT/RIGHT: ON/OFF toggle` 한 줄입니다. 7행 페이지에서는 위쪽의 부가 설명을
-생략해 마지막 행과 겹치지 않으며, F3 COLOR·INIT·DONE과 기존 EXE 동작은 유지됩니다.
+하단 안내는 `LEFT/RIGHT: ON/OFF toggle, F3: COLOR` 한 줄이며 추가 설명 줄은 없습니다.
+7행 페이지와 겹치지 않고 F3 COLOR·F1 INIT·DONE과 기존 EXE 동작을 유지합니다.
 한 ON/OFF 값이 모든 IC에 공통으로 적용됩니다. ON은 Graph·TRACE·G-Solve·Table·CSV/STAT에 포함,
 OFF는 이 사용자 출력들에서 숨김입니다. 숨겨진 y' 같은 내부 state도 선택한 solver에서 계속 계산합니다.
 SYS 2D Phase는 Output ON/OFF와 무관하게 두 state를 사용합니다. 다른 모드의 기존 phase projection은 두 축 state가 모두 ON일 때 표시합니다. 원래 독립 G/L 선택이 제공하던 차이와
@@ -192,12 +202,17 @@ SYS 2D Phase는 Output ON/OFF와 무관하게 두 state를 사용합니다. 다�
 1차의 여러 IC는 이 순서로 자동 순환합니다. OUTPUT의 y 색은 첫 해의 색과 순환 시작점을 정하므로
 모든 해를 같은 색으로 만들지 않습니다. 고차/SYS는 각 state의 선택 색을 사용합니다.
 OUTPUT EXE는 다음 행으로 이동하며 마지막 행은 수정했으면 한 번 확정/머묾, 다음 EXE가 DONE입니다.
-수정하지 않은 마지막 행은 곧바로 DONE입니다. F4 INIT는 모든 종속변수 ON과 기본 solution 색,
+수정하지 않은 마지막 행은 곧바로 DONE입니다. F1 INIT는 모든 종속변수 ON과 기본 solution 색,
 첫 선택 행을 복구하며 SF/field 외형은 유지합니다.
 
 V-WIN INIT, Parameter INIT, OUTPUT INIT, Graph Settings INIT는 값을 복구하고 화면에
 머물며 첫 항목 선택·편집 종료 상태가 됩니다. Parameters F5 SET은 Graph Settings로 직접 들어가고
 EXIT는 정확한 이전 Parameters 선택 행으로 돌아갑니다.
+
+INIT 범위는 분리됩니다. Parameters는 선택 Method와 숨겨진 방식 설정을 보존하며 numerical 설정만,
+V-WIN은 좌표 범위/scale/Xdot만, Graph Settings는 Grid/Label/field 외형만, Output은 출력/색만 초기화합니다.
+V-WIN INIT는 Grid/Label 및 Phase 투영 선택을 보존합니다. Solver의 기존 AUTO 범위 추종은 유지되므로
+TIME 창이 변하면 자동 Xrange가 따라갑니다. 수동 Xrange/h/tolerance/Event는 V-WIN INIT로 초기화하지 않습니다.
 
 ## 기울기장 — 밀도는 Parameters, 외형은 Graph Settings
 
@@ -205,13 +220,13 @@ EXIT는 정확한 이전 Parameters 선택 행으로 돌아갑니다.
 SF100은 100×52점입니다. SF는 h/Step/적분 구간/IC/TRACE 이동 간격을 바꾸지 않습니다.
 
 Graph Settings는 Grid / Axis Label와 간격을 둔 Slope Field heading 아래 Style / Color만 둡니다.
-Grid/Axis Label은 LEFT/RIGHT로만 토글하며 F1/F2는 비어 있고 동작하지 않습니다.
-이 두 행에서만 `LEFT/RIGHT: ON/OFF toggle` 도움말을 표시합니다. EXE의 완료 동작은 동일합니다.
-고정 `Density SF: Parameters` 안내는 없으며 Style/Color에서는 불필요한 하단 안내를 표시하지 않습니다.
-Style은 F1 SEG/F2 ARROW 또는 좌우, Color는 좌우/F3로 선택합니다. 기본은 **Arrow / Pale Blue**입니다.
+Grid/Axis Label은 LEFT/RIGHT로 토글하고 F1 INIT로 초기화합니다. EXE의 완료 동작은 동일합니다.
+Style은 LEFT/RIGHT만 사용하며 해당 행의 F1/F2는 비어 있습니다. INIT는 다른 행에서 F1로 실행합니다.
+Style 도움말은 `LEFT/RIGHT: SEGMENT/ARROW toggle`, Color 도움말은 `RIGHT/F3: COLOR`입니다.
+Color chooser는 RIGHT 또는 F3 COLOR로 엽니다. 기본은 **Arrow / Pale Blue**입니다.
 Color 행은 이름 옆에 실제 선택색의 직사각형 견본을 표시합니다. OUTPUT과 같은 테두리·크기를
 사용하며 Pale Blue/Red/Cyan/Magenta/Gold/Gray의 기존 색상표와 선택·취소 동작을 유지합니다.
-Graph Settings F4 INIT는 Grid/Axis Label ON, Arrow/Pale Blue를 복구하고 **SF는 바꾸지 않습니다**.
+Graph Settings F1 INIT는 Grid/Axis Label ON, Arrow/Pale Blue를 복구하고 **SF는 바꾸지 않습니다**.
 사용자가 v5 세션에 명시적으로 저장한 Segment와 field 색은 그대로 복원합니다.
 
 1st의 네 scalar 모드만 field를 표시합니다. 2nd/N-th/SYS(차수·변수 개수 1 포함)는 SF와 외형 항목을 숨기고
@@ -349,8 +364,9 @@ Y-CAL과 TRACE x=는 요청한 x까지 해당 IC에서 적분할 수 있을 때�
 
 ## Event Detection / Solver Info
 
-Parameters **F2 SOLVE**에서 **F1 EVENT**, **F2 INFO**, **F4 INIT**를 엽니다.
-EXIT는 현재 child 화면 또는 SOLVE submenu만 닫습니다. 설정·INFO 방문만으로 계산하거나
+Parameters **F2 ADV**에서 **F1 EVENT**, **F2 INFO**를 엽니다. 나머지 softkey는 비어 있습니다.
+INIT는 Parameters F1에 있으며 numerical solver parameters만 복구하고 Event 설정은 유지합니다.
+EXIT는 현재 child 화면 또는 ADV submenu만 닫습니다. 설정·INFO 방문만으로 계산하거나
 파일을 쓰지 않습니다. Event는 document당 하나이며 OFF에서도 입력한 설정을 보존합니다.
 
 Event Settings는 Enabled, E, Direction, Action 네 행입니다. LEFT/RIGHT로 선택값을 바꾸고
@@ -487,16 +503,21 @@ Fugue 저장/취소 반응은 HARDWARE RETEST REQUIRED**입니다. 빈값을 0�
 
 ## Recall과 저장
 
-**[USER REQUESTED ADAPTATION]** Main F6 SAVE는 현재 식·IC·설정·Recall을 명시적으로
+**[USER REQUESTED ADAPTATION]** Main **6 SAVE** 또는 SAVE 선택 후 EXE/F6 OPEN은 현재 식·IC·설정·Recall을 명시적으로
 저장합니다. 아직 equation을 선택하지 않았다면 No session을 표시합니다. 일반 편집 확정,
 NEXT/PREV/EXIT에서는 RAM만 유지하며 자동으로 session 파일을 쓰지 않습니다.
 
-Main F5 RCL에서 **Last calculation (RAM)** 또는 **Load saved session**을 선택합니다.
+Main **5 RCL** 또는 RCL 선택 후 EXE/F6 OPEN에서 **Last calculation (RAM)** 또는 **Load saved session**을 선택합니다.
 Main의 짧은 설명 `Recall / load session`은 이 두 기능을 함께 나타냅니다.
 Last calculation은 기존 의미를 유지해 마지막 GRAPH 계산의 식·IC·Output을 복원하고
 현재 app-wide Solver/V-Window와 Field Density/Style/Color는 유지합니다. Load saved session은 확인 후 저장된
 current/recall과 설정을 모두 복원합니다. 진짜 새 실행은 defaults이며, 기존 파일은 삭제하지
 않습니다. MENU 왕복으로 같은 실행이 재개될 때는 이 초기화를 다시 하지 않습니다.
+
+SAVE는 먼저 `Save current session?` 확인창을 엽니다. **F5 NO / EXIT**는 Main으로 돌아가며
+파일 I/O가 없습니다. **F6 YES / EXE**만 기존 SAVE backend를 한 번 실행합니다. 확인창을 연 키의
+hold/repeat는 승인으로 처리하지 않습니다. 성공/실패 안내 뒤에도 Main selector는 SAVE에 남습니다.
+현재 세션이 없는 새 실행에서는 YES 이후 `No session.`을 표시하고 파일을 쓰지 않습니다.
 
 계산기 root의 `DIFFEQ0.dat`와 `DIFFEQ1.dat`를 번갈아 씁니다. magic/version/size/checksum 및
 값을 검사하고 최신 slot이 손상되면 다른 정상 slot을 사용합니다. 새 저장은 **v10**이며

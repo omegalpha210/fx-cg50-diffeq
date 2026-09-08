@@ -28,7 +28,8 @@ Reproduce with an existing compiler/CMake/Python and Pillow:
 python3 tools/capture_readme.py
 ```
 
-The v0.11 Parameters capture shows the RK45 rows. All eight original gallery
+The v0.12.0-beta.2 Parameters capture shows RK45 rows, F1 INIT and F2 ADV.
+Equation/IC/Parameters headers show 1/3, 2/3 and 3/3. V-WIN setup uses Parameters. All eight original gallery
 frames are reproduced with the exact public candidate renderer; graph examples
 retain default RK4. The gallery is not enlarged for this milestone.
 

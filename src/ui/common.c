@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #ifdef FXCG50
 #include <gint/timer.h>
 #include <gint/gint.h>
@@ -109,6 +110,31 @@ void ui_frame(const char *title,const char *subtitle)
     ui_text(8,5,C_WHITE,"%s",title);
     if(subtitle) ui_text(8,26,UI_MUTED,"%s",subtitle);
 }
+void ui_progress(unsigned stage)
+{
+    ui_rect(UI_W-40,0,40,21,UI_BLUE);
+    if(stage<1 || stage>3)return;
+    char text[4]={(char)('0'+stage),'/', '3',0};int width;
+    dsize(text,NULL,&width,NULL);ui_text(UI_W-8-width,5,C_WHITE,"%s",text);
+}
+bool ui_select_move(int key,int *selected,int count)
+{
+    if(count<1 || (key!=KEY_UP && key!=KEY_DOWN))return false;
+    *selected=(*selected+count+(key==KEY_UP ? -1:1))%count;return true;
+}
+/* Paint the complete hint once, then recolor key glyphs at measured positions.
+   This preserves the font's spacing across token boundaries. */
+void ui_help(int x,int y,const char *text,bool main_menu)
+{
+    ui_text(x,y,UI_MUTED,"%s",text);
+    for(const char *p=text;(p=strstr(p,"EXE"));p+=3) {
+        if((p!=text && (isalnum((unsigned char)p[-1]) || p[-1]=='_')) ||
+            isalnum((unsigned char)p[3]) || p[3]=='_')continue;
+        int width=0;dnsize(text,(int)(p-text),NULL,&width,NULL);
+        ui_text(x+width+(p!=text),y,C_BLUE,"EXE");
+    }
+    if(main_menu && !strncmp(text,"MENU:",5))ui_text(x,y,C_RED,"MENU");
+}
 void ui_softkeys(const char *a,const char *b,const char *c,const char *d,const char *e,const char *f)
 {
     const char *keys[]={a,b,c,d,e,f};
@@ -118,6 +144,8 @@ void ui_softkeys(const char *a,const char *b,const char *c,const char *d,const c
         if(!strcmp(keys[i],"NEXT")){background=UI_CYAN;foreground=C_BLACK;}
         if(!strcmp(keys[i],"V-WIN")){background=C_RGB(31,17,0);foreground=C_BLACK;}
         if(!strcmp(keys[i],"SET")){background=UI_BRIGHT_GREEN;foreground=C_BLACK;}
+        if(!strcmp(keys[i],"INIT")){background=UI_YELLOW;foreground=C_BLACK;}
+        if(!strcmp(keys[i],"ADV")){background=C_BLACK;foreground=C_WHITE;}
         if(!strcmp(keys[i],"NORMAL")){background=UI_YELLOW;foreground=C_BLACK;}
         if(!strcmp(keys[i],"FAST")){background=UI_BRIGHT_GREEN;foreground=C_BLACK;}
         if(!strcmp(keys[i],"FASTER")){background=UI_CYAN;foreground=C_BLACK;}
@@ -172,7 +200,7 @@ void ui_field(int row,const char *label,const char *value,bool selected)
 void ui_form_hint(const UiInlineEdit *edit,const char *context)
 {
     const char *text=edit && edit->active ? (edit->limited ? UI_LIMIT_HINT:UI_EDIT_HINT):context;
-    if(text && text[0])ui_text(8,184,UI_MUTED,"%s",text);
+    if(text && text[0])ui_help(8,184,text,false);
 }
 void ui_color_swatch(int x,int y,int color)
 {
@@ -209,6 +237,19 @@ bool ui_confirm(const char *title,const char *message)
         if(key==KEY_EXIT || key==KEY_F6) return false;
     }
 }
+bool ui_save_confirm(void)
+{
+    ui_frame("Save session",NULL);ui_text(10,62,UI_INK,"Save current session?");
+    ui_form_hint(NULL,"EXE: YES   EXIT: NO");
+    ui_softkeys("","","","","NO","YES");dupdate();
+    for(;;) {
+        key_event_t event=ui_getkey();
+        if(event.type==KEYEV_HOLD)continue; /* Opening key repeat is not new consent. */
+        int key=event.key;
+        if(key==KEY_F6 || key==KEY_EXE)return true;
+        if(key==KEY_F5 || key==KEY_EXIT)return false;
+    }
+}
 int ui_digit(int key)
 {
     const int keys[]={KEY_0,KEY_1,KEY_2,KEY_3,KEY_4,KEY_5,KEY_6,KEY_7,KEY_8,KEY_9};
@@ -229,8 +270,7 @@ int ui_choose(const char *title,const char *const *items,int count,int selected)
         ui_form_hint(NULL,"EXE: open");
         ui_softkeys("",count>7 ? "PG-":"",count>7 ? "PG+":"","","","OPEN");dupdate();
         int key=ui_getkey().key;
-        if(key==KEY_UP) selected=(selected+count-1)%count;
-        if(key==KEY_DOWN) selected=(selected+1)%count;
+        ui_select_move(key,&selected,count);
         if(count>7 && key==KEY_F2) selected=selected>=7 ? selected-7:0;
         if(count>7 && key==KEY_F3) selected=selected+7<count ? selected+7:count-1;
         if(key==KEY_EXIT) return -1;

@@ -218,7 +218,8 @@ static bool choose_curve(App *a,GsolveCurve *curve,const GsolveCurve *excluded,c
         graph_render(&a->doc,&a->model,false);
         if(blink.highlighted)graph_highlight_curve(&a->doc,&a->model,curve->family,curve->variable);
         ui_rect(0,0,384,19,C_WHITE);char name[32];curve_name(&a->doc,*curve,name,sizeof(name));
-        ui_text(7,4,UI_BLUE,"%s %s   UP/DOWN  EXE",prompt,name);
+        char hint[96];snprintf(hint,sizeof(hint),"%s %s   UP/DOWN  EXE",prompt,name);
+        ui_help(7,4,hint,false);
         ui_softkeys("","","","","","CANCEL");dupdate();
         int key=ui_blink_key(&blink).key;
         if(key==KEY_EXIT || key==KEY_F6){ui_blink_stop(&blink);return false;}
@@ -478,8 +479,9 @@ UiGraphAction ui_graph(App *a,bool first)
             if(key==KEY_F3) {
                 OdeStatus s=graph_auto_window(d,&a->model);changed=s==ODE_OK;
                 if(!changed) {
-                    ui_rect(0,198,384,18,UI_BLUE);
-                    ui_text(7,202,C_WHITE,"AUTO: %s - EXE",s==ODE_BAD_INPUT ? "No samples in X range":ode_status_text(s));dupdate();
+                    ui_rect(0,198,384,18,C_WHITE);
+                    char hint[96];snprintf(hint,sizeof(hint),"AUTO: %s - EXE",s==ODE_BAD_INPUT ? "No samples in X range":ode_status_text(s));
+                    ui_help(7,202,hint,false);dupdate();
                     while((key=ui_getkey().key)!=KEY_EXE && key!=KEY_EXIT) {}
                 }
             }
@@ -490,7 +492,7 @@ UiGraphAction ui_graph(App *a,bool first)
             if(key==KEY_F5) {
                 if(phase){menu=ANALYSIS;continue;}
                 if(d->view.phase) {
-                    ui_rect(0,198,384,18,UI_BLUE);ui_text(7,202,C_WHITE,"G-Solve: turn Phase off (EXE)");dupdate();
+                    ui_rect(0,198,384,18,C_WHITE);ui_help(7,202,"G-Solve: turn Phase off (EXE)",false);dupdate();
                     while((key=ui_getkey().key)!=KEY_EXE && key!=KEY_EXIT) {}
                 } else gsolve_menu(a,&result);
             }

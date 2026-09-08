@@ -1,3 +1,24 @@
+# UI/UX polish memory update — v0.12.0-beta.2
+
+| SH target | beta.1 baseline | beta.2 | Delta |
+| --- | ---: | ---: | ---: |
+| text | 204936 | 206064 | +1128 |
+| data | 704 | 704 | 0 |
+| BSS | 71952 | 71952 | 0 |
+| largest application frame (ui_graph) | 2572 | 2572 | 0 |
+| G3A bytes | 234320 | 235448 | +1128 |
+
+No new persistent UI state, trajectory/framebuffer buffer or numerical workspace.
+The progress label uses4 local bytes; colored help reuses installed dnsize/dtext
+metrics and paints token glyphs over the same text positions. Existing stage state
+holds ADV context. SAVE confirms before calling the unchanged storage backend.
+Individual frames do not measure combined stack/library/interrupt/OS high-water;
+physical key latency, stack margin and LCD behavior remain HARDWARE TEST REQUIRED.
+
+Earlier milestone measurements follow as historical records.
+
+---
+
 # Event / Diagnostics memory update — v0.12.0-beta.1
 
 Strict clean SH GCC 14.1 build compared with development e885230 (v0.11):

@@ -33,7 +33,7 @@ run('1 4 LEFT ACON F2 F2',['sinh('],['Insert function'])
 run('1 4 LEFT ACON F1 F1',[],['Insert variable'])
 run('1 4 NEG A:SUB EXE',['-y'],['Initial Conditions'])
 run('1 1 1 DOWN',['g(y)','TEXT 144 79 y^2-1'])
-run('1 4 LEFT',['DIFF EQ / General 1st','NEXT','V-WIN'],['OUTPUT','SET'])
+run('1 4 LEFT',['DIFF EQ / General 1st','NEXT'],['OUTPUT','SET','V-WIN'])
 
 families=[('1 1','Separable',"y' = f(x) * g(y)"),
  ('1 2','Linear 1st',"y' + f(x)*y = g(x)"),
@@ -43,13 +43,13 @@ families=[('1 1','Separable',"y' = f(x) * g(y)"),
  ('3 9 F6','N-th order','y^(9) = f(x,y,y1,...,y8)'),
  ('4 9 F6','1st order system',"yi' = fi(x,y1,...,y9), i=1..9")]
 for entry,title,formula in families:
-    out=run(entry+' F6 F6 F6 EXIT F1 F1',[title,formula,'Initial Conditions','Parameter','TRACE'],
+    out=run(entry+' F6 F6 F6 EXIT EXIT EXIT',[title,formula,'Initial Conditions','Parameter','TRACE'],
         ['h=0.1','1/2   ','Calculating graph...'])
     assert out.rfind('DIFF EQ /')>out.rfind('Initial Conditions')>out.rfind('TEXT 14 9 Parameter')
     for stage in ['', ' F6', ' F6 F6']:
         prefix=entry+stage+' DOWN'
         baseline=run(prefix)
-        for aux in (['F3 EXIT','F4 EXIT','F5 EXIT'] if stage==' F6 F6' else ['F3 EXIT']):
+        for aux in (['F3 EXIT','F4 EXIT','F5 EXIT'] if stage==' F6 F6' else ['F3']):
             assert plot(run(prefix+' '+aux))==plot(baseline),(entry,stage,aux)
 
 run('4 9 F6 '+'DOWN '*8+'0 EXE F6 '+'DOWN '*9,["y9'",'Initial Conditions','y9'])
@@ -71,7 +71,7 @@ run('2 F6 SIN F1 EXE',['Invalid value','sin('])
 # Repeated PREV/NEXT retains edited fields and manual parameters exactly.
 edited='1 4 NEG A:SUB F6 DOWN 2 F6 NEG 3 EXE 3 EXE DOWN 0 DOT 0 5 EXE'
 baseline=run(edited)
-assert plot(run(edited+' F1 F1 F6 F6 '*30))==plot(baseline)
+assert plot(run(edited+' EXIT EXIT F6 F6 '*30))==plot(baseline)
 # Red emphasis is confined to F6; inspect RGB bytes from the host drawing.
 _,images=run('2 F6 F6',frames=True)
 rgb=images[-1].split(b'\n',3)[3]
@@ -79,20 +79,20 @@ def pixel(x,y): return rgb[(y*396+x)*3:(y*396+x)*3+3]
 assert pixel(327,203)==bytes([255,0,0])
 assert all(pixel(7+64*i,203)!=bytes([255,0,0]) for i in range(5))
 
-prefix='1 4 F3 NEG 6 DOT 3 EXE 6 DOT 3 EXE EXIT F6 F6'
+prefix='1 4 F6 F6 F3 NEG 6 DOT 3 EXE 6 DOT 3 EXE EXIT'
 run(prefix,['TEXT 144 35 -6\n','TEXT 144 57 6\n'])
 manual=prefix+' NEG 3 EXE 3 EXE'
-out=run(manual+' F3 EXIT F1 F6',['TEXT 144 35 -6.3\n','TEXT 144 57 6.3\n'])
+out=run(manual+' F3 EXIT EXIT F6',['TEXT 144 35 -6.3\n','TEXT 144 57 6.3\n'])
 tail=out[out.rfind('TEXT 14 9 Parameter'):]
 assert 'TEXT 144 35 -3\n' in tail and 'TEXT 144 57 3\n' in tail
-out=run(manual+' F1 F1 F6 F6 F3 NEG 7 EXE EXIT')
+out=run(manual+' EXIT EXIT F6 F6 F3 NEG 7 EXE EXIT')
 tail=out[out.rfind('TEXT 14 9 Parameter'):]
 assert 'TEXT 144 35 -3\n' in tail and 'TEXT 144 57 3\n' in tail
-run('1 4 F3 0 DOT 1 EXE 0 DOT 2 EXE EXIT F6 F6',['TEXT 144 35 0.1\n','TEXT 144 57 0.2\n'])
-run('1 4 F3 DOWN DOWN DOWN 0 DOT 0 5 EXE',['dot','0.05','12.6'])
-run('1 4 F3 S:EXP EXE',['3.14159265'])
-run('1 4 F3 A:ADD EXE',['Invalid value'])
-run('1 4 F3 NEG 7 EXE EXIT EXIT EXIT 2 F3',['View Window','-7'])
+run('1 4 F6 F6 F3 0 DOT 1 EXE 0 DOT 2 EXE EXIT',['TEXT 144 35 0.1\n','TEXT 144 57 0.2\n'])
+run('1 4 F6 F6 F3 DOWN DOWN DOWN 0 DOT 0 5 EXE',['dot','0.05','12.6'])
+run('1 4 F6 F6 F3 S:EXP EXE',['3.14159265'])
+run('1 4 F6 F6 F3 A:ADD EXE',['Invalid value'])
+run('1 4 F6 F6 F3 NEG 7 EXE EXIT EXIT EXIT EXIT EXIT 2 F6 F6 F3',['View Window','-7'])
 
 graph='2 F6 F6 F6 '
 run(graph+'F5 F1 EXE RIGHT',['Select IC1 y','ROOT 2/4'])
@@ -128,6 +128,6 @@ run(graph+'F2 F3',['TRACE'])
 run('2 F6 F6 F4 DOWN RIGHT LEFT',['ON','OFF','LEFT/RIGHT: ON/OFF toggle'])
 run('4 2 F6 F6 F6 F6 F4 F3 F2 F3 F5',
     ['Preparing table...','Table','MID','STAT data saved'],['DIR','Table / IC1'])
-run(graph+'EXIT EXIT EXIT EXIT F5 1',['Recall','DIFF EQ / Linear 2nd'])
-run('EXIT EXIT F6 EXE EXIT',['No session.','SCRIPT COMPLETE'])
+run(graph+'EXIT EXIT EXIT EXIT 5 1',['Recall','DIFF EQ / Linear 2nd'])
+run('EXIT EXIT 6 EXE EXE EXIT',['No session.','SCRIPT COMPLETE'])
 print('UI workflows: seven families, return/drafts, 9 states, modifiers, range, G-Solve/TRACE, menu counters, Table/STAT passed.')

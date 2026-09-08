@@ -10,8 +10,8 @@ root = Path(__file__).resolve().parents[1]
 out = root / 'docs/images'
 out.mkdir(parents=True, exist_ok=True)
 # General first-order y'=1-y^2, x0=0, y0={0,0.5}; window [-3,3] x [-1.5,1.5].
-equation = ('1 4 1 SUB A:SUB SQUARE EXE F3 NEG 3 EXE 3 EXE 1 EXE DOWN '
-            'NEG 1 DOT 5 EXE 1 DOT 5 EXE 0 DOT 5 EXE F6 ')
+equation = ('1 4 1 SUB A:SUB SQUARE EXE F6 F6 F3 NEG 3 EXE 3 EXE 1 EXE DOWN '
+            'NEG 1 DOT 5 EXE 1 DOT 5 EXE 0 DOT 5 EXE F6 EXIT EXIT ')
 ic = equation + 'F6 DOWN S:MUL 0 COMMA 0 DOT 5 S:DIV EXE '
 parameters = ic + 'F6 '
 graph = parameters + 'F6 '

@@ -1,3 +1,50 @@
+# UI/UX polish priority retest — v0.12.0-beta.2
+
+**HARDWARE TEST REQUIRED — all36 new cases pending.** Record OS/version, release
+SHA256, exact keys, expected/observed screen, timing and save-file behavior.
+
+1. Main numeric1–6 opens the corresponding item.
+2. Main F6 OPEN equals EXE for the current selector; returning retains it.
+3. Main F1–F5 blank/inert, especially former RCL shortcut F5.
+4. SAVE F5 NO returns Main without file I/O.
+5. SAVE F6 YES performs one save after confirmation only.
+6. SAVE EXE equals YES; held opening EXE/F6 cannot auto-approve.
+7. SAVE EXIT equals NO; failure and No session keep Main selector safe.
+8. Parameters F1 INIT retains Method/Event/V-Window and resets its numerical defaults.
+9. V-WIN F1 INIT resets geometry only; retains Grid/Label/projection/manual solver settings.
+10. Graph Settings F1 INIT resets its appearance only, retaining SF density.
+11. Output F1 INIT restores dependent outputs/colors only.
+12. Every visible INIT has Yellow background/Black text.
+13. Parameters F2 ADV has Black background/White text.
+14. ADV F1 EVENT retains existing Event editing and validation.
+15. ADV F2 INFO remains read-only, no solve or I/O.
+16. ADV has no INIT; EXIT closes only ADV and retains Parameters selector.
+17. Style LEFT/RIGHT toggles; F1/F2 are blank/inert on that row; other rows offer F1 INIT.
+18. Style hint LEFT/RIGHT: SEGMENT/ARROW toggle fits.
+19. Color hint RIGHT/F3: COLOR fits and both keys open the existing palette.
+20. Output one-line hint includes F3 COLOR; no second explanation; SYS9 row7 remains clear.
+21. First SELECT row UP wraps to last.
+22. Last SELECT row DOWN wraps to first; paged lists follow selection.
+23. Dynamic RK4/RK45 rows and scalar-only SF wrap visible rows only.
+24. Every Equation mode shows1/3 without title/formula overlap.
+25. IC shows2/3; EXIT returns1/3 and retains fields.
+26. Parameters shows3/3; EXIT returns2/3; auxiliary screens have no progress.
+27. Equation F3 is blank/inert outside FUNC; no V-WIN entry.
+28. IC F1–F5 are blank/inert, including during draft entry.
+29. Parameters V-WIN returns to3/3 and prior selector.
+30. Graph V-WIN returns to Graph with its existing numerical behavior.
+31. Main hint: first MENU Red, EXE Blue, other text normal; one line.
+32. Global EXE help token Blue, including EDIT, palettes and graph notices; no other MENU/EXIT recoloring.
+33. Renderer/screenshot comparison for all updated screens and actual LCD contrast/clipping.
+34. MENU/reentry, repeat/cancel response and long navigation soak; no reboot/reset/write.
+35. SAVE/RCL v10 and older same-device sessions unchanged; cold launch and native Fugue behavior.
+36. RK4/RK45/Event/Diagnostics/TRACE/G-Solve/Phase/Table/STAT smoke; data navigation must not become cyclic.
+
+Earlier feature checks remain relevant but their former control labels are historical.
+Use the current [USER_GUIDE](USER_GUIDE.md) control map.
+
+---
+
 # Event / Solver Diagnostics priority retest — v0.12.0-beta.1
 
 **HARDWARE TEST REQUIRED — all 29 new cases are pending.** Record release SHA256,

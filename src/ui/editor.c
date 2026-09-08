@@ -63,8 +63,7 @@ int ui_equation_variables(const Document *d)
 bool ui_field_select(UiInlineEdit *edit,key_event_t event,const char *value,int *selected,int count)
 {
     int key=event.key;
-    if(key==KEY_UP){if(*selected>0)(*selected)--;return true;}
-    if(key==KEY_DOWN){if(*selected+1<count)(*selected)++;return true;}
+    if(ui_select_move(key,selected,count))return true;
     if(key==KEY_LEFT || key==KEY_RIGHT) {
         ui_inline_begin(edit,value,false);
         edit->cursor=key==KEY_LEFT ? 0:(int)strlen(value);return true;

@@ -7,10 +7,10 @@ All new physical-calculator paths remain **HARDWARE TEST REQUIRED**.
 
 ## Entry and expression scope
 
-Parameters **F2 SOLVE → F1 EVENT** opens Event Settings; **F2 INFO** opens the
-read-only report. Parameters' former INIT is **SOLVE → F4 INIT**, preserving its
-method-specific reset behavior. F1 PREV/F3 V-WIN/F4 OUTPUT/F5 SET/F6 GRAPH remain
-on the normal Parameters bar. EXIT closes just the submenu or child screen.
+Parameters **F2 ADV → F1 EVENT** opens Event Settings; **F2 INFO** opens the
+read-only report. Since beta.2, Parameters has **F1 INIT**, preserving its
+method-specific reset behavior and Event settings. F3 V-WIN/F4 OUTPUT/F5 SET/F6 GRAPH
+remain on the normal Parameters bar. EXIT closes just the submenu or child screen.
 Editing Event settings performs no solve or file write. GRAPH validates and
 compiles the expression once, including evaluation at every configured IC.
 An ON empty/invalid/domain-invalid expression prevents calculation. OFF preserves

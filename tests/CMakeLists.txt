@@ -167,3 +167,12 @@ target_link_libraries(test_event_consumers core m)
 add_test(NAME event_consumers COMMAND test_event_consumers)
 add_test(NAME event_ui COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_events_ui.py $<TARGET_FILE:host_app>)
 set_tests_properties(event_ui PROPERTIES TIMEOUT 60)
+
+add_executable(test_ui_controls test_ui_controls.c ../src/ui/forms.c ../src/ui/editor.c
+  ../src/ui/solver.c ../src/ui/common.c ../src/graph/renderer.c ../src/graph/trace.c
+  ../src/graph/phase.c host/gint_host.c)
+target_include_directories(test_ui_controls PRIVATE host)
+target_link_libraries(test_ui_controls core m)
+add_test(NAME ui_controls COMMAND test_ui_controls)
+add_test(NAME workflow_polish_ui COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_workflow_polish.py $<TARGET_FILE:host_app>)
+set_tests_properties(ui_controls workflow_polish_ui PROPERTIES TIMEOUT 60)

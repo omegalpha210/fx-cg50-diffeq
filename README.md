@@ -10,9 +10,9 @@ Solve, graph, and explore ordinary differential equations on your calculator.
 DIFFEQ is a native **fx-CG50 add-in** with colorful solution curves, slope fields,
 TRACE, G-Solve, numerical tables, and phase analysis for two-variable systems.
 
-**Public Beta · v0.12.0-beta.1 · [MIT License](LICENSE)**
+**Public Beta · v0.12.0-beta.2 · [MIT License](LICENSE)**
 
-**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.1)**
+**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.2)**
 · [All releases](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [Report a bug](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -39,6 +39,8 @@ Open any image for its full-size view, especially on a phone.
 | ![RK45 selected with Initial h=0.1, RelTol=1e-6 and AbsTol=1e-9](docs/images/solver-parameters.png) | ![Magenta and cyan solution curves with slope field disabled](docs/images/graph-solution.png) |
 | Choose RK4 or RK45, its settings, and optional field density. | Press GRAPH. Pan, zoom, trace, or open a table. |
 
+Headers show **1/3 → 2/3 → 3/3**. Use EXIT to go back from IC or Parameters.
+V-WIN is available only from Parameters and Graph.
 Use **F6 NEXT** between stages and **F6 GRAPH** to calculate. In a selected,
 unedited ordinary field, **EXE** performs the same primary action from any row.
 
@@ -106,15 +108,15 @@ See [coefficients, safeguards, benchmarks and memory](docs/RK45_NUMERICS.md).
 
 ## Event Detection and Solver Diagnostics
 
-In Parameters, **F2 SOLVE → F1 EVENT** defines one `E(x,state)=0` condition.
+In Parameters, **F2 ADV → F1 EVENT** defines one `E(x,state)=0` condition.
 Choose **ANY / RISING / FALLING** (always relative to increasing x, even backward)
 and **MARK / STOP**. MARK continues with up to **32** visible markers while total
 hits keep counting. STOP ends each IC/direction at its refined root; Table and
 TRACE show **END: Event**, and G-Solve stays within the valid solution.
 
-**SOLVE → F2 INFO** shows read-only RK4/RK45 status, actual solver work (including
+**ADV → F2 INFO** shows read-only RK4/RK45 status, actual solver work (including
 Event refinement), step sizes and Event totals. UP/DOWN scrolls; EXIT returns.
-Opening it does not calculate or write files. Parameters INIT is now **SOLVE → F4 INIT**.
+Opening it does not calculate or write files. Parameters **F1 INIT** resets solver settings while retaining Method, Event and V-Window.
 
 | Event Settings | Solver Diagnostics (RK45) |
 |---|---|
@@ -152,7 +154,8 @@ in that input. X/Y follow pans the view while preserving spans and solver settin
 Explicit TIME `x=` queries use the selected solver at the requested in-range x;
 they are not replaced by Phase's cached interpolation.
 
-Graph Settings toggles Grid/Axis Label with LEFT/RIGHT; their F1/F2 are blank.
+Graph Settings uses **F1 INIT** to reset Grid, Axis Label and field style/color.
+The Style row uses LEFT/RIGHT only and leaves F1/F2 blank; move to another row to INIT.
 First-order lists keep the **191-character** editor limit, with separate count
 and length messages. Up to ten solution columns can be explored with x frozen.
 
@@ -167,7 +170,7 @@ y0 = {0,0.5}
 h = 0.1
 ```
 
-Set V-WIN to Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`,
+In Parameters, open **F3 V-WIN** and set Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`,
 Yscale `0.5`. Xdot updates automatically. For the original RK4 graph examples, leave Method RK4, Step `1`, SF `12`
 and Max steps `20000`. The automatic solver range becomes `-3` to `3`.
 The two curves approach y=1 to the right and y=-1 to the left.
@@ -179,7 +182,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 ## Install on your calculator
 
-1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.1).
+1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.2).
 2. Download **DIFFEQ.g3a**. `SHA256SUMS.txt` is available to check your download.
 3. Connect the fx-CG50 by USB, select USB Flash mode, and open its storage drive.
 4. Copy `DIFFEQ.g3a` to the drive's **root directory**, outside `@MainMem`.
@@ -196,23 +199,32 @@ Older add-ins may reject new saves; adaptations are explained in the
 
 | Context | Keys |
 |---|---|
-| Main Menu | Digits 1–4 or UP/DOWN + EXE choose a type; F5 RCL, F6 SAVE |
-| Selected ordinary field | UP/DOWN selects; LEFT/RIGHT starts editing; EXE runs NEXT/GRAPH/DONE/OPEN |
+| Main Menu | Digits 1–6 open 1st/2nd/N-th/SYS/RCL/SAVE; UP/DOWN selects, EXE or F6 OPEN opens; F1–F5 blank |
+| Selected ordinary field | UP/DOWN selects cyclically; LEFT/RIGHT starts editing; EXE runs NEXT/GRAPH/DONE/OPEN |
 | Editing | EXE commits and selects the next field; the last field stays. EXIT commits and stays |
 | Equation | FUNC is available in EDIT; VAR appears only where relevant. EXIT closes the token bar first |
-| OUTPUT | LEFT/RIGHT toggles ON/OFF; F3 COLOR, F4 INIT, F6 DONE. EXE follows the output rows |
-| Parameters | Method: LEFT/RIGHT toggles RK4/RK45; F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
+| OUTPUT | LEFT/RIGHT toggles ON/OFF; F1 INIT, F3 COLOR, F6 DONE. EXE follows the output rows |
+| Parameters | F1 INIT; F2 ADV → EVENT/INFO; Method: LEFT/RIGHT toggles RK4/RK45; F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
 | Graph (except 2D SYS) | Arrows pan; F1 TRACE, F2 ZOOM, F3 V-WIN, F4 TABLE, F5 G-SLV, F6 magenta PREV |
 | 2D SYS Graph | F4 VIEW → F1 TIME / F2 PHASE / F3 TABLE; Phase uses F5 ANLYS |
 | Phase analysis | F1 FIELD, F2 NULL, F3 EQPT, F4 INFO; LEFT/RIGHT cycles equilibria, EXIT returns |
 | TIME TRACE | LEFT/RIGHT moves, UP/DOWN switches curves; F1 x=, F2–F4 speed, F5/F6 configured endpoints, EXIT returns |
 | Phase TRACE | Shows x, y1 and y2 along the retained trajectory; cached/interpolated x queries, no time-range extension |
 | Table | UP/DOWN pages, LEFT/RIGHT scrolls columns; TOP/BTM/MID, F5 STAT |
-| Session | SAVE is explicit; RCL offers last calculation or saved load. MENU returns to the calculator OS |
+| Session | SAVE confirmation: F5 NO/EXIT cancels, F6 YES/EXE saves once; RCL offers last calculation or saved load; MENU returns to OS |
 
 SF appears only in scalar first-order Parameters. Higher-order/SYS, including
 N-th1 and SYS1, hide it and preserve its value, even after Parameters INIT.
 First-order INIT resets SF to12. Style and color stay in Graph Settings.
+
+INIT is yellow with black text and resets only its screen's settings. Parameters
+retains Method and Event; V-WIN resets window geometry; Graph Settings resets
+Grid/Label/field style/color; Output resets dependent outputs/colors. ADV is black
+with white text and opens utilities without calculating. SELECT lists wrap at the
+ends; editor cursors, Graph/TRACE/Phase and Table navigation retain their behavior.
+Contextual EXE text is blue; only Main's MENU token is red.
+
+[Updated Main, SAVE and workflow screens](docs/ui-review/workflow-overview.png)
 
 ## Build from source
 

@@ -11,19 +11,19 @@ def execute(keys,directory):
     assert p.returncode==0 and 'SCRIPT COMPLETE' in p.stdout,(p.stderr,p.stdout[-3000:])
     return p.stdout
 with tempfile.TemporaryDirectory(dir='.') as directory:
-    execute('F6 EXE',directory)
+    execute('6 EXE EXE',directory)
     assert not list(Path(directory).glob('DIFFEQ?.dat'))
     execute('1 4 NEG A:SUB F6 F6 F6 EXIT EXIT EXIT EXIT EXIT EXIT',directory)
     assert not list(Path(directory).glob('DIFFEQ?.dat'))
-    execute('1 4 NEG A:SUB F6 F6 F6 EXIT EXIT EXIT EXIT EXIT F6 EXE',directory)
+    execute('1 4 NEG A:SUB F6 F6 F6 EXIT EXIT EXIT EXIT EXIT 6 EXE EXE',directory)
     slots={p.name:p.read_bytes() for p in Path(directory).glob('DIFFEQ?.dat')}
     assert slots
     cold=execute('1 4',directory)
     assert 'TEXT 144 57 sin(x)-y\n' in cold and 'TEXT 144 57 -y\n' not in cold
     assert 'reads=0 writes=0 opens=0 closes=0' in cold
-    restored=execute('F5 2 F1',directory)
+    restored=execute('5 2 F1',directory)
     assert 'TEXT 144 57 -y\n' in restored
     assert slots=={p.name:p.read_bytes() for p in Path(directory).glob('DIFFEQ?.dat')}
-    recalled=execute('F5 2 F1 EXIT F5 1',directory)
+    recalled=execute('5 2 F1 EXIT 5 1',directory)
     assert 'TEXT 144 57 -y\n' in recalled
 print('Explicit session policy: no edit/EXIT writes, SAVE, cold defaults, RCL, retained slots passed.')

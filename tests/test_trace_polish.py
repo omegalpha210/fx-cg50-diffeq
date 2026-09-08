@@ -65,12 +65,12 @@ for row in ['', 'DOWN ']:
     settings='1 4 F6 F6 F5 '+row
     before=run(settings)
     assert 'LEFT/RIGHT: ON/OFF toggle' in tail(before) and 'Density SF:' not in before
-    assert bar(before)==['','','','INIT','','DONE']
-    assert plot(run(settings+'F1 F2'))==plot(before)
+    assert bar(before)==['INIT','','','','','DONE']
+    assert plot(run(settings+'F2 F4'))==plot(before)
     changed=run(settings+'RIGHT')
     assert 'Off' in tail(changed) and plot(run(settings+'RIGHT LEFT'))==plot(before)
-assert bar(run('1 4 F6 F6 F5 DOWN DOWN'))==['SEG','ARROW','','INIT','','DONE']
-assert bar(run('1 4 F6 F6 F5 DOWN DOWN DOWN'))==['','','COLOR','INIT','','DONE']
+assert bar(run('1 4 F6 F6 F5 DOWN DOWN'))==['','','','','','DONE']
+assert bar(run('1 4 F6 F6 F5 DOWN DOWN DOWN'))==['INIT','','COLOR','','','DONE']
 # Ten physical initial values, last family and frozen-x final columns.
 ten='1 4 0 EXE F6 DOWN '+keys('{0,1,2,3,4,5,6,7,8,9}')+'EXE '
 assert 'at most 10' in tail(run(ten))

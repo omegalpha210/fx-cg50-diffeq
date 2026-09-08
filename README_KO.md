@@ -10,9 +10,9 @@
 DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식의 수치해를
 컬러 그래프·기울기장·TRACE·G-Solve·표로 살펴보고, 2변수 시스템의 위상을 분석할 수 있습니다.
 
-**공개 베타 · v0.12.0-beta.1 · [MIT 라이선스](LICENSE)**
+**공개 베타 · v0.12.0-beta.2 · [MIT 라이선스](LICENSE)**
 
-**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.1)**
+**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.2)**
 · [전체 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [버그 신고](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -101,15 +101,15 @@ Table/G-Solve/TIME x=는 요청 x에 직접 도착하도록 적분합니다. TRA
 
 ## Event Detection / Solver Diagnostics
 
-Parameters **F2 SOLVE → F1 EVENT**에서 하나의 `E(x,state)=0` 조건을 설정합니다.
+Parameters **F2 ADV → F1 EVENT**에서 하나의 `E(x,state)=0` 조건을 설정합니다.
 **ANY / RISING / FALLING**은 backward에서도 x 증가 기준이며 **MARK / STOP**을 선택합니다.
 MARK는 계속 적분하며 최대 **32개** marker를 표시하고 그 이후 hit도 계속 셉니다.
 STOP은 IC·방향마다 refined root에서 종료합니다. Table/TRACE는 **END: Event**를 표시하고
 G-Solve도 유효한 해의 범위 안에서 동작합니다.
 
-**SOLVE → F2 INFO**는 RK4/RK45의 상태, refinement를 포함한 실제 수치 작업량, step 크기와
+**ADV → F2 INFO**는 RK4/RK45의 상태, refinement를 포함한 실제 수치 작업량, step 크기와
 Event 합계를 읽기 전용으로 표시합니다. UP/DOWN으로 읽고 EXIT로 복귀하며 계산·파일 쓰기는 없습니다.
-기존 Parameters INIT는 **SOLVE → F4 INIT**로 이동했습니다.
+Parameters **F1 INIT**는 Method·Event·V-Window를 유지하며 solver 설정을 초기화합니다.
 
 | Event Settings | Solver Diagnostics (RK45) |
 |---|---|
@@ -141,7 +141,8 @@ TIME TRACE 속도 버튼은 **노랑 / Bright Green / Cyan** 배경과 검정 �
 TIME에서 명시적으로 `x=`를 입력하면 유효 구간 안의 해당 x까지 선택한 solver로 평가하는 동작을 유지합니다.
 이 경로는 Phase의 캐시 보간으로 대체하지 않습니다.
 
-Graph Settings의 Grid/Axis Label은 LEFT/RIGHT로 토글하고 F1/F2는 비어 있습니다.
+Graph Settings는 **F1 INIT**로 Grid·Axis Label·기울기장 스타일/색을 초기화합니다.
+Style 행만 F1/F2가 비어 있고 LEFT/RIGHT로 바꾸며, INIT는 다른 행에서 실행합니다.
 1차 목록은 **191자** 입력 한도를 유지하며 개수·길이 오류를 구분합니다. Table은 x를 고정한 채
 최대 10개 해 열을 탐색할 수 있습니다.
 
@@ -156,7 +157,7 @@ y0 = {0,0.5}
 h = 0.1
 ```
 
-V-WIN은 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`, Yscale `0.5`로
+Parameters **F3 V-WIN**에서 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`, Yscale `0.5`로
 설정합니다. Xdot은 자동으로 갱신됩니다. 기존 RK4 그래프 예제는 Method RK4, Step `1`, SF `12`, Max steps
 `20000`은 그대로 둡니다. 자동 적분 구간은 `-3`부터 `3`입니다.
 두 해는 오른쪽에서 y=1, 왼쪽에서 y=-1에 가까워집니다.
@@ -168,7 +169,7 @@ V-WIN은 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`, Yscale `0.5`�
 
 ## 계산기에 설치하기
 
-1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.1)를 엽니다.
+1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.2)를 엽니다.
 2. **DIFFEQ.g3a**를 받습니다. 다운로드 확인용 `SHA256SUMS.txt`도 제공됩니다.
 3. fx-CG50을 USB로 연결하고 USB Flash 모드를 선택한 뒤 컴퓨터에서 계산기 드라이브를 엽니다.
 4. `DIFFEQ.g3a`를 드라이브 **최상위**에 복사합니다. `@MainMem` 폴더 안에 넣지 않습니다.
@@ -184,23 +185,33 @@ V-WIN은 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax `1.5`, Yscale `0.5`�
 
 | 화면·상태 | 키 |
 |---|---|
-| Main | 숫자 1~4 또는 UP/DOWN+EXE로 유형 선택, F5 RCL, F6 SAVE |
-| 일반 필드 선택 | UP/DOWN으로 선택, LEFT/RIGHT로 편집 시작, EXE로 NEXT/GRAPH/DONE/OPEN |
+| Main | 숫자 1~6: 1st/2nd/N-th/SYS/RCL/SAVE; UP/DOWN 선택, EXE 또는 F6 OPEN 진입; F1~F5 비움 |
+| 일반 필드 선택 | UP/DOWN 순환 선택, LEFT/RIGHT로 편집 시작, EXE로 NEXT/GRAPH/DONE/OPEN |
 | 편집 중 | EXE는 확정 후 다음 필드 선택, 마지막 행은 머묾. EXIT는 확정 후 같은 행 선택 |
 | Equation | EDIT에서 FUNC 사용, 필요한 모드에 VAR 표시. EXIT는 열린 token bar부터 닫음 |
-| OUTPUT | LEFT/RIGHT ON/OFF, F3 COLOR, F4 INIT, F6 DONE. EXE는 출력 행 순서로 이동 |
-| Parameters | Method: LEFT/RIGHT로 RK4/RK45 전환; F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
+| OUTPUT | LEFT/RIGHT ON/OFF, F1 INIT, F3 COLOR, F6 DONE. EXE는 출력 행 순서로 이동 |
+| Parameters | F1 INIT; F2 ADV → EVENT/INFO; Method: LEFT/RIGHT로 RK4/RK45 전환; F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
 | Graph (2D SYS 제외) | 방향키 이동, F1 TRACE, F2 ZOOM, F3 V-WIN, F4 TABLE, F5 G-SLV, F6 magenta PREV |
 | 2D SYS Graph | F4 VIEW → F1 TIME / F2 PHASE / F3 TABLE, Phase에서는 F5 ANLYS |
 | Phase 분석 | F1 FIELD, F2 NULL, F3 EQPT, F4 INFO, LEFT/RIGHT 평형점 순회, EXIT 복귀 |
 | TIME TRACE | LEFT/RIGHT 이동, UP/DOWN 곡선 전환, F1 x=, F2~F4 속도, F5/F6 설정 구간 양끝, EXIT 복귀 |
 | Phase TRACE | 보관한 궤적의 x·y1·y2 표시, 캐시·보간으로 x 조회, 시간 구간 확장 없음 |
 | Table | UP/DOWN 페이지, LEFT/RIGHT 열 이동, TOP/BTM/MID, F5 STAT |
-| 세션 | SAVE는 명시적 저장, RCL은 마지막 계산 또는 저장 파일 복원, MENU는 계산기 OS 복귀 |
+| 세션 | SAVE 확인: F5 NO/EXIT 취소, F6 YES/EXE 한 번 저장; RCL은 마지막 계산 또는 파일 복원; MENU는 OS 복귀 |
 
 SF는 scalar 1차 네 모드의 Parameters에만 표시합니다. 고차/SYS는 N-th1·SYS1을 포함해
 SF를 숨기며 INIT 후에도 그 값을 보존합니다. 1차 INIT는 SF=12로 복구합니다.
 기울기장 스타일과 색은 Graph Settings에서 설정합니다.
+
+입력 화면은 **Equation 1/3 → IC 2/3 → Parameters 3/3**을 표시합니다.
+IC/Parameters에서 EXIT로 이전 단계로 돌아가며, V-WIN은 Parameters와 Graph에서만 엽니다.
+INIT는 노란 배경/검정 글씨로 해당 화면의 설정만 초기화합니다. Parameters는 Method·Event를
+유지하고, V-WIN은 창의 기하 설정, Graph Settings는 Grid/Label/기울기장 스타일·색,
+Output은 종속변수 ON/OFF·색을 초기화합니다. ADV는 검정 배경/흰 글씨이며 계산 없이 유틸리티를 엽니다.
+SELECT 목록만 끝에서 순환하고 편집 커서·Graph/TRACE/Phase·Table 이동은 기존 동작을 유지합니다.
+도움말 EXE는 파랑, Main의 MENU만 빨강입니다.
+
+[갱신한 Main·SAVE·입력 화면 모음](docs/ui-review/workflow-overview.png)
 
 ## 소스에서 빌드하기
 

@@ -24,7 +24,7 @@ def rgb565(c):return bytes([(c>>11&31)*255//31,(c>>5&63)*255//63,(c&31)*255//31]
 # Hint ownership follows logical edit state, including simulated blink events.
 forms=['1 1','1 2','1 3 DOWN DOWN','1 4','2','3 9 F6','4 9 F6',
        '1 1 F6','1 1 F6 DOWN','2 F6','4 9 F6 F6 '+('DOWN '*9),
-       '1 4 F6 F6','2 F6 F6','2 F3','3','4']
+       '1 4 F6 F6','2 F6 F6','2 F6 F6 F3','3','4']
 for prefix in forms:
     base=run(prefix)
     assert EDIT not in tail(base) and 'up/down: select' not in tail(base).lower()
@@ -44,8 +44,8 @@ assert 'One solution: x0 plus all state values' in tail(run('2 F6'))
 assert 'UP/DOWN: page' in tail(run('2 F6 F6 F6 F4'))
 assert 'UP/DOWN  EXE' in tail(run('2 F6 F6 F6 F5 F1'))
 # A modal numeric function picker owns its help, then returns to logical EDIT.
-assert EDIT not in tail(run('2 F3 LEFT OPTN'))
-assert EDIT in tail(run('2 F3 LEFT OPTN EXIT'))
+assert EDIT not in tail(run('2 F6 F6 F3 LEFT OPTN'))
+assert EDIT in tail(run('2 F6 F6 F3 LEFT OPTN EXIT'))
 assert 'LEFT/RIGHT: ON/OFF toggle' in tail(run('2 F6 F6 F4'))
 for prefix in ['4 9 F6 F6','4 9 F6 F6 F6 F4']:
     out=tail(run(prefix))
@@ -54,7 +54,7 @@ for prefix in ['4 9 F6 F6','4 9 F6 F6 F6 F4']:
 graph='2 F6 F6 F6 '
 out,rgb=run(graph,image=True);assert bar(out)==BASE
 _,prev=run('2 F6',image=True)
-assert pixel(rgb,327,203)==pixel(prev,7,203)==rgb565(0xf81f)
+assert pixel(rgb,327,203)==rgb565(0xf81f) and pixel(prev,7,203)==rgb565(0x1a98)
 assert 'TEXT 14 9 Parameter\n' in tail(run(graph+'F6'))
 assert bar(run(graph+'F1'))==['x=','NORMAL','FAST','FASTER','LEFT','RIGHT']
 assert bar(run(graph+'F2'))==['IN','OUT','AUTO','ORIG','','']
@@ -72,10 +72,10 @@ for color,moves in zip([0x8d5b,0xdc51,0x65d8,0xcc59,0xc549,0x9492],
     assert pixel(rgb,334,148)==rgb565(color)
     assert pixel(rgb,332,146)==rgb565(0x198a) # shared UI_INK frame
     assert plot(run(selected+'F3 DOWN EXIT'))==plot(out)
-    _,reset=run(selected+'F4',image=True);assert pixel(reset,334,148)==rgb565(0x8d5b)
+    _,reset=run(selected+'F1',image=True);assert pixel(reset,334,148)==rgb565(0x8d5b)
 with tempfile.TemporaryDirectory() as directory:
-    run(settings+'F3 DOWN RIGHT EXE '+('EXIT '*5)+'F6 EXE',directory)
-    _,rgb=run('F5 2 F1 F6 F6 F5',directory,image=True)
+    run(settings+'F3 DOWN RIGHT EXE '+('EXIT '*5)+'6 EXE EXE',directory)
+    _,rgb=run('5 2 F1 F6 F6 F5',directory,image=True)
     assert pixel(rgb,334,148)==rgb565(0xc549)
 
 # Actual renderer capability, including unsupported N-th1/SYS1, drives rows.
@@ -87,7 +87,7 @@ for entry in first+higher:
     count=7 if supported else 6
     labels=re.findall(r'TEXT 20 \d+ ([^\n]+)',tail(run(params)))
     assert labels==['Xrange min','Xrange max','Method','h','Step']+(['SF'] if supported else [])+['Max steps']
-    assert plot(run(params+'DOWN '*20))==plot(run(params+'DOWN '*(count-1)))
+    assert plot(run(params+'DOWN '*20))==plot(run(params+'DOWN '*(20%count)))
     assert plot(run(params+'DOWN '*20+'UP '*20))==plot(run(params))
     for row in range(count):
         current=params+'DOWN '*row
@@ -105,14 +105,14 @@ for entry in first+higher:
 
 sf20='1 4 F6 F6 DOWN DOWN DOWN DOWN DOWN 2 0 EXIT '
 for entry in higher:
-    in_higher=sf20+('EXIT '*4)+entry+' F6 F6 F2 F4 '
+    in_higher=sf20+('EXIT '*4)+entry+' F6 F6 F1 '
     to_main='EXIT '*(3 if entry=='2' else 4)
     restored=in_higher+to_main+'1 4 F6 F6 '
     assert 'TEXT 144 145 20\n' in tail(run(restored))
-    assert 'TEXT 144 145 12\n' in tail(run(restored+'F2 F4'))
+    assert 'TEXT 144 145 12\n' in tail(run(restored+'F1'))
 with tempfile.TemporaryDirectory() as directory:
-    run(sf20+('EXIT '*4)+'2 F6 F6 F2 F4 '+('EXIT '*3)+'F6 EXE',directory)
-    loaded='F5 2 F1 F6 F6 '
+    run(sf20+('EXIT '*4)+'2 F6 F6 F1 '+('EXIT '*3)+'6 EXE EXE',directory)
+    loaded='5 2 F1 F6 F6 '
     assert 'TEXT 20 145 Max steps\n' in tail(run(loaded,directory))
     assert 'TEXT 144 145 20\n' in tail(run(loaded+('EXIT '*3)+'1 4 F6 F6',directory))
 print('UI polish: logical EDIT hints, context/overlay restoration, PREV pixels, six field swatches and mode-aware SF/INIT/SAVE retention passed.')
