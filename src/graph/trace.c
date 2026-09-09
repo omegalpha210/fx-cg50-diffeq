@@ -10,15 +10,17 @@ static TraceSamples samples;
 static union {
     struct {unsigned char bits[384*198/8];uint16_t rows[384*19];} overlay;
     TraceSamples staging;
+    struct {uint16_t colors[384*198/8/2];uint16_t rows[384*19];} box;
 } scratch;
 _Static_assert(sizeof(TraceSamples)<=384*198/8+384*19*2,"TRACE staging exceeds overlay budget");
 #define mask scratch.overlay.bits
 #define footer scratch.overlay.rows
-static bool inverted,pointer;
-static int pointer_x,pointer_y;
+static bool inverted;
+static GraphPointPatch pointer;
 static uint16_t highlight_xor;
 static bool cache_ready;
-static uint64_t cache_key;
+static uint64_t cache_key,plot_key;
+static bool plot_ready;
 static uint64_t hash_bytes(uint64_t hash,const void *data,size_t size)
 {
     const unsigned char *bytes=data;
@@ -34,9 +36,22 @@ static uint64_t numerical_key(const Document *d)
 #undef KEY
     return hash;
 }
+static uint64_t plot_identity(const Document *d)
+{
+    uint64_t hash=UINT64_C(14695981039346656037);
+#define KEY(field) hash=hash_bytes(hash,&d->field,sizeof(d->field))
+    KEY(event);KEY(adaptive);KEY(kind);KEY(dim);KEY(nic);KEY(text);KEY(power);KEY(ic);
+    KEY(solver.h);KEY(solver.max_steps);KEY(solver.step);KEY(enabled);
+#undef KEY
+    return hash;
+}
+bool trace_plot_matches(const Document *d,double xmin,double xmax)
+{
+    return plot_ready && plot_key==plot_identity(d) && samples.extent.xmin<=xmin && samples.extent.xmax>=xmax;
+}
 bool trace_cache_matches(const Document *d)
 {return d && model_phase_supported(d) && cache_ready && cache_key==numerical_key(d);}
-void trace_cache_invalidate(void){cache_ready=false;}
+void trace_cache_invalidate(void){cache_ready=false;plot_ready=false;}
 GraphResult trace_cache_result(void){return samples.result;}
 static void mask_pixel(int x,int y)
 {
@@ -116,7 +131,7 @@ static void record_result(TraceSamples *out,TraceBranch *branch,ModelPathResult 
 bool trace_capture_begin(const Document *d)
 {
     graph_capture.active=false;
-    if(!d || !model_phase_supported(d) || d->nic<1 ||
+    if(!d || d->nic<1 || (!model_phase_supported(d) && !d->enabled) ||
         model_preflight(d,&d->solver).status!=ODE_OK)return false;
     memset(&graph_capture,0,sizeof(graph_capture));
     memset(&scratch.staging,0,sizeof(scratch.staging));
@@ -165,6 +180,7 @@ void trace_capture_end(bool success)
         graph_capture.finished==2*(unsigned)graph_capture.capture.d->nic) {
         scratch.staging.valid=scratch.staging.branch[0][0].count+scratch.staging.branch[0][1].count>0;
         samples=scratch.staging;cache_key=graph_capture.key;cache_ready=true;
+        plot_key=plot_identity(graph_capture.capture.d);plot_ready=true;
     }
     graph_capture.active=false;graph_capture.branch_active=false;
 }
@@ -228,6 +244,7 @@ bool trace_prepare(Document *d,CompiledModel *m,int family,int variable)
     if(status==ODE_OK) {
         samples=scratch.staging;cache_ready=model_phase_supported(d);
         if(cache_ready)cache_key=numerical_key(d);
+        plot_key=plot_identity(d);plot_ready=true;
     }
     trace_overlay_begin();
     if(status==ODE_OK)selected_mask(d);else memset(mask,0,sizeof(mask));
@@ -420,6 +437,7 @@ OdeStatus trace_navigate(Document *d,CompiledModel *m,double target,bool jump,Tr
         if(status==ODE_OK) {
             samples=scratch.staging;extended=true;cache_ready=model_phase_supported(d);
             if(cache_ready)cache_key=numerical_key(d);
+        plot_key=plot_identity(d);plot_ready=true;
         }
         /* Staging aliases overlay storage. Rebuild it even on cancellation;
            failed work has changed neither the view, cache, cursor nor VRAM. */
@@ -448,27 +466,53 @@ static void invert_mask(void)
     for(unsigned p=0;p<384*198;p++)if(mask[p/8]&(1u<<(p%8)))
         gint_vram[(UI_Y+p/384)*DWIDTH+UI_X+p%384]^=highlight_xor;
 }
-static void invert_pointer(void)
-{
-    for(int x=0;x<384;x++)gint_vram[(UI_Y+pointer_y)*DWIDTH+UI_X+x]^=0xffff;
-    for(int y=0;y<198;y++)if(y!=pointer_y)gint_vram[(UI_Y+y)*DWIDTH+UI_X+pointer_x]^=0xffff;
-}
 void trace_overlay_begin(void)
 {
     for(int y=0;y<19;y++)memcpy(footer+y*384,gint_vram+(UI_Y+179+y)*DWIDTH+UI_X,384*sizeof(uint16_t));
-    inverted=false;pointer=false;
+    inverted=false;pointer.active=false;
 }
 void trace_overlay_restore(void)
 {
+    graph_point_restore(&pointer);
     if(inverted)invert_mask();
-    if(pointer)invert_pointer();
     for(int y=0;y<19;y++)memcpy(gint_vram+(UI_Y+179+y)*DWIDTH+UI_X,footer+y*384,384*sizeof(uint16_t));
-    inverted=false;pointer=false;
+    inverted=false;pointer.active=false;
 }
 void trace_overlay_show(const Document *d,const TracePoint *point,int variable,bool highlight)
 {
     if(highlight){invert_mask();inverted=true;}
-    const ViewWindow *view=model_view_const(d);
+    const ViewWindow *view=model_view_const(d);int x,y;
     if(graph_point(view,d->view.phase ? point->y[view->phase_x]:point->x,
-        point->y[d->view.phase ? view->phase_y:variable],&pointer_x,&pointer_y)) {invert_pointer();pointer=true;}
+        point->y[d->view.phase ? view->phase_y:variable],&x,&y))graph_point_cross(x,y,&pointer);
+}
+
+/* BOX borrows the inactive TRACE mask/footer. At most4512 color samples; no
+   allocation or second framebuffer. A4px stipple keeps underlying curves visible. */
+static struct {int left,right,top,bottom;bool shown;} box;
+static bool box_pixel(int x,int y)
+{
+    return y>=35 && y<179 && (x==box.left || x==box.right || y==box.top || y==box.bottom
+        || (x%4==0 && y%4==0));
+}
+void trace_box_restore(void)
+{
+    graph_point_restore(&pointer);
+    unsigned i=0;
+    if(box.shown)for(int y=box.top;y<=box.bottom;y++)for(int x=box.left;x<=box.right;x++)
+        if(box_pixel(x,y))gint_vram[(UI_Y+y)*DWIDTH+UI_X+x]=scratch.box.colors[i++];
+    box.shown=false;
+    for(int y=0;y<19;y++)memcpy(gint_vram+(UI_Y+179+y)*DWIDTH+UI_X,footer+y*384,384*sizeof(uint16_t));
+}
+void trace_box_show(int x1,int y1,int x2,int y2,bool rectangle)
+{
+    box.left=x1<x2 ? x1:x2;box.right=x1>x2 ? x1:x2;
+    box.top=y1<y2 ? y1:y2;box.bottom=y1>y2 ? y1:y2;box.shown=rectangle;
+    unsigned i=0;
+    if(rectangle)for(int y=box.top;y<=box.bottom;y++)for(int x=box.left;x<=box.right;x++) {
+        if(!box_pixel(x,y))continue;
+        unsigned p=(unsigned)((UI_Y+y)*DWIDTH+UI_X+x);
+        scratch.box.colors[i++]=gint_vram[p];
+        gint_vram[p]=x==box.left || x==box.right || y==box.top || y==box.bottom ? UI_BLUE:C_RGB(21,25,30);
+    }
+    graph_point_cross(x2,y2,&pointer);
 }

@@ -93,8 +93,8 @@ assert plot(run(graph+'UP'))!=plot(run(graph))
 assert plot(run(graph+'UP DOWN'))==plot(run(graph))
 # Context-specific Graph Settings exception: Style has no direct F1/F2 buttons.
 style='1 4 F6 F6 F5 DOWN DOWN '
-assert bar(run(style))==['','','','','','DONE']
-assert plot(run(style+'F1 F2'))==plot(run(style))
+assert bar(run(style))==['INIT','','','','','DONE']
+assert plot(run(style+'F1 F2'))==plot(run('1 4 F6 F6 F5'))
 assert 'LEFT/RIGHT: SEGMENT/ARROW toggle' in tail(run(style))
 assert 'Segment' in tail(run(style+'LEFT')) and 'Arrow' in tail(run(style+'LEFT RIGHT'))
 assert 'RIGHT/F3: COLOR' in tail(run(style+'DOWN'))

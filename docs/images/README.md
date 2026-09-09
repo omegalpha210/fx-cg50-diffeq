@@ -28,7 +28,8 @@ Reproduce with an existing compiler/CMake/Python and Pillow:
 python3 tools/capture_readme.py
 ```
 
-The v0.12.0-beta.3 Parameters capture shows RK45 h0/AUTO rows, F1 INIT and F2 ADV. Graph frames include TIME/PHASE/EVT status.
+The v0.12.0-beta.4 Parameters capture shows RK45 h0/AUTO rows, F1 INIT and F2 ADV. Scalar Graph frames have no TIME label; SYS2 uses TIME/PHASE and enabled Event adds EVT.
+Equation/IC show F1 INIT, Graph shows F6 INIT, and TRACE uses a 9px local cross.
 Equation/IC/Parameters headers show 1/3, 2/3 and 3/3. V-WIN setup uses Parameters. All eight original gallery
 frames are reproduced with the exact public candidate renderer; graph examples
 retain default RK4. The gallery is not enlarged for this milestone.

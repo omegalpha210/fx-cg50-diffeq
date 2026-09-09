@@ -13,7 +13,7 @@ output.mkdir(parents=True, exist_ok=True)
 parameters = '1 4 A:SUB EXE F6 DOWN 1 EXE F6 DOWN DOWN RIGHT '
 event = parameters + 'F2 F1 RIGHT DOWN A:SUB SUB 1 0 EXE RIGHT DOWN RIGHT '
 cases = [('event-settings', event, 'Event Settings'),
-         ('solver-diagnostics', event + 'F6 EXIT F6 F6 F2 F2 ' + 'DOWN '*7, 'Solver Info')]
+         ('solver-diagnostics', event + 'F6 EXIT F6 EXIT F2 F2 ' + 'DOWN '*7, 'Solver Info')]
 for name, keys, title in cases:
     with tempfile.TemporaryDirectory() as directory:
         run = subprocess.run([str(root/'build-host/host_app')], cwd=directory,

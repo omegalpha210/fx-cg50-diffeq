@@ -50,7 +50,7 @@ for speed,multiple in [('F2',1),('F3',2),('F4',3)]:
         assert solves(moved)>solves(out)
         returned=run(trace+speed+' '+jump+' '+direction+' '+jump)
         assert point(returned)==(2,x,x+1) and solves(returned)==solves(moved)
-        assert bar(run(trace+speed+' '+jump+' EXIT'))==['TRACE','ZOOM','V-WIN','TABLE','G-SLV','PREV']
+        assert bar(run(trace+speed+' '+jump+' EXIT'))==['TRACE','ZOOM','V-WIN','TABLE','G-SLV','INIT']
 # A FAST target crosses in the same input, with no forced endpoint pause.
 cross=trace+'F1 5 DOT 9 5 EXE F4 RIGHT '
 assert abs(point(run(cross))[1]-6.05)<1e-7
@@ -69,7 +69,7 @@ for row in ['', 'DOWN ']:
     assert plot(run(settings+'F2 F4'))==plot(before)
     changed=run(settings+'RIGHT')
     assert 'Off' in tail(changed) and plot(run(settings+'RIGHT LEFT'))==plot(before)
-assert bar(run('1 4 F6 F6 F5 DOWN DOWN'))==['','','','','','DONE']
+assert bar(run('1 4 F6 F6 F5 DOWN DOWN'))==['INIT','','','','','DONE']
 assert bar(run('1 4 F6 F6 F5 DOWN DOWN DOWN'))==['INIT','','COLOR','','','DONE']
 # Ten physical initial values, last family and frozen-x final columns.
 ten='1 4 0 EXE F6 DOWN '+keys('{0,1,2,3,4,5,6,7,8,9}')+'EXE '
@@ -82,6 +82,6 @@ for page in ['F1','F2','F3','DOWN','UP']:
     assert re.findall(r'TEXT \d+ 49 ([^\n]*)',tail(out))==['x','y9','y10']
 long_input='1 4 F6 DOWN '+('0 '*192)
 assert 'Input too long; Max: 191 characters' in tail(run(long_input))
-assert 'Input too long' in tail(run(long_input+'EXE')) and 'Max: 191 characters' in tail(run(long_input+'EXE'))
+assert 'Input too long' in tail(run(long_input+'F6')) and 'Max: 191 characters' in tail(run(long_input+'F6'))
 assert ': return to MAIN MENU' in tail(run(''))
 print('TRACE colors/black text/selection, exact configured jumps, same-input crossing, Y pan, settings arrows, ten families/frozen columns and bounded length feedback passed.')

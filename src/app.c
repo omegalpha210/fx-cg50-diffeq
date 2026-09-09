@@ -20,7 +20,8 @@ typedef struct {
     int main_selected,first_selected,dimension_selected,equation_selected;
     EquationKind dimension_kind;
     UiInlineEdit equation_edit;
-    UiStageState ic,parameters;
+    UiInitialState ic;UiStageState parameters;
+    char power_draft[EXPR_TEXT];bool power_pending;unsigned equation_limited;
     bool graph_first,has_session;
 } AppUi;
 
@@ -141,20 +142,6 @@ static const char *formula(const Document *document,char *buffer,unsigned size)
     }
 }
 
-static bool inline_value(const UiInlineEdit *edit,double *out)
-{
-    ExprProgram program;
-    ExprError error=expr_compile(edit->text,(ExprScope){0,false,false,false},&program);
-    double value=0;ExprStatus status=error.status;
-    if(status==EXPR_OK)status=expr_eval(&program,0,NULL,0,&value);
-    if(status!=EXPR_OK || !isfinite(value) || fabs(value)>1e100) {
-        ui_field_error(status==EXPR_OK ?
-            "Magnitude must be at most 1e100.":expr_status_text(status));
-        return false;
-    }
-    *out=value;return true;
-}
-
 static int equation_count(const Document *document)
 {
     return model_equations(document)+(document->kind==EQ_BERNOULLI);
@@ -171,26 +158,28 @@ static void equation_field(const Document *document,int index,char *label,
     snprintf(label,label_size,"n");snprintf(value,value_size,"%.12g",document->power);
 }
 
-static bool accept_equation_edit(Document *document,int selected,const UiInlineEdit *edit)
+static bool validate_equation(Document *d,int index,const char *text,char *message,unsigned capacity)
 {
-    int equations=model_equations(document);
-    if(selected>=equations) {
-        double value;if(!inline_value(edit,&value))return false;
-        document->power=value;return true;
+    bool power=index>=model_equations(d);
+    ExprScope scope={d->dim,d->kind==EQ_HIGHER,true,true};
+    if(d->kind==EQ_SEPARABLE){scope.allow_x=index==0;scope.allow_y=index==1;}
+    if(d->kind==EQ_LINEAR || d->kind==EQ_BERNOULLI || d->kind==EQ_SECOND)scope.allow_y=false;
+    if(power)scope=(ExprScope){0,false,false,false};
+    ExprProgram program;ExprError e=expr_compile(text,scope,&program);ExprStatus status=e.status;
+    double value=0;
+    if(power && status==EXPR_OK)status=expr_eval(&program,0,NULL,0,&value);
+    if(power && status==EXPR_OK && (!isfinite(value) || fabs(value)>1e100))status=EXPR_NONFINITE;
+    if(status!=EXPR_OK) {
+        char label[24];if(power)snprintf(label,sizeof(label),"n");else model_equation_label(d,index,label,sizeof(label));
+        snprintf(message,capacity,"%s: %s @%d",label,expr_status_text(status),e.position+1);return false;
     }
-    ExprScope scope={document->dim,document->kind==EQ_HIGHER,true,true};
-    if(document->kind==EQ_SEPARABLE){scope.allow_x=selected==0;scope.allow_y=selected==1;}
-    if(document->kind==EQ_LINEAR || document->kind==EQ_BERNOULLI
-        || document->kind==EQ_SECOND)scope.allow_y=false;
-    ExprProgram program;ExprError error=expr_compile(edit->text,scope,&program);
-    if(error.status!=EXPR_OK) {
-        char message[128],label[24];
-        model_equation_label(document,selected,label,sizeof(label));
-        snprintf(message,sizeof(message),"%s: %s @%d",label,
-            expr_status_text(error.status),error.position+1);
-        ui_field_error(message);return false;
-    }
-    snprintf(document->text[selected],EXPR_TEXT,"%s",edit->text);return true;
+    if(power)d->power=value;
+    return true;
+}
+static void clear_input_drafts(AppUi *ui)
+{
+    ui_initial_clear(&ui->ic);ui->power_pending=false;ui->equation_limited=0;
+    ui->equation_edit=(UiInlineEdit){0};
 }
 
 static ScreenTransition screen_main(App *a,AppUi *ui)
@@ -202,7 +191,7 @@ static ScreenTransition screen_main(App *a,AppUi *ui)
     ui_frame("Differential Equation",NULL);
     for(int i=0;i<6;i++)ui_field_at(31+i*22+(i>=4 ? 4:0),labels[i],descriptions[i],i==ui->main_selected);
     /* This gap is not an item: SYS -> RCL keeps the same six indices. */
-    ui_rect(10,114,365,5,C_WHITE);ui_line(10,116,374,116,UI_LINE);
+    ui_rect(10,114,365,5,C_WHITE);ui_rect(10,115,365,3,C_RGB(21,25,30));
     ui_help(8,184,"MENU: return to MAIN MENU",true);
     ui_softkeys("","","","","","OPEN");dupdate();
     int key=ui_getkey().key,choice=-1;
@@ -214,7 +203,7 @@ static ScreenTransition screen_main(App *a,AppUi *ui)
     ui->main_selected=choice;
     if(choice==0)return open_screen(APP_SCREEN_FIRST_ORDER);
     if(choice==1) {
-        if(a->doc.kind!=EQ_SECOND)new_document(a,EQ_SECOND,2);
+        if(a->doc.kind!=EQ_SECOND){clear_input_drafts(ui);new_document(a,EQ_SECOND,2);}
         ui->has_session=true;ui->equation_selected=0;return open_screen(APP_SCREEN_EQUATION);
     }
     if(choice==2 || choice==3) {
@@ -230,7 +219,7 @@ static ScreenTransition screen_main(App *a,AppUi *ui)
         if(!a->has_recall) {
             ui_message("Recall","No previous calculation in this session.");return stay();
         }
-        use_recall(a);ui->has_session=true;ui->equation_selected=0;
+        clear_input_drafts(ui);use_recall(a);ui->has_session=true;ui->equation_selected=0;
         return open_screen(APP_SCREEN_EQUATION);
     }
     return open_screen(APP_SCREEN_SAVE);
@@ -244,7 +233,7 @@ static ScreenTransition screen_first_order(App *a,AppUi *ui)
     if(selected<0)return back_screen();
     ui->first_selected=selected;
     EquationKind kind=(EquationKind)selected;
-    if(a->doc.kind!=(int)kind)new_document(a,kind,1);
+    if(a->doc.kind!=(int)kind){clear_input_drafts(ui);new_document(a,kind,1);}
     ui->has_session=true;ui->equation_selected=0;
     return open_screen(APP_SCREEN_EQUATION);
 }
@@ -273,8 +262,8 @@ static ScreenTransition screen_dimension(App *a,AppUi *ui)
                 if(ui->has_session && input_fingerprint(&a->doc)!=pristine_input) {
                     if(!ui_confirm("Change Equation Size","Replace equation and ICs with defaults?"))continue;
                 }
-                new_document(a,ui->dimension_kind,dimension);
-                ui->ic=(UiStageState){0};ui->parameters=(UiStageState){0};
+                clear_input_drafts(ui);new_document(a,ui->dimension_kind,dimension);
+                ui->parameters=(UiStageState){0};
             }
             ui->dimension_selected=dimension;ui->has_session=true;ui->equation_selected=0;
             return open_screen(APP_SCREEN_EQUATION);
@@ -287,7 +276,7 @@ static ScreenTransition screen_dimension(App *a,AppUi *ui)
 
 static ScreenTransition screen_equation(App *a,AppUi *ui)
 {
-    int menu=0,menu_page=0;
+    int menu=0,menu_page=0;char error[128]="";
     for(;;) {
         Document *document=&a->doc;int count=equation_count(document);
         int *selected=&ui->equation_selected;UiInlineEdit *edit=&ui->equation_edit;
@@ -302,6 +291,7 @@ static ScreenTransition screen_equation(App *a,AppUi *ui)
             for(int row=0;row<6 && page*6+row<count;row++) {
                 int index=page*6+row;char label[24],value[EXPR_TEXT];
                 equation_field(document,index,label,sizeof(label),value,sizeof(value));
+                if(index==model_equations(document) && ui->power_pending)snprintf(value,sizeof(value),"%s",ui->power_draft);
                 ui_field(row+row_offset,label,edit->active && index==*selected ? edit->text:value,
                     index==*selected);
                 if(edit->active && index==*selected)
@@ -310,9 +300,10 @@ static ScreenTransition screen_equation(App *a,AppUi *ui)
             ui_form_hint(edit,"LEFT/RIGHT: edit");
         }
         if(menu){ui_progress(0);ui_equation_menu(menu,menu_page,variables);}
-        else ui_softkeys(variables ? "VAR":"",edit->active ? "FUNC":"","","","","NEXT");
+        else ui_softkeys("INIT",edit->active ? "FUNC":"",edit->active && variables ? "VAR":"","","","NEXT");
+        if(error[0])ui_form_error(error);
         dupdate();
-        key_event_t event=ui_getkey();int key=event.key;
+        key_event_t event=ui_getkey();int key=event.key;error[0]=0;
         if(menu) {
             if(key==KEY_EXIT){menu=0;continue;}
             if(key==KEY_F6){if(menu==2 || variables>5)menu_page=1-menu_page;else menu=0;continue;}
@@ -327,13 +318,21 @@ static ScreenTransition screen_equation(App *a,AppUi *ui)
             if(key>=KEY_F1 && key<=KEY_F5)continue;
             menu=0;ui_progress(1); /* Restore stage before an inline validation error. */
         }
-        if((key==KEY_F1 && !variables) || (key==KEY_F2 && !edit->active))continue;
-        if(key==KEY_F1 || key==KEY_F2){menu=key==KEY_F1 ? 1:2;menu_page=0;continue;}
-        if(key==KEY_F3)continue;
+        if(key==KEY_F1) {
+            model_equation_defaults(document);*selected=0;*edit=(UiInlineEdit){0};
+            ui->power_pending=false;ui->equation_limited=0;a->dirty=true;continue;
+        }
+        if(key==KEY_F2 || key==KEY_F3) {
+            if(edit->active && (key==KEY_F2 || variables)){menu=key==KEY_F3 ? 1:2;menu_page=0;}
+            continue;
+        }
         bool leave=key==KEY_EXIT || key==KEY_F6;
         if(edit->active) {
             if(leave || key==KEY_UP || key==KEY_DOWN || key==KEY_EXE) {
-                if(!accept_equation_edit(document,*selected,edit))continue;
+                if(*selected==model_equations(document)) {
+                    snprintf(ui->power_draft,sizeof(ui->power_draft),"%s",edit->text);ui->power_pending=true;
+                } else snprintf(document->text[*selected],EXPR_TEXT,"%s",edit->text);
+                ui->equation_limited=(ui->equation_limited & ~(1u<<*selected))|(edit->limited ? 1u<<*selected:0);
                 a->dirty=true;edit->active=false;
                 if(key==KEY_EXE || key==KEY_EXIT) {
                     ui_field_complete(key,true,selected,count);continue;
@@ -353,11 +352,15 @@ static ScreenTransition screen_equation(App *a,AppUi *ui)
         {
             char label[24],value[EXPR_TEXT];
             equation_field(document,*selected,label,sizeof(label),value,sizeof(value));
-            if(ui_field_select(edit,event,value,selected,count))continue;
+            if(*selected==model_equations(document) && ui->power_pending)snprintf(value,sizeof(value),"%s",ui->power_draft);
+            if(ui_field_select(edit,event,value,selected,count)) {
+                if(edit->active)edit->limited=(ui->equation_limited&(1u<<*selected))!=0;
+                continue;
+            }
         }
         if(key==KEY_OPTN && document->kind==EQ_HIGHER) {
             if(app_compile(a) && ui_confirm("Convert to system","Replace with an editable first-order system?")) {
-                model_convert_system(document);a->dirty=true;
+                model_convert_system(document);clear_input_drafts(ui);a->dirty=true;
             }
             continue;
         }
@@ -366,12 +369,15 @@ static ScreenTransition screen_equation(App *a,AppUi *ui)
             for(int i=0;i<count;i++) {
                 char label[24],value[EXPR_TEXT];UiInlineEdit check;
                 equation_field(document,i,label,sizeof(label),value,sizeof(value));
+                if(i==model_equations(document) && ui->power_pending)snprintf(value,sizeof(value),"%s",ui->power_draft);
                 ui_inline_begin(&check,value,false);
-                if(!accept_equation_edit(document,i,&check)) {
+                if((ui->equation_limited&(1u<<i)) || !validate_equation(document,i,value,error,sizeof(error))) {
+                    if(ui->equation_limited&(1u<<i))snprintf(error,sizeof(error),"%s",UI_LIMIT_HINT);
+                    check.limited=(ui->equation_limited&(1u<<i))!=0;
                     *selected=i;*edit=check;valid=false;break;
                 }
             }
-            if(valid)return open_screen(APP_SCREEN_INITIAL_CONDITIONS);
+            if(valid){ui->power_pending=false;return open_screen(APP_SCREEN_INITIAL_CONDITIONS);}
         }
     }
 }
@@ -504,7 +510,7 @@ int app_run(void)
                         solver_report_reset();app.dirty=false;ui.has_session=true;ui.equation_selected=0;
                         pristine_input=0;
                         ui.equation_edit=(UiInlineEdit){0};
-                        ui.ic=(UiStageState){0};ui.parameters=(UiStageState){0};
+                        clear_input_drafts(&ui);ui.parameters=(UiStageState){0};
                         transition=replace_screen(APP_SCREEN_EQUATION);break;
                     }
                 }

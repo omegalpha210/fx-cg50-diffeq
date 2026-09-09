@@ -1,24 +1,26 @@
-# DIFFEQ v0.12.0-beta.3 — UI consistency
+# DIFFEQ v0.12.0-beta.4 — Graph interaction and BOX Zoom
 
-- Unified semantic softkeys, including GRAPH/RUN red in every key position.
-- Simplified contextual help and Main grouping; kept OPEN/NEXT/GRAPH meanings.
-- Fixed thick leading EXE: empty-prefix font width caused a one-pixel duplicate
-  overpaint. All retained EXE hints now use normal glyphs painted once, in blue.
-- Added RK45 h0 and existing solver-range AUTO/MAN labels without changing solvers.
-- Added small TIME/PHASE and enabled-only EVT labels; improved graph overlay order,
-  corrected Event marker screen offset, protected G-Solve result text from pointers.
-- Preserved selected curves' existing 2px blink and Black/Blue contrast policy.
-- Added Output horizontal line previews; OFF preserves the selected color.
-- Kept input errors in their fields and numerical END on Graph/Table. Critical
-  SAVE/load/resize/convert confirmations share F5 NO/F6 YES, EXIT/EXE and HOLD guard.
-- Refreshed EN/KO guidance and renderer screenshots; documented the full UI audit.
+- Clearer 3px Main divider; Graph Settings F1 INIT works on every row.
+- TIME/PHASE labels only with SYS2 VIEW; EVT remains type-independent.
+- Delayed neutral G-Solve feedback after about 156ms, with existing cancellation.
+- Shared 9px black/white TRACE/G-Solve/BOX point cross; 2px selected curves retained.
+- Graph F6 INIT restores the current view's graph-entry window; EXIT goes back.
+  Compatible cache is reused; incomplete/replaced cache or Event report uses safe redraw.
+  ZOOM ORIG remains the factory window.
+- ZOOM F5 BOX: arrows move 4px, EXE confirms two corners, minimum 6px each dimension,
+  pale stipple/blue outline, either-stage EXIT cancels without changing the viewport.
+- Equation/IC F1 INIT resets only those inputs; Equation F2 FUNC/F3 VAR are EDIT-only.
+- Incomplete Equation/IC drafts are allowed until NEXT; focus first error inline.
+  IC values update only after all fields validate; unfinished IC drafts are not saved.
+- Existing nonfatal red domain/numerical status and valid-region TRACE/G-Solve preserved.
 
-42/42 host/UBSan groups, clean27-unit SH build/link with zero warnings,13/13 G3A
-checks are required from candidate and exact tagged source. BSS71952/data704 B
-unchanged; maximum single application frame2568 B (4 B lower). Release VALIDATION
-records exact source, timings and hash. No numerical solver, Event algorithm,
-parser, storage protocol or migration change; SAVE v10 and v3–v9 readers retained.
+44 host/UBSan groups, clean 27-unit SH build/link with zero warnings and 13 package
+checks are required from candidate and exact tag. BSS 72304 (+352), data 752 (+48,
+gint RTC driver), largest frame 2648 (+80) B. No second framebuffer or trajectory;
+IC draft payload is bounded to 1920 heap bytes plus allocator overhead.
+Numerical algorithms, Event counting, SAVE v10 and frozen v3–v9 readers are unchanged.
 
-**HARDWARE TEST REQUIRED:** all36 new checks in [HARDWARE_RETEST](../HARDWARE_RETEST.md),
-including LCD/key-repeat, native SAVE/RCL, MENU/Fugue and stack high-water. Host
-frames are not device photos. [UI audit/rules](../UI_CONVENTIONS.md), [guide](../USER_GUIDE.md).
+[Full interaction audit](../INTERACTION_AUDIT.md), [user guide](../USER_GUIDE.md),
+[28 renderer frames](../ui-review/interaction-overview.png).
+**HARDWARE RETEST REQUIRED:** all 46 cases in [HARDWARE_RETEST](../HARDWARE_RETEST.md)
+are pending. Host frames are not calculator photographs or an SH emulator.

@@ -24,6 +24,10 @@ bool trace_capture_branch_begin(const Document *d,int family,int side);
 bool trace_capture_point(double x,const double *y,uint32_t step,void *unused);
 void trace_capture_branch_end(ModelPathResult result);
 void trace_capture_end(bool success);
+/* Presentation-only reuse: identity and required original solver coverage. */
+bool trace_plot_matches(const Document *d,double xmin,double xmax);
+void trace_box_show(int x1,int y1,int x2,int y2,bool rectangle);
+void trace_box_restore(void);
 bool trace_cache_matches(const Document *d);
 void trace_cache_invalidate(void);
 GraphResult trace_cache_result(void);

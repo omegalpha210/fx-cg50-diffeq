@@ -178,3 +178,12 @@ add_test(NAME workflow_polish_ui COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_S
 set_tests_properties(ui_controls workflow_polish_ui PROPERTIES TIMEOUT 60)
 add_test(NAME ui_consistency COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_consistency.py $<TARGET_FILE:host_app>)
 set_tests_properties(ui_consistency PROPERTIES TIMEOUT 60)
+
+add_executable(test_graph_interaction test_graph_interaction.c ../src/graph/trace.c
+  ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/common.c host/gint_host.c)
+target_include_directories(test_graph_interaction PRIVATE host)
+target_link_libraries(test_graph_interaction core m)
+add_test(NAME graph_interaction COMMAND test_graph_interaction)
+add_test(NAME graph_interaction_ui COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_interaction_ui.py $<TARGET_FILE:host_app>)
+set_tests_properties(graph_interaction_ui PROPERTIES TIMEOUT 60)

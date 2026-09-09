@@ -45,7 +45,7 @@ for method in ['', 'DOWN DOWN RIGHT ']:
     assert 'END: Event' in tail(run(graph))
     assert 'END: Event' in tail(run(graph+'F4 F2'))
     assert 'END: Event' in tail(run(graph+'F1 F6 RIGHT RIGHT'))
-    info=graph+'F6 F2 F2 '
+    info=graph+'EXIT F2 F2 '
     initial=run(info);assert 'Solver Info' in initial and 'EVENT' in tail(initial)
     assert metrics(initial)==metrics(run(info+('DOWN '*40)+('UP '*40)+('EXIT F2 '*50)))
     end=tail(run(info+'DOWN '*40));assert '1 / 32' in end and 'Stopped x' in end

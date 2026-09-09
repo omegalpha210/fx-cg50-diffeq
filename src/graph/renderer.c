@@ -6,6 +6,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+void graph_point_cross(int x,int y,GraphPointPatch *patch)
+{
+    if(patch){patch->x=x;patch->y=y;patch->active=true;}
+    for(int dy=-4;dy<=4;dy++)for(int dx=-4;dx<=4;dx++) {
+        int px=x+dx,py=y+dy;
+        if(px<0 || px>383 || py<0 || py>197)continue;
+        unsigned pos=(unsigned)((UI_Y+py)*DWIDTH+UI_X+px);
+        if(patch)patch->pixels[(dy+4)*9+dx+4]=gint_vram[pos];
+        if(abs(dx)<=1 && abs(dy)<=1)gint_vram[pos]=C_WHITE;
+        else if(dx==0 || dy==0)gint_vram[pos]=C_BLACK;
+    }
+}
+void graph_point_restore(GraphPointPatch *patch)
+{
+    if(!patch || !patch->active)return;
+    for(int dy=-4;dy<=4;dy++)for(int dx=-4;dx<=4;dx++) {
+        int x=patch->x+dx,y=patch->y+dy;
+        if(x>=0 && x<384 && y>=0 && y<198)
+            gint_vram[(UI_Y+y)*DWIDTH+UI_X+x]=patch->pixels[(dy+4)*9+dx+4];
+    }
+    patch->active=false;
+}
 bool graph_family_enabled(const Document *d,int family)
 {
     if(family<0 || family>=d->nic)return false;
@@ -140,12 +162,15 @@ void graph_labels(const Document *d,const CompiledModel *m)
 {
     graph_phase_labels(d,m);
     char text[16];int width;
-    snprintf(text,sizeof(text),"%s%s",d->view.phase ? "PHASE":"TIME",d->event.enabled ? " EVT":"");
+    bool view=model_phase_supported(d);
+    if(!view && !d->event.enabled)return;
+    snprintf(text,sizeof(text),"%s%s",view ? (d->view.phase ? "PHASE":"TIME"):"",
+        d->event.enabled ? (view ? " EVT":"EVT"):"");
     dsize(text,NULL,&width,NULL);
     ui_rect(UI_W-8-width,2,width+4,13,C_WHITE);
     ui_text(UI_W-6-width,4,UI_MUTED,"%s",text);
 }
-static void graph_status(GraphResult result)
+void graph_status(GraphResult result)
 {
     if(result.status!=ODE_OK) {
         /* Termination is below corner legends, never on top of VIEW/EVT/N1. */
@@ -186,7 +211,7 @@ GraphResult graph_render(Document *d,CompiledModel *m,bool first)
     }
     solver_report_begin(d,m);
     if(system)graph_phase_reset();
-    bool capture=system && trace_capture_begin(d);
+    bool capture=(system || first) && trace_capture_begin(d);
     dclear(C_WHITE);
     axes(model_view_const(d),system && d->view.phase);
     graph_phase_layers(d,m);
@@ -219,7 +244,7 @@ GraphResult graph_render(Document *d,CompiledModel *m,bool first)
     graph_phase_markers(d,-1);
     graph_labels(d,m);
     graph_status(result);
-    ui_softkeys("TRACE","ZOOM","V-WIN",system ? "VIEW":"TABLE",system && d->view.phase ? "ANLYS":"G-SLV","PREV");
+    ui_softkeys("TRACE","ZOOM","V-WIN",system ? "VIEW":"TABLE",system && d->view.phase ? "ANLYS":"G-SLV","INIT");
     return result;
 }
 void graph_event_markers(const Document *d)
@@ -315,4 +340,15 @@ OdeStatus graph_auto_window(Document *d,CompiledModel *m)
     d->view.ymin=b.ymin-dy;d->view.ymax=b.ymax+dy;
     d->view.yscale=tick_step(1,d->view.ymax-d->view.ymin);
     return ODE_OK;
+}
+
+bool graph_redraw_cached(Document *d,CompiledModel *m,double xmin,double xmax)
+{
+    if(!trace_plot_matches(d,xmin,xmax))return false;
+    const SolverReport *report=solver_report();
+    /* A later narrow redraw may have replaced the Event marker report. Do not
+       pair an older broad trajectory with missing terminal markers. */
+    if(d->event.enabled && (!report->valid || report->xmin>xmin || report->xmax<xmax))return false;
+    graph_backdrop(d,m);trace_cache_render(d);graph_event_markers(d);graph_phase_markers(d,-1);
+    graph_labels(d,m);graph_status(trace_cache_result());return true;
 }

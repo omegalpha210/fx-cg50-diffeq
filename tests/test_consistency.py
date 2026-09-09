@@ -31,7 +31,7 @@ assert 'EXE' not in tail(main) and 'TEXT 14 188 MENU\n' in main
 assert 'TEXT 47 188 : return to MAIN MENU\n' in main
 colors={pixel(data,x,y) for y in range(184,201) for x in range(6,390)}
 assert rgb(0xf800) in colors and rgb(0x001f) not in colors
-assert all(pixel(data,x,120)==rgb(0xc69c) for x in range(16,381)) # Divider, outside any row.
+assert all(pixel(data,x,120)==rgb((21<<11)|(25<<6)|30) for x in range(16,381)) # Divider, outside any row.
 assert plot(run('DOWN '*3+'DOWN'))==plot(run('DOWN '*4))
 for number in range(1,7):
     assert plot(run(str(number)))==plot(run('DOWN '*(number-1)+'F6'))==plot(run('DOWN '*(number-1)+'EXE'))
@@ -44,11 +44,11 @@ _,edit=run('1 4 LEFT',True)
 assert all(pixel(edit,144,y)==rgb(0xffff) for y in range(56,70)) # Value-column caret.
 _,selected=run('1 4',True)
 assert any(pixel(selected,144,y)!=rgb(0xffff) for y in range(56,70))
-error=run('1 4 SIN EXE')
+error=run('1 4 SIN F6')
 assert 'Syntax error @5' in tail(error) and 'Check equation' not in error
 assert 'DIFF EQ / General 1st' in re.findall(r'FRAME \d+ ([^\n]*)',error)[-1]
-assert bar(error)==['','','','','','EDIT']
-assert 'sin(' in tail(run('1 4 SIN EXE EXE'))
+assert bar(error)==['INIT','FUNC','','','','NEXT']
+assert 'sin(' in tail(run('1 4 SIN F6'))
 params='2 F6 F6 '
 assert tail(run(params)).count('AUTO\n')==2 and 'TEXT 20 101 h\n' in tail(run(params))
 adaptive=params+'DOWN DOWN RIGHT '
@@ -79,8 +79,8 @@ system='4 2 F6 F6 F6 F6 '
 event_params='1 4 A:SUB EXE F6 DOWN 1 EXE F6 '
 event=event_params+'F2 F1 RIGHT DOWN A:SUB SUB 1 0 EXE DOWN RIGHT F6 EXIT F6 '
 phase_event='4 2 F6 F6 F6 F2 F1 RIGHT DOWN A:SUB 1 EXE F6 EXIT F6 F4 F2 '
-for path,label in [(graph,'TIME'),(system,'TIME'),(system+'F4 F2 ','PHASE'),
-                   (event,'TIME EVT'),(phase_event,'PHASE EVT')]:
+for path,label in [(system,'TIME'),(system+'F4 F2 ','PHASE'),
+                   (event,'EVT'),(phase_event,'PHASE EVT')]:
     out=run(path)
     assert re.search(r'TEXT \d+ 8 '+label+r'\n',tail(out))
     assert not re.search(r'TEXT \d+ 9 [123]/3',tail(out))
@@ -90,7 +90,7 @@ for path,label in [(graph,'TIME'),(system,'TIME'),(system+'F4 F2 ','PHASE'),
     blink=run(path+'F1 '+'BLINK '*20)
     assert plot(blink)==plot(traced) and metrics(blink)==metrics(traced)
 assert 'TEXT 13 24 END: Event\n' in tail(run(event))
-assert 'TIME EVT' in tail(run(event+'F5 F4'))
+assert 'EVT' in tail(run(event+'F5 F4'))
 assert 'END: Event' in tail(run(event+'F4 F2'))
 assert 'Linearized:' in tail(run(phase_event+'F5 F2 F3'))
 # Result at the bottom plot boundary: its pointer cannot cut through footer text.
@@ -99,17 +99,17 @@ out,pixels=run(bottom,True)
 assert 'Y-ICPT 1/1' in tail(out)
 assert all(pixel(pixels,x,200)==rgb(0xffff) for x in range(6,390))
 inventory=[('', ['', '', '', '', '', 'OPEN']),('1',['','','','','','OPEN']),
-    ('2',['','','','','','NEXT']),('2 F6',['','','','','','NEXT']),
+    ('2',['INIT','','','','','NEXT']),('2 F6',['INIT','','','','','NEXT']),
     (params,['INIT','ADV','V-WIN','OUTPUT','SET','GRAPH']),
     (params+'F2',['EVENT','INFO','','','','']),
     (params+'F2 F1',['','','','','','DONE']),
     (params+'F2 F2',['','','','','','']),
     (params+'F3',['INIT','','','','','DONE']),
     (output,['INIT','','COLOR','','','DONE']),
-    ('1 4 F6 F6 F5 DOWN DOWN',['','','','','','DONE']),
-    (graph,['TRACE','ZOOM','V-WIN','TABLE','G-SLV','PREV']),
+    ('1 4 F6 F6 F5 DOWN DOWN',['INIT','','','','','DONE']),
+    (graph,['TRACE','ZOOM','V-WIN','TABLE','G-SLV','INIT']),
     (system+'F4',['TIME','PHASE','TABLE','','','']),
-    (graph+'F2',['IN','OUT','AUTO','ORIG','','']),
+    (graph+'F2',['IN','OUT','AUTO','ORIG','BOX','']),
     (graph+'F1',['x=','NORMAL','FAST','FASTER','LEFT','RIGHT']),
     (graph+'F5',['ROOT','MAX','MIN','Y-ICPT','ICPT','>']),
     (system+'F4 F2 F5',['FIELD','NULL','EQPT','INFO','','']),

@@ -24,19 +24,19 @@ cases=[
  ('output-off','Output / OFF preserves color','2 F6 F6 F4 RIGHT'),
  ('settings','Graph Settings / Style',params+'F5 DOWN DOWN'),
  ('palette','Palette / normal EXE','2 F6 F6 F4 F3'),
- ('time','TIME',params+'F6'),
+ ('time','Ordinary graph / no view label',params+'F6'),
  ('phase','PHASE',phase),
- ('time-event','TIME EVT / STOP',event),
+ ('time-event','EVT / STOP',event),
  ('phase-event','PHASE EVT / analysis',phase_event+'F5 F2 F3'),
  ('trace','TRACE / selected curve','2 F6 F6 F6 F1 RIGHT RIGHT'),
  ('gsolve','G-Solve / curve choice','2 F6 F6 F6 F5 F1'),
  ('gsolve-result','G-Solve / bottom-edge result','1 4 0 EXE F6 F6 F3 DOWN DOWN DOWN DOWN 0 EXE F6 F6 F5 F4'),
  ('save','SAVE confirmation','2 EXIT 6'),
- ('input-error','Inline syntax error','1 4 SIN EXE'),
+ ('input-error','NEXT syntax error','1 4 SIN F6'),
  ('event-error','Inline Event error','2 F6 F6 F2 F1 DOWN ADD EXE'),
  ('rk45-error','Inline tolerance error',params+'DOWN DOWN RIGHT DOWN DOWN 0 EXE'),
  ('phase-time-ref','Nonautonomous Phase / legend','4 2 F6 DOWN NEG A:SUB 1 ADD XOT EXE F6 F6 F6 F4 F2 F5 F2'),
- ('time-event-trace','TIME EVT / TRACE',event+'F1 F6'),
+ ('time-event-trace','EVT / TRACE',event+'F1 F6'),
 ]
 font=ImageFont.load_default();sheet=Image.new('RGB',(816,264*((len(cases)+1)//2)+8),'#e8eef5')
 draw=ImageDraw.Draw(sheet)

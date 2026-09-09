@@ -10,9 +10,9 @@
 DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식의 수치해를
 컬러 그래프·기울기장·TRACE·G-Solve·표로 살펴보고, 2변수 시스템의 위상을 분석할 수 있습니다.
 
-**공개 베타 · v0.12.0-beta.3 · [MIT 라이선스](LICENSE)**
+**공개 베타 · v0.12.0-beta.4 · [MIT 라이선스](LICENSE)**
 
-**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.3)**
+**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.4)**
 · [전체 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [버그 신고](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -142,7 +142,7 @@ TIME에서 명시적으로 `x=`를 입력하면 유효 구간 안의 해당 x까
 이 경로는 Phase의 캐시 보간으로 대체하지 않습니다.
 
 Graph Settings는 **F1 INIT**로 Grid·Axis Label·기울기장 스타일/색을 초기화합니다.
-Style 행만 F1/F2가 비어 있고 LEFT/RIGHT로 바꾸며, INIT는 다른 행에서 실행합니다.
+Style은 LEFT/RIGHT로 바꾸고 F1 INIT는 Style을 포함한 모든 행에서 작동합니다. F2는 비어 있습니다.
 1차 목록은 **191자** 입력 한도를 유지하며 개수·길이 오류를 구분합니다. Table은 x를 고정한 채
 최대 10개 해 열을 탐색할 수 있습니다.
 
@@ -169,7 +169,7 @@ Parameters **F3 V-WIN**에서 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax
 
 ## 계산기에 설치하기
 
-1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.3)를 엽니다.
+1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.4)를 엽니다.
 2. **DIFFEQ.g3a**를 받습니다. 다운로드 확인용 `SHA256SUMS.txt`도 제공됩니다.
 3. fx-CG50을 USB로 연결하고 USB Flash 모드를 선택한 뒤 컴퓨터에서 계산기 드라이브를 엽니다.
 4. `DIFFEQ.g3a`를 드라이브 **최상위**에 복사합니다. `@MainMem` 폴더 안에 넣지 않습니다.
@@ -188,11 +188,11 @@ Parameters **F3 V-WIN**에서 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax
 | Main | 숫자 1~6: 1st/2nd/N-th/SYS/RCL/SAVE; UP/DOWN 선택, EXE 또는 F6 OPEN 진입; F1~F5 비움 |
 | 일반 필드 선택 | UP/DOWN 순환 선택, LEFT/RIGHT로 편집 시작, EXE로 NEXT/GRAPH/DONE/OPEN |
 | 편집 중 | EXE는 확정 후 다음 필드 선택, 마지막 행은 머묾. EXIT는 확정 후 같은 행 선택 |
-| Equation | EDIT에서 FUNC 사용, 필요한 모드에 VAR 표시. EXIT는 열린 token bar부터 닫음 |
+| Equation | F1 INIT, EDIT에서 F2 FUNC/F3 VAR(지원 모드만). EXIT는 열린 token bar부터 닫음 |
 | OUTPUT | LEFT/RIGHT ON/OFF, F1 INIT, F3 COLOR, F6 DONE. EXE는 출력 행 순서로 이동 |
 | Parameters | F1 INIT; F2 ADV → EVENT/INFO; Method: LEFT/RIGHT로 RK4/RK45 전환; F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
-| Graph (2D SYS 제외) | 방향키 이동, F1 TRACE, F2 ZOOM, F3 V-WIN, F4 TABLE, F5 G-SLV, F6 magenta PREV |
-| 2D SYS Graph | F4 VIEW → F1 TIME / F2 PHASE / F3 TABLE, Phase에서는 F5 ANLYS |
+| Graph (2D SYS 제외) | 방향키 이동, F1 TRACE, F2 ZOOM, F3 V-WIN, F4 TABLE, F5 G-SLV, F6 노랑/검정 INIT; EXIT로 Parameters 복귀 |
+| 2D SYS Graph | F4 VIEW → F1 TIME / F2 PHASE / F3 TABLE, Phase에서는 F5 ANLYS; F6 INIT는 선택 view 유지 |
 | Phase 분석 | F1 FIELD, F2 NULL, F3 EQPT, F4 INFO, LEFT/RIGHT 평형점 순회, EXIT 복귀 |
 | TIME TRACE | LEFT/RIGHT 이동, UP/DOWN 곡선 전환, F1 x=, F2~F4 속도, F5/F6 설정 구간 양끝, EXIT 복귀 |
 | Phase TRACE | 보관한 궤적의 x·y1·y2 표시, 캐시·보간으로 x 조회, 시간 구간 확장 없음 |
@@ -209,14 +209,25 @@ INIT는 노란 배경/검정 글씨로 해당 화면의 설정만 초기화합�
 유지하고, V-WIN은 창의 기하 설정, Graph Settings는 Grid/Label/기울기장 스타일·색,
 Output은 종속변수 ON/OFF·색을 초기화합니다. ADV는 검정 배경/흰 글씨이며 계산 없이 유틸리티를 엽니다.
 SELECT 목록만 끝에서 순환하고 편집 커서·Graph/TRACE/Phase·Table 이동은 기존 동작을 유지합니다.
-Main은 빨간 MENU 안내만 남기며 SYS/RCL 사이에 작은 구분선을 표시합니다. 단순 OPEN/NEXT/GRAPH와
-같은 EXE 안내는 생략하고, EDIT·palette·G-Solve 선택에 필요한 EXE는 normal-weight 파랑으로
-한 번씩 그립니다. Solver 범위의 기존 공통 상태를 **AUTO/MAN**, RK45 초기 step을 **h0**로
-표시합니다(RK4는 h). Graph의 작은 **TIME/PHASE**, Event 활성 시 **EVT**와 overlay 배치를
-정리했습니다. 선택 곡선은 기존 2px·blink를 유지합니다. Output은 OFF에서도 선택 색의 짧은
-선을 보여줍니다. 입력 오류는 field/draft를 보존하고 계산 END는 Graph/Table에 남깁니다.
-SAVE/load/resize/convert 확인은 F5 NO/EXIT, F6 YES/EXE이며 opening HOLD를 무시합니다.
-[UI 규칙·전체 화면/F-key audit](docs/UI_CONVENTIONS.md).
+Main은 3px pale-blue 구분선과 빨간 MENU 안내만 표시합니다. 일반 EXE OPEN/NEXT/GRAPH
+안내는 숨기고 EDIT·palette·BOX·곡선 선택에 필요한 EXE는 normal-weight 파랑으로 한 번씩 그립니다.
+AUTO/MAN·RK45 h0는 유지합니다. **TIME/PHASE**는 SYS2 VIEW가 있을 때만, **EVT**는 Event
+활성 시 ODE 유형과 관계없이 표시합니다.
+
+**Graph F6 INIT**는 현재 view의 graph-entry 창을 복구하고 TIME/PHASE 선택과 manual solver
+설정을 유지합니다. 호환 캐시는 재사용하며 캐시/Event 기록의 범위가 부족하면 기존 안전한 redraw를
+사용합니다. **ZOOM F4 ORIG**는 factory 창입니다. **F2 ZOOM → F5 BOX**는 중앙에서 시작하며,
+방향키 4px 이동 → EXE Point1 고정 → Point2 이동 → EXE로 가로·세로 최소 6px 영역을 확정합니다.
+Pale stipple 아래 곡선이 보이고 어느 단계의 EXIT도 창을 바꾸지 않습니다. 두 view의 창은 독립입니다.
+
+TRACE/G-Solve/BOX는 9px 검정 cross와 흰 중심을 공유하며 기존 2px 곡선 blink는 유지합니다.
+G-Solve가 약 156ms 이상 지속되면 중립적인 CALCULATING...과 EXIT 취소 안내를 표시합니다.
+Equation/IC F1 INIT는 해당 입력만 복구합니다. 미완성 draft는 NEXT에서 전체 검증하고 첫 오류를
+선택합니다. IC numeric 값은 전체 성공 후에만 반영하며 미완성 IC draft는 runtime-only입니다.
+빨간 domain/numerical END는 비치명 상태로 유지하고 유효 구간 TRACE/G-Solve를 계속 사용할 수 있습니다.
+Output은 OFF에서도 선택 색의 선을 표시합니다.
+[전체 변경·제약](docs/INTERACTION_AUDIT.md), [UI 규칙](docs/UI_CONVENTIONS.md),
+[BOX·변경 화면 모음](docs/ui-review/interaction-overview.png).
 
 [갱신한 Main·SAVE·입력 화면 모음](docs/ui-review/workflow-overview.png)
 

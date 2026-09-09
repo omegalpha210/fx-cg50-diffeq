@@ -47,7 +47,7 @@ assert 'Step underflow' in failed and ': commit / next   EXIT: commit' in tail(f
 base=run(graph+'F1')
 assert 'IC1 x=0 y=1' in base and solves(base)>0
 moved=run(graph+'F1 F4 '+('R:RIGHT '*70)+'EXIT')
-assert bar(moved)==['TRACE','ZOOM','V-WIN','TABLE','G-SLV','PREV']
+assert bar(moved)==['TRACE','ZOOM','V-WIN','TABLE','G-SLV','INIT']
 exact=tail(run(graph+'F1 F1 0 DOT 7 3 3 EXE'))
 x,y=map(float,re.findall(r'IC1 x=([\d.eE+-]+) y=([\d.eE+-]+)',exact)[-1])
 import math

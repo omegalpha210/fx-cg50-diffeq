@@ -1,4 +1,4 @@
-# DIFF EQ 사용 설명서 — v0.12.0-beta.3
+# DIFF EQ 사용 설명서 — v0.12.0-beta.4
 
 기본 RK4와 TRACE·G-Solve·10개 초기값·SYS 2D Phase 기능을 보존하면서
 Main/SAVE 확인, INIT/ADV, 순환 selector와 3단계 진행 표시를 정리했습니다.
@@ -9,8 +9,8 @@ Main/SAVE 확인, INIT/ADV, 순환 selector와 3단계 진행 표시를 정리�
 | 화면 | F1 | F2 | F3 | F4 | F5 | F6 |
 |---|---|---|---|---|---|---|
 | 메인 | — | — | — | — | — | OPEN |
-| Equation 1/3 | VAR (필요한 모드만) | FUNC (EDIT만) | — | — | — | NEXT |
-| Initial Conditions 2/3 | — | — | — | — | — | NEXT |
+| Equation 1/3 | INIT | FUNC (EDIT만) | VAR (지원 모드 EDIT만) | — | — | NEXT |
+| Initial Conditions 2/3 | INIT | — | — | — | — | NEXT |
 | Solver Parameters 3/3 | INIT | ADV | V-WIN | OUTPUT | SET | GRAPH (빨강) |
 | ADV submenu | EVENT | INFO | — | — | — | — |
 | SAVE confirmation | — | — | — | — | NO | YES |
@@ -19,16 +19,16 @@ Main/SAVE 확인, INIT/ADV, 순환 selector와 3단계 진행 표시를 정리�
 | Solver Info | — | — | — | — | — | — |
 | Output 종속변수 | INIT | — | COLOR | — | — | DONE |
 | Graph Settings: Grid/Label | INIT | — | — | — | — | DONE |
-| Graph Settings: Style | — | — | — | — | — | DONE |
+| Graph Settings: Style | INIT | — | — | — | — | DONE |
 | Graph Settings: Color | INIT | — | COLOR | — | — | DONE |
 | FUNC 1쪽 | ABS | SINH | COSH | TANH | ASINH | 다음 |
 | FUNC 2쪽 | ACOSH | ATANH | — | — | — | 이전 |
-| 그래프 기본 화면 | TRACE | ZOOM | V-WIN | TABLE | G-SLV | PREV (magenta) |
-| SYS 2D TIME | TRACE | ZOOM | V-WIN | VIEW | G-SLV | PREV |
-| SYS 2D PHASE | TRACE | ZOOM | V-WIN | VIEW | ANLYS | PREV |
+| 그래프 기본 화면 | TRACE | ZOOM | V-WIN | TABLE | G-SLV | INIT (노랑/검정) |
+| SYS 2D TIME | TRACE | ZOOM | V-WIN | VIEW | G-SLV | INIT |
+| SYS 2D PHASE | TRACE | ZOOM | V-WIN | VIEW | ANLYS | INIT |
 | VIEW | TIME | PHASE | TABLE | — | — | — |
 | Phase ANLYS | FIELD | NULL | EQPT | INFO | — | — |
-| ZOOM 하위 메뉴 | IN | OUT | AUTO | ORIG | — | — |
+| ZOOM 하위 메뉴 | IN | OUT | AUTO | ORIG | BOX | — |
 | G-Solve 1쪽 | ROOT | MAX | MIN | Y-ICPT | ICPT | 다음 |
 | G-Solve 2쪽 | Y-CAL | X-CAL | — | — | — | 이전 |
 | Trace | x= | NORMAL | FAST | FASTER | LEFT | RIGHT |
@@ -43,10 +43,10 @@ G-Solve, Table 데이터/열, 2D palette 및 INFO scroll의 기존 이동 방식
 **편집 중이 아니면 EXE는 선택 행의 위치와 관계없이 F6 NEXT/GRAPH/DONE/OPEN을 실행합니다.**
 따라서 기본 입력을 사용하면 Equation에서 EXE 세 번으로 Graph에 도달합니다.
 LEFT는 편집 시작·커서 맨 앞, RIGHT는 편집 시작·커서 맨 뒤입니다. 직접 입력은 기존 값을 대체합니다.
-편집 중 **EXE는 검증·확정 후 다음 행을 선택**하며, 다음 행의 편집까지 열지 않습니다.
+편집 중 **EXE는 draft 확정 후 다음 행을 선택**하며, 다음 행의 편집까지 열지 않습니다.
 마지막 행 편집에서는 첫 EXE가 확정 후 같은 행을 선택하고, 두 번째 EXE가 F6 동작을 실행합니다.
-편집 중 **EXIT는 검증·확정 후 같은 행 선택**으로 돌아갑니다. 부모 화면에는 EXIT를 한 번 더 누릅니다.
-잘못된 입력은 오류 안내 후 같은 draft·커서로 돌아옵니다. X/Y-CAL의 EXE는 아래의 RUN 예외를 따릅니다.
+편집 중 **EXIT는 draft 확정 후 같은 행 선택**으로 돌아갑니다. 부모 화면에는 EXIT를 한 번 더 누릅니다.
+Equation/IC는 미완성 draft를 허용하고 NEXT에서 검증합니다. 다른 숫자/설정 화면은 기존 확정 시 검증을 유지합니다. X/Y-CAL의 EXE는 아래의 RUN 예외를 따릅니다.
 
 Equation·IC·Parameters·V-Window·차수/변수 개수의 일반 입력을 편집할 때 하단 한 줄은
 `EXE: commit / next   EXIT: commit`입니다. 커서가 blink로 숨겨져도 EDIT 상태이면 유지합니다.
@@ -57,8 +57,8 @@ G-Solve의 곡선 선택 등 특수 방향키 동작은 그대로입니다. 팝�
 Graph Settings의 ON/OFF·Style·Color 선택은 문자 입력 EDIT가 아니므로 전용 안내를 씁니다.
 TRACE x=와 X/Y-CAL의 계산 입력은 각 화면에 표시된 기존 조작을 따릅니다.
 
-NEXT와 사용 가능한 보조 softkey는 draft를 먼저 검증·확정한 뒤 이동합니다.
-Equation/IC의 F3와 IC의 F1은 비어 있으며 동작하지 않습니다. F3 V-WIN은 Parameters와 Graph에만 있습니다.
+Equation/IC NEXT는 모든 required field를 검증하고 첫 오류 필드에 머뭅니다.
+Equation/IC F1은 INIT이며 Equation F3 VAR는 지원 모드 EDIT에서만 표시합니다. F3 V-WIN은 Parameters와 Graph에만 있습니다.
 EXIT로 Parameters → IC → Equation으로 돌아갑니다. 각 title 오른쪽에 3/3 → 2/3 → 1/3을 표시합니다.
 ADV·FUNC/VAR 등의 submenu와 Graph/보조 화면에는 progress를 표시하지 않습니다. OUTPUT과 SET은 Parameters에 있습니다.
 보조 화면 EXIT는 진입 단계·선택 행으로 복귀합니다. SET은 중간 메뉴 없이 Graph settings를 바로 엽니다. Private Constants는 제거되었습니다. On/Off는 LEFT/RIGHT로 전환하고 EXE로 DONE을 실행합니다.
@@ -67,8 +67,8 @@ PREV는 magenta, NEXT는 cyan, V-WIN은 orange, SET은 bright green입니다.
 단순 OPEN/NEXT/GRAPH와 같은 EXE 안내는 표시하지 않습니다. EDIT commit, palette SELECT, G-Solve 곡선 SELECT에 남긴 EXE는 한 번만 그리는 normal-weight Blue이고, 나머지 도움말 색은 유지합니다. Main의 첫 MENU 토큰만 Red입니다.
 문자 위치는 실제 font metrics를 사용하며 EDIT의 기존 확정/이동 semantics는 같습니다.
 
-Graph 기본 F6 PREV는 기존 magenta 스타일이며 Solver Parameters로 돌아갑니다.
-TRACE는 별도 BACK 없이 EXIT로 닫습니다. ZOOM/G-Solve의 기존 bar를 유지하며, 하위 메뉴를 EXIT로 닫으면 PREV가 복원됩니다.
+Graph 기본 F6 INIT는 현재 view의 graph-entry 창을 복구하며, EXIT가 Solver Parameters로 돌아갑니다.
+TRACE는 별도 BACK 없이 EXIT로 닫습니다. ZOOM/G-Solve의 기존 bar를 유지하며, 하위 메뉴를 EXIT로 닫으면 Graph INIT가 복원됩니다.
 Main 하단은 `MENU: return to MAIN MENU`이며 MENU의 실제 계산기 Main Menu 복귀 동작은 동일합니다.
 EXIT 순서는 Graph → Parameters → IC → Equation → subtype/order → Main입니다.
 2nd 및 Main에서 RCL로 연 Equation은 Main으로 돌아갑니다. Main의 EXIT는 Main에 머뭅니다.
@@ -92,11 +92,11 @@ EXIT 편집 확정은 화면에 머뭅니다. 잘못된 값은 오류를 표시�
 ## 식과 숫자 입력
 
 세 단계 편집 중 좌/우는 커서를 이동하고 **DEL**은 왼쪽 문자를, **AC**는 전체를 지웁니다.
-Equation의 F1 VAR/F2 FUNC는 현재 식 화면을 유지하고 **하단 bar만 교체**합니다.
+Equation의 F3 VAR/F2 FUNC는 현재 식 화면을 유지하고 **하단 bar만 교체**합니다.
 메뉴 열기·페이지 전환은 draft·커서·선택을 보존합니다. F1~F5로 token을 현재 위치에
 삽입하면 기본 bar로 돌아옵니다. **FUNC는 실제 EDIT 상태에서만 표시**하며 SELECT의 빈 F2는 무효입니다.
 커서 blink의 ON/OFF와는 무관합니다. **FUNC/VAR에서 첫 EXIT는 submenu만 닫고** draft·커서·선택·EDIT를 유지합니다.
-미완성 `sinh(`도 이때 검증하지 않습니다. 다음 EXIT가 평소의 검증·확정, 그 다음 EXIT가 부모 이동입니다.
+미완성 `sinh(`도 이때 검증하지 않습니다. 다음 EXIT는 미완성 draft도 확정하고 머물며, 그 다음 EXIT가 검증 없이 부모로 이동합니다.
 길게 누른 EXIT 반복 이벤트는 이 계층을 연속으로 닫지 않습니다. EXE/방향키는 메뉴를 닫고 기존 편집 동작을 수행하며,
 F6는 submenu 페이지 전환만 수행합니다. VAR는 N-th의 2~9차 도함수 별칭과 SYS의 y1~y9에만 표시합니다.
 모든 1차 모드·선형 2차·N-th 1차에서는 F1이 비어 있으며 눌러도 팝업이 열리지 않습니다.
@@ -171,7 +171,7 @@ Table은 x를 고정한 채 좌우로 y1~y10 열을 이동합니다. 기존 총 
 입력합니다. 이 여러 숫자는 **한 해를 정의하는 하나의 완전한 초기 벡터**입니다. 독립적인 여러
 IC set을 뜻하지 않습니다. 고차/SYS의 새 UI는 한 벡터만 받으며, 상태별 scalar에 목록을 넣지 않습니다.
 전체 원본 매뉴얼의 근거와 일반 Output matrix의 해석 한계는 [IC audit](IC_BEHAVIOR_AUDIT.md)에 있습니다.
-모든 IC 화면의 F1~F5는 비어 있고 동작하지 않습니다. F6 NEXT와 EXIT를 사용합니다.
+모든 IC 화면에 F1 INIT가 있고 F2~F5는 비어 있습니다. F6 NEXT와 EXIT를 사용합니다.
 
 **Solver Parameters**의 x min/max는 적분 구간입니다. 처음에는 `ceil(V-Window Xmin)`과
 `floor(V-Window Xmax)`이며 사용자가 V-Window/Graph pan/zoom을 조작하면 따라갑니다. TRACE runtime 추적은 이 자동 범위도 변경하지 않습니다. 직접 편집한 범위는 user override로
@@ -223,7 +223,7 @@ SF100은 100×52점입니다. SF는 h/Step/적분 구간/IC/TRACE 이동 간격�
 
 Graph Settings는 Grid / Axis Label와 간격을 둔 Slope Field heading 아래 Style / Color만 둡니다.
 Grid/Axis Label은 LEFT/RIGHT로 토글하고 F1 INIT로 초기화합니다. EXE의 완료 동작은 동일합니다.
-Style은 LEFT/RIGHT만 사용하며 해당 행의 F1/F2는 비어 있습니다. INIT는 다른 행에서 F1로 실행합니다.
+Style은 LEFT/RIGHT로 변경하며 F1 INIT는 이 행에서도 항상 보입니다. F2는 비어 있습니다.
 Style 도움말은 `LEFT/RIGHT: SEGMENT/ARROW toggle`, Color 도움말은 `RIGHT/F3: COLOR`입니다.
 Color chooser는 RIGHT 또는 F3 COLOR로 엽니다. 기본은 **Arrow / Pale Blue**입니다.
 Color 행은 이름 옆에 실제 선택색의 직사각형 견본을 표시합니다. OUTPUT과 같은 테두리·크기를
@@ -261,7 +261,7 @@ Field 팔레트는 기존 선명한 solution 팔레트와 별개입니다. 설�
 
 - 방향키: 표시 창을 폭/높이의 20%만큼 pan.
 - `+`/`−` 또는 ZOOM: 중앙 기준 확대/축소. TIME에서 Solver range를 직접 override하지 않은 상태에서는 새 X window에 맞춰 적분 구간도 갱신됩니다.
-- ZOOM은 현재 그래프 위에서 F1 IN / F2 OUT / F3 AUTO / **F4 ORIG**를 표시합니다. 각 동작 후에도 ZOOM bar를 유지하며 **EXIT로만 닫습니다**. ZOOM 안에서도 방향키로 pan하며 메뉴가 유지됩니다. 메뉴를 열고 닫기만 하면 재적분·파일 I/O가 없습니다.
+- ZOOM은 현재 그래프 위에서 F1 IN / F2 OUT / F3 AUTO / **F4 ORIG / F5 BOX**를 표시합니다. 각 동작 후에도 ZOOM bar를 유지하며 **EXIT로만 닫습니다**. ZOOM 안에서도 방향키로 pan하며 메뉴가 유지됩니다. 메뉴를 열고 닫기만 하면 재적분·파일 I/O가 없습니다.
 - ORIG는 V-WIN INIT와 같은 기본 창으로 돌아갑니다. 식·IC·h는 유지하며 TIME의 Solver AUTO만 새 창을 따릅니다. 수동 Solver 범위는 유지됩니다.
 - AUTO는 현재 X 범위를 유지하고, Solver와 X 창의 교집합에 있는 ON 상태의 곡선의 유한한 값으로 Y 범위를 맞춥니다. 현재 Y 창 밖의 값도 사용하며 상수 곡선에도 여백을 줍니다. 유효한 점이 없거나 계산이 중단되면 기존 창을 보존하고 하단에 안내합니다. SYS 2D PHASE AUTO는 보관된 원래 trajectory의 y1/y2 전체 유한 범위에 여백을 더해 두 축을 맞춥니다. TIME AUTO는 현재 X 창을 유지합니다.
 - OPTN 물리 키: SYS 2D에서는 Graph Settings와 계산 상세입니다. 다른 2-state 이상 모드는 기존 phase projection/축 선택을 유지합니다.
@@ -560,9 +560,9 @@ slot은 교체될 수 있습니다. 원본 보존이 필요하면 기존 파일�
 오차 확인 예제: 일반 1차 `y`, y(0)=1, x=1에서 h=.1의 RK4 값은 약 2.718279744입니다. h=.05, .025로 줄이면 host global error가 각각 약 1/15.35, 1/15.67로 줄었습니다. 목표 하드웨어 수학 라이브러리에서의 실제 값은 따로 검증해야 합니다.
 
 
-## UI consistency (beta.3)
+## UI consistency (beta.3에서 유지한 규칙)
 
-Graph 우측 위에 작은 TIME/PHASE를, Event enabled일 때만 EVT를 표시합니다.
+Graph 우측 위의 TIME/PHASE는 SYS2 VIEW가 있는 모드에서만 표시합니다. Event enabled이면 모든 모드에서 EVT를 표시합니다.
 Field/nullcline/곡선 위에 Event square와 equilibrium diamond를 그리고, 작은 배경을 둔
 legend/view/status 및 활성 커서·결과 footer를 조합합니다. END는 legend 아래 줄을 사용합니다.
 TRACE/G-Solve 선택 곡선은 기존2px와 blink, Black↔Blue를 유지합니다. 결과 pointer가 footer
@@ -572,3 +572,40 @@ TRACE/G-Solve 선택 곡선은 기존2px와 blink, Black↔Blue를 유지합니�
 정보창을 사용합니다. SAVE/load/resize/convert 확인은 모두 **F5 NO/EXIT**, **F6 YES/EXE**이고
 확인창을 연 키의 HOLD는 무시합니다. 현재 전체 F-key 표와 규칙은 [UI conventions](UI_CONVENTIONS.md),
 [24개 renderer 화면](ui-review/consistency-overview.png)을 참고하십시오. 실기 화면은 아직 재검증 전입니다.
+
+
+## Graph interaction / BOX (beta.4)
+
+**Graph F6 INIT**는 이번 계산에서 해당 view가 처음 표시된 창의 범위·scale로 돌아갑니다.
+TIME/PHASE 선택 자체는 유지합니다. V-WIN/Table/Settings를 다녀와도 원래 기준을 유지하며,
+새 계산에서 기준을 다시 잡습니다. 식·IC·method/h/tolerance·Event·Output·manual range는
+바꾸지 않고 AUTO 범위는 복구한 창을 따릅니다. 보관된 sample cache와 Event report가 재사용
+가능하면 ODE 재적분 없이 그립니다. 캐시가 교체되었거나 범위가 부족하면 기존 안전한 redraw를
+사용하므로 무조건 무계산이라고 보장하지 않습니다. **ZOOM ORIG**는 기존 factory 창입니다.
+
+**F2 ZOOM → F5 BOX**는 가장 가까운 중앙 pixel(192,99)에서 시작합니다. 방향키/repeat로
+4px씩 이동하고 EXE로 Point1을 고정합니다. Point2를 이동하면 pale-blue stipple과 파란 테두리가
+보입니다. 두 번째 EXE가 최소 가로·세로6px인 사각형만 확정하고 Graph로 돌아갑니다. 모서리 순서는
+무관합니다. 작은 영역은 BOX TOO SMALL로 유지하며 이동 후 다시 확정합니다. 어느 단계의 EXIT도
+창을 바꾸지 않고 ZOOM으로 돌아갑니다. TIME/PHASE 창은 독립이며 manual Solver 범위를 보존합니다.
+
+TRACE/G-Solve/BOX 위치는 동일한9px 검정 cross와 흰3px 중심으로 표시합니다. 긴 전 화면
+crosshair는 제거했습니다. Event square·평형점 diamond와 선택 곡선2px/blink는 유지합니다.
+G-Solve가 약156ms 이상 계속되면 파란 CALCULATING... spinner와 EXIT: cancel이 나타납니다.
+실제 진행률을 표시하지 않으며 기존 EXIT/MENU 취소를 우선합니다. 결과·없음·오류·취소 모두에서
+busy를 제거합니다. 빨간 END/Partial domain 경고는 전체 실패가 아니며 유효 구간의 TRACE와
+G-Solve를 계속 사용할 수 있습니다. 기존 수치 종료 판정이나 wording은 바꾸지 않았습니다.
+
+**Equation F1 INIT**는 현재 모드 식과 Bernoulli n만, **IC F1 INIT**는 현재 모드 초기조건만
+새 문서의 기본값으로 복구하고 첫 행에 머뭅니다. FUNC/VAR token palette가 열려 있으면 palette
+키가 우선하므로 EXIT로 닫은 뒤 INIT합니다. Equation은 F2 FUNC/F3 VAR가 EDIT에서만 보입니다.
+
+Equation/IC의 빈칸·부분 식은 EXE/EXIT/행 이동으로 draft에 보관할 수 있습니다. 부모 EXIT는
+검증하지 않습니다. **NEXT 또는 SELECT EXE**에서 모든 항목을 검사하고 첫 오류를 선택하여
+빨간 inline 안내를 표시합니다. INIT와 입력 키는 계속 사용할 수 있습니다. IC는 전 항목이
+유효할 때만 numeric IC에 반영하며, 뒤로 갔다 와도 draft를 유지합니다. 미확정 IC draft는
+runtime UI 상태이고 SAVE v10에 추가하지 않았습니다. Equation의 raw text도 계산 전 검증하며
+유효하지 않은 compiled 식을 solver에 넘기지 않습니다. Parameters→GRAPH의 기존 검증은 유지합니다.
+
+[전체 감사·제약](INTERACTION_AUDIT.md), [28개 renderer 화면](ui-review/interaction-overview.png).
+**HARDWARE RETEST REQUIRED:** LCD·키 반복·busy 응답·BOX·실기 저장 재검증 전입니다.

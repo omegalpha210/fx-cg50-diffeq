@@ -1,4 +1,5 @@
 #include "ui.h"
+#include <gint/rtc.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -224,12 +225,16 @@ void ui_color_swatch(int x,int y,int color)
 {
     ui_rect(x,y,29,13,UI_INK);ui_rect(x+2,y+2,25,9,color);
 }
-void ui_field_error(const char *message)
+void ui_form_error(const char *message)
 {
     char text[192];snprintf(text,sizeof(text),"%s",message);
     for(char *p=text;*p;p++)if(*p=='\n')*p=' ';
     ui_short(text,sizeof(text),text,UI_W-16);
     ui_rect(0,179,UI_W,19,C_WHITE);ui_text(8,184,C_RED,"%s",text);
+}
+void ui_field_error(const char *message)
+{
+    ui_form_error(message);
     ui_softkeys("","","","","","EDIT");dupdate();
     for(;;){int key=ui_getkey().key;if(key==KEY_EXIT || key==KEY_EXE || key==KEY_F6)return;}
 }
@@ -352,4 +357,29 @@ void ui_blink_stop(UiBlink *blink)
     if(blink->timer>=0)timer_stop(blink->timer);
 #endif
     blink->timer=-1;blink->timeout=0;
+}
+
+void ui_busy_start(UiBusy *busy)
+{
+    *busy=(UiBusy){.start=rtc_ticks()};busy->last=busy->start;
+}
+bool ui_busy_cancel(void *context)
+{
+    /* Never let visual feedback delay the existing EXIT/MENU polling. */
+    if(ui_cancel(NULL))return true;
+    UiBusy *busy=context;uint32_t now=rtc_ticks();
+    uint32_t elapsed=now>=busy->start ? now-busy->start:now+86400u*128u-busy->start;
+    uint32_t delta=now>=busy->last ? now-busy->last:now+86400u*128u-busy->last;
+    if(elapsed>=20 && (!busy->visible || delta>=16)) {
+        ui_rect(0,179,384,19,C_WHITE);
+        ui_text(7,184,UI_BLUE,"CALCULATING... %c   EXIT: cancel","|/-\\"[busy->frame++%4]);
+        ui_softkeys("","","","","","");
+        dupdate();busy->visible=true;busy->last=now;
+    }
+    return false;
+}
+void ui_busy_end(UiBusy *busy)
+{
+    if(busy->visible)ui_rect(0,179,384,19,C_WHITE);
+    busy->visible=false;
 }

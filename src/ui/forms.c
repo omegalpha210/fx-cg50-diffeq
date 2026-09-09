@@ -4,6 +4,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 typedef UiInlineEdit NumberEdit;
 static bool number_select(NumberEdit *edit,key_event_t event,double value,int *selected,int count)
@@ -229,12 +230,12 @@ void ui_graph_settings(Document *d)
         }
         ui_form_hint(NULL,selected<2 ? "LEFT/RIGHT: ON/OFF toggle":
             (selected==2 ? "LEFT/RIGHT: SEGMENT/ARROW toggle":"RIGHT/F3: COLOR"));
-        ui_softkeys(selected==2 ? "":"INIT","",selected==3 ? "COLOR":"","","","DONE");
+        ui_softkeys("INIT","",selected==3 ? "COLOR":"","","","DONE");
         dupdate();int key=ui_getkey().key;
         key=ui_field_complete(key,false,&selected,count);
         if(key==KEY_EXIT || key==KEY_F6)return;
         if(ui_select_move(key,&selected,count))continue;
-        if(key==KEY_F1 && selected!=2) {
+        if(key==KEY_F1) {
             view->grid=view->labels=1;model_field_appearance_defaults(d);selected=0;continue;
         }
         if(selected<2) {
@@ -248,45 +249,77 @@ void ui_graph_settings(Document *d)
         }
     }
 }
-UiStageAction ui_initial_conditions(Document *d,UiStageState *state)
+void ui_initial_clear(UiInitialState *state)
 {
-    int selected=state->selected;NumberEdit edit=state->edit;
-    bool scalar=model_field_supported(d);int count=d->dim+1;
+    for(int i=0;i<=ODE_MAX_DIM;i++)free(state->draft[i]);
+    *state=(UiInitialState){0};
+}
+static void ic_text(const Document *d,const UiInitialState *state,int field,char text[EXPR_TEXT])
+{
+    if(state->draft[field])snprintf(text,EXPR_TEXT,"%s",state->draft[field]);
+    else if(model_field_supported(d) && field)initial_values_format(d,text,EXPR_TEXT);
+    else snprintf(text,EXPR_TEXT,"%.12g",field ? d->ic[0].y[field-1]:d->ic[0].x);
+}
+static bool ic_draft(UiInitialState *state,int field,const NumberEdit *edit)
+{
+    size_t n=strlen(edit->text)+1;char *text=malloc(n);
+    if(!text)return false;
+    memcpy(text,edit->text,n);free(state->draft[field]);state->draft[field]=text;
+    state->limited=(state->limited & ~(1u<<field))|(edit->limited ? 1u<<field:0);
+    return true;
+}
+static int ic_validate(Document *d,const UiInitialState *state,char *error,unsigned capacity)
+{
+    double numbers[ODE_MAX_DIM+1];InitialValues values={0};
+    bool scalar=model_field_supported(d);
+    for(int i=0;i<=d->dim;i++) {
+        char text[EXPR_TEXT];ic_text(d,state,i,text);
+        if(state->limited&(1u<<i)) {snprintf(error,capacity,"%s",UI_LIMIT_HINT);return i;}
+        if(scalar && i==1) {
+            IcListStatus status=initial_values_parse(text,&values);
+            if(status!=IC_LIST_OK){snprintf(error,capacity,"%s",initial_values_error(status));return i;}
+        } else {
+            ExprProgram p;ExprError e=expr_compile(text,(ExprScope){0,false,false,false},&p);
+            ExprStatus status=e.status;
+            if(status==EXPR_OK)status=expr_eval(&p,0,NULL,0,&numbers[i]);
+            if(status!=EXPR_OK || !isfinite(numbers[i]) || fabs(numbers[i])>1e100) {
+                snprintf(error,capacity,"%s",status==EXPR_OK ? "Magnitude must be at most 1e100.":expr_status_text(status));return i;
+            }
+        }
+    }
+    d->ic[0].x=numbers[0];
+    if(scalar)initial_values_apply(d,&values);
+    else {d->nic=1;for(int i=1;i<=d->dim;i++)d->ic[0].y[i-1]=numbers[i];}
+    return -1;
+}
+UiStageAction ui_initial_conditions(Document *d,UiInitialState *state)
+{
+    int selected=state->stage.selected;NumberEdit edit=state->stage.edit;
+    bool scalar=model_field_supported(d);int count=d->dim+1;char error[128]="";
     if(selected>=count)selected=count-1;
     for(;;) {
         int page=selected/7;char current[EXPR_TEXT]={0};
-        ui_frame("Initial Conditions",NULL);
-        ui_progress(2);
+        ui_frame("Initial Conditions",NULL);ui_progress(2);
         for(int row=0;row<7 && page*7+row<count;row++) {
             int field=page*7+row;char label[24],value[EXPR_TEXT];
             if(!field)snprintf(label,sizeof(label),"x0");
             else {model_variable_label(d,field-1,label,sizeof(label));
                 size_t n=strlen(label);snprintf(label+n,sizeof(label)-n,d->kind==EQ_SYSTEM ? "_0":"0");}
-            if(scalar && field)initial_values_format(d,value,sizeof(value));
-            else snprintf(value,sizeof(value),"%.12g",field ? d->ic[0].y[field-1]:d->ic[0].x);
+            ic_text(d,state,field,value);
             ui_field(row,label,edit.active && field==selected ? edit.text:value,field==selected);
             if(field==selected){snprintf(current,sizeof(current),"%s",value);if(edit.active)number_cursor(&edit,row);}
         }
         if(scalar)ui_text(10,170,UI_MUTED,"y0: scalar or {values}; at most 10");
         ui_form_hint(&edit,scalar ? "Comma: separator":"One solution: x0 plus all state values");
-        ui_softkeys("","","","","","NEXT");dupdate();
-        key_event_t event=ui_getkey();int key=event.key;
-        if(key>=KEY_F1 && key<=KEY_F5)continue;
+        ui_softkeys("INIT","","","","","NEXT");
+        if(error[0])ui_form_error(error);
+        dupdate();key_event_t event=ui_getkey();int key=event.key;error[0]=0;
+        if(key==KEY_F1) {model_initial_defaults(d);ui_initial_clear(state);selected=0;edit=(NumberEdit){0};continue;}
+        if(key>=KEY_F2 && key<=KEY_F5)continue;
         if(edit.active) {
-            int action=stage_leave(key) || key==KEY_UP || key==KEY_DOWN ? 1:number_key(&edit,event);
+            int action=key==KEY_EXIT || key==KEY_F6 || key==KEY_UP || key==KEY_DOWN ? 1:number_key(&edit,event);
             if(!action)continue;
-            if(edit.limited){ui_field_error(initial_values_error(IC_LIST_LENGTH));continue;}
-            if(scalar && selected==1) {
-                InitialValues values;IcListStatus status=initial_values_parse(edit.text,&values);
-                if(status!=IC_LIST_OK){ui_field_error(initial_values_error(status));continue;}
-                initial_values_apply(d,&values);
-            } else {
-                double value;if(!number_value(&edit,&value))continue;
-                if(fabs(value)>1e100){ui_field_error("Magnitude must be at most 1e100.");continue;}
-                if(selected)d->ic[0].y[selected-1]=value;
-                else {d->ic[0].x=value;if(scalar)for(int i=1;i<d->nic;i++)d->ic[i].x=value;}
-                if(!scalar)d->nic=1;
-            }
+            if(!ic_draft(state,selected,&edit)) {snprintf(error,sizeof(error),"Not enough memory; draft retained.");continue;}
             edit.active=false;
             if(key==KEY_EXE || key==KEY_EXIT){ui_field_complete(key,true,&selected,count);continue;}
             if(key==KEY_UP || key==KEY_DOWN) {
@@ -296,11 +329,19 @@ UiStageAction ui_initial_conditions(Document *d,UiStageState *state)
             }
         }
         key=ui_field_complete(key,false,&selected,count);event.key=(unsigned)key;
-        if(key==KEY_EXIT || key==KEY_F6) {
-            if(key==KEY_F6 && !d->nic){ui_field_error("Enter y0 before continuing.");continue;}
-            state->selected=selected;state->edit=edit;return stage_action(key);
+        if(key==KEY_F6) {
+            int bad=ic_validate(d,state,error,sizeof(error));
+            if(bad>=0) {
+                selected=bad;ic_text(d,state,bad,current);ui_inline_begin(&edit,current,false);
+                edit.limited=(state->limited&(1u<<bad))!=0;continue;
+            }
+            ui_initial_clear(state);
         }
-        ui_field_select(&edit,event,current,&selected,count);
+        if(key==KEY_EXIT || key==KEY_F6) {
+            state->stage.selected=selected;state->stage.edit=edit;return stage_action(key);
+        }
+        if(ui_field_select(&edit,event,current,&selected,count) && edit.active)
+            edit.limited=(state->limited&(1u<<selected))!=0;
     }
 }
 static int choose_color(const char *title,const char *const names[6],int (*color)(unsigned),unsigned initial)

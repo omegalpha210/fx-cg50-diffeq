@@ -108,8 +108,7 @@ void ui_trace(App *a)
             prepared=selected;
         }
         if(valid)trace_overlay_show(d,&point,curve.variable,blink.highlighted);
-        /* Repaint tiny text backplates over the reversible cross cursor, and
-           again after XOR removal. No trajectory or framebuffer copy. */
+        /* Labels stay readable above the reversible local point patch. */
         graph_labels(d,&a->model);
         ui_rect(0,179,384,19,C_WHITE);
         if(edit.active) {
@@ -267,8 +266,7 @@ static bool gsolve_input(App *a,GsolveCurve curve,const char *label,double *valu
 static void result_pointer(const Document *d,GsolvePoint point)
 {
     int px,py;if(!graph_point(&d->view,point.x,point.y,&px,&py))return;
-    ui_line(px-5,py,px+5,py,UI_BLUE);ui_line(px,py-5,px,py+5,UI_BLUE);
-    ui_rect(px-1,py-1,3,3,C_WHITE);
+    graph_point_cross(px,py,NULL);
 }
 static void show_results(App *a,GsolveCurve curve,const GsolveCurve *other,
     const char *mode,GsolveResults result)
@@ -324,8 +322,9 @@ static void gsolve_run(App *a,int operation)
         if(count==2){gsolve_curve_at(&a->doc,0,&curve);gsolve_curve_at(&a->doc,1,&other);}
         else if(!choose_curve(a,&curve,NULL,"Curve A")
             || !choose_curve(a,&other,&curve,"Curve B"))return;
-        show_results(a,curve,&other,name,gsolve_intersections(&a->doc,&a->model,
-            curve,other,ui_cancel,NULL));return;
+        UiBusy busy;ui_busy_start(&busy);
+        GsolveResults result=gsolve_intersections(&a->doc,&a->model,curve,other,ui_busy_cancel,&busy);
+        ui_busy_end(&busy);show_results(a,curve,&other,name,result);return;
     }
     if(!choose_curve(a,&curve,NULL,"Select")) {
         if(count<1)show_gsolve_notice(a,name,"Not available");
@@ -337,8 +336,10 @@ static void gsolve_run(App *a,int operation)
         double x=operation==3 ? 0:target;GsolvePoint point;
         double xmin=fmax(a->doc.solver.xmin,a->doc.view.xmin);
         double xmax=fmin(a->doc.solver.xmax,a->doc.view.xmax);
+        UiBusy busy;ui_busy_start(&busy);
         OdeStatus status=x<xmin || x>xmax ? ODE_OK:
-            gsolve_ycal(&a->doc,&a->model,curve,x,&point,ui_cancel,NULL);
+            gsolve_ycal(&a->doc,&a->model,curve,x,&point,ui_busy_cancel,&busy);
+        ui_busy_end(&busy);
         GsolveResults result={.status=status};
         if(x>=xmin && x<=xmax && status==ODE_OK) {
             result.count=1;result.point[0]=point;
@@ -347,7 +348,9 @@ static void gsolve_run(App *a,int operation)
     }
     GsolveMode mode=operation==1 ? GSOLVE_MAXIMUM:(operation==2 ? GSOLVE_MINIMUM:
         (operation==6 ? GSOLVE_XCAL:GSOLVE_ROOT));
-    show_results(a,curve,NULL,name,gsolve_search(&a->doc,&a->model,curve,mode,target,ui_cancel,NULL));
+    UiBusy busy;ui_busy_start(&busy);
+    GsolveResults result=gsolve_search(&a->doc,&a->model,curve,mode,target,ui_busy_cancel,&busy);
+    ui_busy_end(&busy);show_results(a,curve,NULL,name,result);
 }
 static void gsolve_menu(App *a,GraphResult *last)
 {
@@ -398,12 +401,45 @@ static void change_restore(Document *d,const GraphChange *before)
     d->view.phase=before->projection;d->phase_view=before->phase_window;*model_view(d)=before->window;d->solver=before->solver;
     d->phase_field=before->field;d->phase_nullclines=before->nullclines;d->phase_ready=before->ready;
 }
+/* The dispatcher can leave Graph for V-WIN/Table without growing its stack.
+   This tiny snapshot therefore survives those returns until a new calculation. */
+static GraphEntryView entry_view;
+static bool zoom_box(App *a,GraphResult result)
+{
+    int x=192,y=99,first_x=x,first_y=y;bool second=false,small=false;
+    trace_overlay_begin();
+    for(;;) {
+        trace_box_show(first_x,first_y,x,y,second);
+        graph_labels(&a->doc,&a->model);graph_status(result);
+        ui_rect(0,179,384,19,C_WHITE);
+        ui_help(7,184,small ? "BOX TOO SMALL; move point 2":
+            (second ? "Point 2  EXE: ZOOM   EXIT: cancel":"Point 1  EXE: SET   EXIT: cancel"),false);
+        ui_softkeys("","","","","","");dupdate();
+        key_event_t event=ui_getkey();int key=event.key;
+        trace_box_restore();
+        if(key==KEY_EXIT)return false;
+        if(key==KEY_EXE && event.type!=KEYEV_HOLD) {
+            if(!second){first_x=x;first_y=y;second=true;}
+            else {
+                ViewWindow next=*model_view(&a->doc);
+                if(graph_box_window(&next,first_x,first_y,x,y)) {*model_view(&a->doc)=next;return true;}
+                small=true;
+            }
+        }
+        if(key==KEY_LEFT || key==KEY_RIGHT || key==KEY_UP || key==KEY_DOWN)small=false;
+        if(key==KEY_LEFT)x=x>=4 ? x-4:0;
+        if(key==KEY_RIGHT)x=x<=379 ? x+4:383;
+        if(key==KEY_UP)y=y>=4 ? y-4:0;
+        if(key==KEY_DOWN)y=y<=193 ? y+4:197;
+    }
+}
 UiGraphAction ui_graph(App *a,bool first)
 {
     enum {BASE,ZOOM,VIEW,ANALYSIS} menu=BASE;
     bool redraw=true,pending=false,eq_shown=false;
     int selected=-1;OdeStatus notice=ODE_OK;
     Document *d=&a->doc;GraphChange before=change_begin(d);
+    if(first)entry_view.valid=false;
     GraphResult result={.status=ODE_OK,.failed_family=-1};
     for(;;) {
         bool system=model_phase_supported(d),phase=system && d->view.phase;
@@ -419,11 +455,15 @@ UiGraphAction ui_graph(App *a,bool first)
                 }
             } else {result=next;if(pending)a->dirty=true;}
             pending=false;phase=system && d->view.phase;
+            if(result.status==ODE_OK || result.status==ODE_HAS_INVALID || result.status==ODE_EVENT_STOP) {
+                if(!entry_view.valid)graph_entry_capture(&entry_view,d);
+                if(phase && !entry_view.phase_saved){entry_view.phase=d->phase_view;entry_view.phase_saved=true;}
+            }
         }
-        if(menu==ZOOM)ui_softkeys("IN","OUT","AUTO","ORIG","","");
+        if(menu==ZOOM)ui_softkeys("IN","OUT","AUTO","ORIG","BOX","");
         else if(menu==VIEW)ui_softkeys("TIME","PHASE","TABLE","","","");
         else if(menu==ANALYSIS)ui_softkeys("FIELD","NULL","EQPT","INFO","","");
-        else ui_softkeys("TRACE","ZOOM","V-WIN",system ? "VIEW":"TABLE",phase ? "ANLYS":"G-SLV","PREV");
+        else ui_softkeys("TRACE","ZOOM","V-WIN",system ? "VIEW":"TABLE",phase ? "ANLYS":"G-SLV","INIT");
         if(menu==ANALYSIS && eq_shown) {
             const PhaseResults *r=graph_phase_results();
             if(selected>=0 && (unsigned)selected<r->count)graph_phase_markers(d,selected);
@@ -477,12 +517,24 @@ UiGraphAction ui_graph(App *a,bool first)
             continue;
         }
         if(menu==ZOOM && key==KEY_EXIT){menu=BASE;continue;}
-        if(menu==BASE && (key==KEY_EXIT || key==KEY_F6))return UI_GRAPH_BACK;
+        if(menu==BASE && key==KEY_EXIT)return UI_GRAPH_BACK;
+        if(menu==BASE && key==KEY_F6) {
+            if(!entry_view.valid)continue;
+            graph_entry_restore(&entry_view,d);model_sync_solver_window(d);
+            eq_shown=false;selected=-1;a->dirty=true;
+            if(graph_redraw_cached(d,&a->model,entry_view.xmin,entry_view.xmax))result=trace_cache_result();
+            else redraw=true; /* Cache replaced/incompatible: use the normal safe renderer. */
+            continue;
+        }
         if(menu==BASE && key==KEY_F1){ui_trace(a);continue;}
         if(menu==BASE && key==KEY_F2){menu=ZOOM;continue;}
         before=change_begin(d);ViewWindow *v=model_view(d);
         bool changed=pan_key(v,key);
         if(menu==ZOOM) {
+            if(key==KEY_F5) {
+                changed=zoom_box(a,result);
+                if(changed)menu=BASE;
+            }
             if(key==KEY_F4) {
                 if(phase)model_phase_window_defaults(v);else model_window_defaults(v);
                 changed=true;

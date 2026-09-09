@@ -26,7 +26,7 @@ cases=[('main','Main',''),
     ('color-chooser','Output / six-color chooser','2 F6 F6 F4 DOWN F3'),
     ('trace','TRACE / Xdot interpolation','2 F6 F6 F6 F1 RIGHT'),
     ('func','FUNC / softkeys only','1 4 LEFT F2'),
-    ('var','VAR / second page','4 9 F6 LEFT F1 F6'),
+    ('var','VAR / second page','4 9 F6 LEFT F3 F6'),
     ('scalar-prompt','Y-CAL / scalar RUN','2 F6 F6 F6 F5 F6 F1 EXE 2 DOT 5'),
     ('graph-settings','Graph settings / INIT','2 F6 F6 F5')]
 cases += [
@@ -72,7 +72,7 @@ cases += [
     ('polish-sf-nth','N-th9 / no SF row','3 9 F6 F6 F6'),
     ('polish-sf-system','SYS9 / no SF row','4 9 F6 F6 F6'),
     ('polish-field-swatch','Field / Pale Magenta swatch','1 4 F6 F6 F5 DOWN DOWN DOWN F3 DOWN EXE'),
-    ('polish-prev','Graph / semantic PREV','2 F6 F6 F6'),
+    ('polish-prev','Graph / semantic INIT','2 F6 F6 F6'),
     ('polish-ic-full','SYS9 IC / seven rows clear of help','4 9 F6 F6'),
     ('polish-output-full','SYS9 OUTPUT / seven rows + one hint','4 9 F6 F6 F6 F4')]
 trace_ic_start=len(cases)
@@ -85,7 +85,7 @@ cases += [
     ('settings-toggle','Graph Settings / arrows only','1 4 F6 F6 F5'),
     ('ic-ten','First-order / ten initial values',ten),
     ('table-ten','Table / tenth solution, frozen x',ten+'F6 F6 F4 '+'RIGHT '*10),
-    ('ic-count-limit','IC / separate ten-value limit',ten+'LEFT ACON S:MUL '+ '0 COMMA '*10+'0 S:DIV EXE'),
+    ('ic-count-limit','IC / separate ten-value limit',ten+'LEFT ACON S:MUL '+ '0 COMMA '*10+'0 S:DIV F6'),
     ('ic-length-limit','IC / bounded 191-character limit','1 4 F6 DOWN '+'0 '*192+'EXE')]
 assert len({name for name,_,_ in cases})==len(cases)
 sheet=Image.new('RGB',(816,8+264*((len(cases)+1)//2)),'#e8eef5')

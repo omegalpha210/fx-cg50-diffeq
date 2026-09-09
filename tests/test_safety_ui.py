@@ -73,7 +73,7 @@ out=run(manual+'RIGHT '*310+'EXIT EXIT')
 assert all(s in tail(out) for s in ['TEXT 144 35 -2\n','TEXT 144 57 2\n','TEXT 144 101 0.05\n'])
 for direction in ['LEFT','RIGHT','UP','DOWN']:
     out=run(graph+'F2 '+direction)
-    assert bar(out)==['IN','OUT','AUTO','ORIG','','']
+    assert bar(out)==['IN','OUT','AUTO','ORIG','BOX','']
     assert solves(out)>solves(run(graph))
-    assert bar(run(graph+'F2 '+direction+' EXIT'))==['TRACE','ZOOM','V-WIN','TABLE','G-SLV','PREV']
+    assert bar(run(graph+'F2 '+direction+' EXIT'))==['TRACE','ZOOM','V-WIN','TABLE','G-SLV','INIT']
 print('Table limit/TOP/BTM/MID/frozen x, form EXE/hidden VAR, preflight, TRACE auto-follow and ZOOM arrows passed.')

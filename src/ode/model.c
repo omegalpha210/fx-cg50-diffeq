@@ -52,22 +52,34 @@ void model_defaults(Document *d,EquationKind kind,int dim)
     ode_adaptive_defaults(&d->adaptive);
     d->solver_custom=0;model_sync_solver_window(d);
     model_output_defaults(d);model_field_appearance_defaults(d);
+    model_equation_defaults(d);model_initial_defaults(d);
+}
+/* Same new-document defaults, isolated for screen-local INIT. */
+void model_initial_defaults(Document *d)
+{
+    memset(d->ic,0,sizeof(d->ic));d->nic=1;
     for(int i=0;i<ODE_MAX_IC;i++)d->ic[i].y[0]=1;
+    if(d->kind==EQ_SEPARABLE)d->ic[0].y[0]=0;
+    if(d->kind==EQ_LINEAR)d->ic[0].y[0]=-2;
+}
+void model_equation_defaults(Document *d)
+{
+    d->power=2;
+    memset(d->text,0,sizeof(d->text));
     for(int i=0;i<ODE_MAX_DIM;i++)strcpy(d->text[i],"0");
-    switch(kind) {
-        case EQ_SEPARABLE:
-            strcpy(d->text[0],"1");strcpy(d->text[1],"y^2-1");
-            d->ic[0].y[0]=0;break;
-        case EQ_LINEAR:strcpy(d->text[0],"x");strcpy(d->text[1],"x");d->ic[0].y[0]=-2;break;
+    switch(d->kind) {
+        case EQ_SEPARABLE:strcpy(d->text[0],"1");strcpy(d->text[1],"y^2-1");break;
+        case EQ_LINEAR:strcpy(d->text[0],"x");strcpy(d->text[1],"x");break;
         case EQ_BERNOULLI:strcpy(d->text[0],"-2");strcpy(d->text[1],"-1");break;
         case EQ_GENERAL:strcpy(d->text[0],"sin(x)-y");break;
         case EQ_SECOND:strcpy(d->text[1],"1");break;
         case EQ_HIGHER:break;
         case EQ_SYSTEM:
-            for(int i=0;i<d->dim-1;i++) snprintf(d->text[i],EXPR_TEXT,"y%d",i+2);
+            for(int i=0;i<d->dim-1;i++)snprintf(d->text[i],EXPR_TEXT,"y%d",i+2);
             strcpy(d->text[d->dim-1],"-y1");break;
     }
 }
+
 bool model_field_supported(const Document *d)
 {return d->kind>=EQ_SEPARABLE && d->kind<=EQ_GENERAL && d->dim==1;}
 void model_field_appearance_defaults(Document *d)

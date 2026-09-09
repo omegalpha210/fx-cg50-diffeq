@@ -45,6 +45,8 @@ bool model_field_supported(const Document *d);
 bool model_phase_supported(const Document *d);
 void model_field_appearance_defaults(Document *d);
 void model_sanitize_field(Document *d);
+void model_equation_defaults(Document *d);
+void model_initial_defaults(Document *d);
 void model_defaults(Document *d,EquationKind kind,int dim);
 unsigned model_default_color(int family,int variable,int dimension);
 unsigned model_color(const Document *d,int family,int variable);

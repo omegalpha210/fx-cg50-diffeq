@@ -2,6 +2,7 @@
 #include "ui.h"
 #include <gint/display.h>
 #include <math.h>
+#include <stdlib.h>
 int graph_palette_color(unsigned color)
 {
     /* RGB565, including the nearest representable #33ff33 (green=63). */
@@ -111,4 +112,32 @@ bool graph_field_direction(const ViewWindow *v,double slope,double *dx,double *d
         *dx=1/norm;*dy=-t/norm;
     }
     return true;
+}
+
+void graph_entry_capture(GraphEntryView *entry,const Document *d)
+{
+    *entry=(GraphEntryView){.time=d->view,.phase=d->phase_view,.phase_saved=d->phase_ready,
+        .valid=true,.xmin=d->solver.xmin,.xmax=d->solver.xmax};
+}
+void graph_entry_restore(const GraphEntryView *entry,Document *d)
+{
+    if(!entry->valid)return;
+    bool phase=model_phase_supported(d) && d->view.phase;
+    ViewWindow *v=model_view(d);const ViewWindow *initial=phase ? &entry->phase:&entry->time;
+    v->xmin=initial->xmin;v->xmax=initial->xmax;v->ymin=initial->ymin;v->ymax=initial->ymax;
+    v->xscale=initial->xscale;v->yscale=initial->yscale;
+    /* Projection, appearance and all numerical preferences stay as selected. */
+}
+bool graph_box_window(ViewWindow *v,int x1,int y1,int x2,int y2)
+{
+    if(x1<0 || x1>383 || x2<0 || x2>383 || y1<0 || y1>197 || y2<0 || y2>197
+        || abs(x1-x2)<6 || abs(y1-y2)<6)return false;
+    ViewWindow next=*v;double w=v->xmax-v->xmin,h=v->ymax-v->ymin;
+    int left=x1<x2 ? x1:x2,right=x1>x2 ? x1:x2;
+    int top=y1<y2 ? y1:y2,bottom=y1>y2 ? y1:y2;
+    next.xmin=v->xmin+w*((double)left/383);next.xmax=v->xmin+w*((double)right/383);
+    next.ymin=v->ymax-h*((double)bottom/197);next.ymax=v->ymax-h*((double)top/197);
+    if(!isfinite(next.xmin) || !isfinite(next.xmax) || !isfinite(next.ymin) || !isfinite(next.ymax)
+        || next.xmin>=next.xmax || next.ymin>=next.ymax)return false;
+    *v=next;return true;
 }

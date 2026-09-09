@@ -1,3 +1,5 @@
+#include <time.h>
+#include <gint/rtc.h>
 #include <gint/display.h>
 #include <gint/keyboard.h>
 #include <stdio.h>
@@ -123,3 +125,18 @@ key_event_t getkey(void)
     fprintf(stderr,"Unknown scripted key: %s\n",token);exit(2);
 }
 #endif
+
+static unsigned fake_ticks,tick_step;
+void host_tick_step(unsigned ticks){fake_ticks=0;tick_step=ticks;}
+uint32_t rtc_ticks(void)
+{
+    const char *step=getenv("DIFFEQ_HOST_TICK_STEP");
+    if(step || tick_step){
+        fake_ticks+=step ? (unsigned)strtoul(step,NULL,10):tick_step;
+        const char *limit=getenv("DIFFEQ_HOST_TICK_LIMIT");
+        if(limit && fake_ticks>(unsigned)strtoul(limit,NULL,10))fake_ticks=(unsigned)strtoul(limit,NULL,10);
+        return fake_ticks;
+    }
+    struct timespec t;clock_gettime(CLOCK_MONOTONIC,&t);
+    return (uint32_t)((t.tv_sec%86400)*128+(t.tv_nsec*128)/1000000000);
+}

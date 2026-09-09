@@ -1,3 +1,35 @@
+# Graph interaction acceptance — v0.12.0-beta.4
+
+Baseline development15fb84f/publicf95cf5f. [Full audit](INTERACTION_AUDIT.md).
+
+- **44/44 host/UBSan PASS**,22.90s final development run; all previous42 retained.
+- 3px Main divider; INIT on all Graph Settings rows; SYS2-only TIME/PHASE with
+  independent EVT; normal blue EXE and semantic colors retained.
+- Delayed156ms G-Solve busy feedback, cancel-first polling, all outcome teardown;
+  shared9px black/white TRACE/G-Solve/BOX marker with reversible pixels.
+- Graph F6 INIT entry-window restore; current view retained; compatible cache reuse
+  with identity/coverage/Event-report guard and existing safe-render fallback.
+- ZOOM F5 BOX:4px movement, two fresh EXE confirmations,6px minimum/reverse corners,
+  separate windows, transaction/cancel exact pixels, preserved manual range/ORIG.
+- Equation/IC F1 INIT default/scope comparisons; EDIT-only F2 FUNC/F3 VAR;
+  incomplete drafts until NEXT, first-error focus and atomic numeric IC commit.
+- sqrt-domain, sampled-pole and bounded sinh(y) examples preserve red END status
+  and valid-side TRACE/G-Solve. Existing numerical algorithms, reports and storage
+  protocol unchanged. model.c changes only extract existing factory defaults.
+- Clean27-unit SH compile/link, zero warnings,13/13 package checks;241980-byte G3A.
+- text212548,data752,BSS72304,maxframe2648. RTC driver explains data+48; no new
+  framebuffer/trajectory allocation. [Memory details](MEMORY_AUDIT.md).
+- [28 current production frames](ui-review/interaction-overview.png), refreshed
+  existing captures and README gallery; host captures are not device photographs.
+
+**HARDWARE RETEST REQUIRED:** all46 priority cases in HARDWARE_RETEST remain pending.
+Exact public candidate/tag runs, source hashes, downloaded asset verification and
+final identifiers are recorded in Release VALIDATION.md and SHA256SUMS.txt.
+
+Earlier milestones below are historical.
+
+---
+
 # UI consistency acceptance — v0.12.0-beta.3
 
 Baseline development9e64365 / public4dcb2d6. Full screen/F-key inventory, installed

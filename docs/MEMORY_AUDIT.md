@@ -1,3 +1,33 @@
+# Graph interaction memory — v0.12.0-beta.4
+
+| SH target | beta.3 | beta.4 | Delta |
+|---|---:|---:|---:|
+| text |206816|212548|+5732|
+| data |704|752|+48|
+| BSS |71952|72304|+352|
+| largest application frame |2568 (ui_graph)|2648 (app_run)|+80|
+| G3A bytes |236200|241980|+5780|
+
+Symbol comparison attributes data+48 to the installed gint RTC driver (_drv_rtc),
+used read-only for delayed busy feedback. BSS adds the156-byte graph-entry snapshot,
+20-byte BOX bounds,8-byte plot identity/ready flag, and replaces the old pointer
+coordinates/flag with a176-byte81-pixel local marker patch (plus alignment).
+No second framebuffer, trajectory, large static draft array or numeric workspace.
+BOX reuses9504 bytes of the inactive TRACE mask for at most4512 saved uint16 pixels,
+and its existing14592-byte footer backup. The scratch union size is unchanged.
+
+IC draft strings allocate only edited fields: at most10×192=1920 payload bytes
+plus allocator overhead. They are freed on NEXT success, INIT or document replacement;
+back navigation intentionally retains them. Allocation failure preserves the current
+editor. No session format change. More frames: phase_equilibria2144,
+model_convert_system1944,ui_initial_conditions1860,ui_table1768,ui_graph1524 B.
+Individual .su frames do not measure nested library/gint/OS/interrupt high-water.
+**HARDWARE RETEST REQUIRED:** heap/stack margin, RTC/Fugue, LCD and repeat latency.
+
+Earlier milestones below are historical.
+
+---
+
 # UI consistency memory update — v0.12.0-beta.3
 
 | SH target | beta.2 | beta.3 | Delta |

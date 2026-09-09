@@ -40,6 +40,7 @@ void ui_color_swatch(int x,int y,int color);
 void ui_short(char *out,unsigned capacity,const char *text,int width);
 void ui_message(const char *title,const char *message);
 /* Keep the current field/draft visible; acknowledgement returns to editing. */
+void ui_form_error(const char *message);
 void ui_field_error(const char *message);
 bool ui_confirm(const char *title,const char *message);
 bool ui_save_confirm(void);
@@ -50,6 +51,10 @@ bool ui_trace_cancel(void *unused);
 void ui_trace_input(bool active);
 key_event_t ui_trace_key(UiBlink *blink);
 key_event_t ui_getkey(void);
+typedef struct {uint32_t start,last;unsigned frame;bool visible;} UiBusy;
+void ui_busy_start(UiBusy *busy);
+bool ui_busy_cancel(void *context);
+void ui_busy_end(UiBusy *busy);
 void ui_blink_start(UiBlink *blink);
 key_event_t ui_blink_key(UiBlink *blink);
 void ui_blink_stop(UiBlink *blink);
@@ -73,6 +78,10 @@ void ui_event(Document *d);
 void ui_solver_info(void);
 void ui_vwindow(Document *d);
 void ui_graph_settings(Document *d);
-UiStageAction ui_initial_conditions(Document *d,UiStageState *state);
+/* Only changed fields own text; at most10*(EXPR_TEXT) heap bytes, never saved.
+   NEXT validates the complete set before touching numeric IC values. */
+typedef struct {UiStageState stage;char *draft[ODE_MAX_DIM+1];unsigned limited;} UiInitialState;
+void ui_initial_clear(UiInitialState *state);
+UiStageAction ui_initial_conditions(Document *d,UiInitialState *state);
 void ui_output(Document *d);
 #endif

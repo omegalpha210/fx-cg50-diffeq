@@ -16,11 +16,21 @@ typedef enum {
 bool graph_clip(const ViewWindow *v,double *x0,double *y0,double *x1,double *y1);
 bool graph_point(const ViewWindow *v,double x,double y,int *px,int *py);
 bool graph_follow_window(ViewWindow *v,double x,double y);
+/* Local9px cross: black arms around a white3x3 center, clipped to plot. */
+typedef struct {uint16_t pixels[81];int x,y;bool active;} GraphPointPatch;
+void graph_point_cross(int x,int y,GraphPointPatch *patch);
+void graph_point_restore(GraphPointPatch *patch);
 void graph_backdrop(Document *d,CompiledModel *m);
 void graph_event_markers(const Document *d);
 /* Small, read-only view/event/Phase legends; never a reserved plot header. */
 void graph_labels(const Document *d,const CompiledModel *m);
 void graph_solution_segment(const ViewWindow *v,double x0,double y0,double x1,double y1,int color);
+typedef struct {ViewWindow time,phase;bool phase_saved,valid;double xmin,xmax;} GraphEntryView;
+void graph_entry_capture(GraphEntryView *entry,const Document *d);
+void graph_entry_restore(const GraphEntryView *entry,Document *d);
+bool graph_box_window(ViewWindow *view,int x1,int y1,int x2,int y2);
+void graph_status(GraphResult result);
+bool graph_redraw_cached(Document *d,CompiledModel *m,double xmin,double xmax);
 bool graph_zoom(ViewWindow *v,double factor,double dx,double dy);
 int graph_color(int family,int variable,int dimension);
 int graph_palette_color(unsigned color);

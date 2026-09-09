@@ -2,7 +2,21 @@
 
 The application is native C11. The numerical engine, expression compiler, equation model, graph geometry and UI are independent modules. The target links against installed gint headers and `Gint::Gint`; host tests link the same mathematical core against the host C library.
 
-## UI consistency (v0.12 beta.3)
+## Graph interaction (v0.12 beta.4)
+
+[INTERACTION_AUDIT](INTERACTION_AUDIT.md) records exact ownership and fallback rules.
+Graph-entry geometry is156 static bytes across dispatcher returns. BOX temporarily
+borrows the inactive TRACE mask/footer and restores touched pixels; no new large
+buffer. Scalar initial streams also seed the existing bounded cache for INIT only;
+TRACE numerical navigation and ordinary scalar pan/redraw retain prior policy.
+INIT requires matching identity/coverage and Event report coverage or uses existing
+safe redraw. A shared81-pixel point patch replaces full crosshair inversion.
+G-Solve wraps its unchanged numerical cancel callback with read-only128Hz RTC busy
+feedback. IC drafts own bounded per-edited-field heap strings in navigation state;
+NEXT validates all before numeric commit. Existing defaults are split into scoped
+Equation/IC helpers, with full default/Document equality tests. SAVE remains v10.
+
+## UI consistency (v0.12 beta.3 baseline)
 
 Shared helpers own semantic softkeys, disjoint normal-font help segments,
 field-preserving errors and F5 NO/F6 YES confirmations. Existing solver_custom and

@@ -28,7 +28,7 @@ for keys,expected in [('A:ADD','x'),('ADD','+'),('A:SUB','y'),('SUB','-'),
                       ('S:EXP ADD','pi+'),('A:ADD ADD A:SUB SUB NEG','x+y--')]:
     run('1 4 '+keys,['TEXT 144 57 '+expected+'\n'])
 run('1 4 SIN F6',['Syntax error','Syntax error'],['Initial Conditions'])
-run('1 4 SIN F3 EXE',['Syntax error','sin('],['View Window'])
+run('1 4 SIN F3 EXE',['sin('],['View Window','Syntax error'])
 run('1 4 LEFT ACON F2 F2',['sinh('],['Insert function'])
 run('1 4 LEFT ACON F1 F1',[],['Insert variable'])
 run('1 4 NEG A:SUB EXE',['-y'],['Initial Conditions'])
@@ -67,7 +67,7 @@ run('1 4 F6 F5 F6 F6',['TRACE'],['No initial conditions.'])
 run('2 F6 F5',["y'0"],['No initial conditions.','ADD','DROP'])
 run('1 4 NEG A:SUB F3 EXIT F6 DOWN 2 F6 F4 EXIT DOWN DOWN DOWN 0 DOT 0 5 F5 EXIT',
     ['-y','Initial Conditions','Output selection','Parameter','0.05'])
-run('2 F6 SIN F1 EXE',['Syntax error','sin('])
+run('2 F6 SIN F6',['Syntax error','sin('])
 # Repeated PREV/NEXT retains edited fields and manual parameters exactly.
 edited='1 4 NEG A:SUB F6 DOWN 2 F6 NEG 3 EXE 3 EXE DOWN 0 DOT 0 5 EXE'
 baseline=run(edited)

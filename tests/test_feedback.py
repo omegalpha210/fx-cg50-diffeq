@@ -34,17 +34,17 @@ for prefix,title,count in forms:
     assert plot(run(last+'2 EXE'))==plot(run(last+'2 EXIT'))
     assert plot(run(last+'2 EXE EXE'))==plot(run(last+'2 EXIT F6'))
     assert plot(run(last+'EXE'))==plot(run(last+'F6'))
-for prefix in ['2','2 F6','2 F6 F6','2 F6 F6 F3']:
+for prefix in ['2 F6 F6','2 F6 F6 F3']:
     for accept in ['EXE','EXIT']:
         assert plot(run(prefix+' SIN '+accept+' EXE'))==plot(run(prefix+' SIN'))
 for prefix,actions in [('2',['F6']),('2 F6',['F6']),
  ('2 F6 F6',['F1','F3','F4','F5','F6'])]:
     for action in actions:
-        assert plot(run(prefix+' SIN '+action+' EXE'))==plot(run(prefix+' SIN'))
+        assert 'sin(' in tail(run(prefix+' SIN '+action+' EXE'))
         assert plot(run(prefix+' 2 '+action))==plot(run(prefix+' 2 EXIT '+action))
 # FUNC/VAR are softkey modifiers: ordinary keys retain their editor meaning.
 for prefix,menus in [('2 LEFT',['F2']),('1 4 LEFT RIGHT',['F2']),
-                     ('3 9 F6 LEFT',['F1','F2']),('4 9 F6 DOWN RIGHT',['F1','F2'])]:
+                     ('3 9 F6 LEFT',['F3','F2']),('4 9 F6 DOWN RIGHT',['F3','F2'])]:
     for menu in menus:
         assert plot(run(prefix+' '+menu+' EXIT'))==plot(run(prefix))
         for key in ['EXE','LEFT','RIGHT','UP','DOWN']:
@@ -61,7 +61,7 @@ for physical,token in [('S:SIN','asin('),('S:COS','acos('),('S:TAN','atan(')]:
     assert 'TEXT 144 57 '+token+'\n' in tail(run(blank+physical))
 for entry,count in [('3 9 F6',8),('4 9 F6',9)]:
     for index in range(count):
-        keys='F1 '+('F6 ' if index>=5 else '')+'F'+str(index%5+1)
+        keys='F3 '+('F6 ' if index>=5 else '')+'F'+str(index%5+1)
         out=run(entry+' LEFT ACON '+keys)
         assert 'TEXT 144 57 y'+str(index+1)+'\n' in tail(out)
         assert 'Insert variable' not in out
@@ -132,8 +132,8 @@ def bar(out):return [text for _,text in re.findall(r'TEXT (\d+) 206 ([^\n]*)',ou
 graph='2 F6 F6 F6 '
 for operation in ['F1','F2','F3','F4']:
     out=run(graph+'F2 '+operation)
-    assert bar(out)==['IN','OUT','AUTO','ORIG','','']
-    assert bar(run(graph+'F2 '+operation+' EXIT'))==['TRACE','ZOOM','V-WIN','TABLE','G-SLV','PREV']
+    assert bar(out)==['IN','OUT','AUTO','ORIG','BOX','']
+    assert bar(run(graph+'F2 '+operation+' EXIT'))==['TRACE','ZOOM','V-WIN','TABLE','G-SLV','INIT']
 assert plot(run(graph+'F2 '+('F1 F1 F2 F3 F4 '*100)+'EXIT'))==plot(run(graph))
 assert plot(run(graph+'RIGHT UP F2 F4'))==plot(run(graph+'RIGHT UP F3 F1 EXIT'))
 manual='2 F6 F6 NEG 2 EXE 2 EXE DOWN 0 DOT 0 5 EXE F6 '

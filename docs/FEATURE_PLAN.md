@@ -1,7 +1,7 @@
 # fx-CG50 feature plan
 
-Current milestone: v0.12.0-beta.3 UI consistency audit, complete in source/host/SH
-validation. [Rules and evidence](UI_CONVENTIONS.md). All36 new device retests are
+Current milestone: v0.12.0-beta.4 Graph interaction / BOX Zoom, complete in source/host/SH
+validation. [Rules and evidence](INTERACTION_AUDIT.md). All46 new device retests are
 pending. After hardware dogfooding, review v1.0.0-rc.1 readiness; do not add a new
 numerical feature or automatically declare v1.0. The historical implementation
 plan below contains superseded controls; USER_GUIDE is the current key map.

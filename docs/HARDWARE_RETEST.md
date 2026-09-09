@@ -1,3 +1,59 @@
+# Graph interaction priority retest — v0.12.0-beta.4
+
+**HARDWARE RETEST REQUIRED — all46 new cases pending.** Record OS/version, release
+SHA256, keys, expected/observed result, duration, LCD and storage behavior.
+
+1. Main six items remain on one page.
+2. Pale-blue divider has clear3px thickness.
+3. Divider does not overlap help or softkeys.
+4. Numeric1–6 shortcuts and selector indices unchanged.
+5. Graph Settings Style F1 INIT visible/works; F2 blank.
+6. Graph Settings Color F1 INIT visible/works; F3 COLOR retained.
+7. Plain first-order no TIME label.
+8. Second-order no TIME label.
+9. N-th and non-SYS2 no TIME label.
+10. EVT still appears independently when enabled.
+11. SYS2 TIME label matches VIEW.
+12. SYS2 PHASE label matches VIEW.
+13. Delayed neutral G-Solve busy appears without quick-operation flicker.
+14. Slow RK45 second-order y/y-prime ICPT and SYS ICPT complete.
+15. EXIT/MENU cancellation while busy; no remaining busy text.
+16. TRACE local9px cross, six curve colors and Black/Blue blink.
+17. Cross center exact; edges clipped and old pixels restored.
+18. G-Solve point marker matches TRACE; Event/EQPT distinct.
+19. Graph F6 INIT, EXIT back; restore Event markers/status after a narrow redraw.
+20. Graph INIT after pan and after returning from V-WIN/Table.
+21. Graph INIT after Zoom/BOX, retaining selected TIME/PHASE.
+22. ZOOM ORIG still restores factory window, different from custom graph-entry INIT.
+23. BOX cursor starts at nearest plot center.
+24. BOX Point1 movement/repeat clipped to plot; independent of h/Xdot.
+25. Fresh EXE locks Point1; held EXE cannot advance twice.
+26. BOX pale-blue stipple/outline retains curves and protects status/footer.
+27. Point2 EXE commits only then and returns Graph base.
+28. BOX all reverse-corner orders yield correct min/max.
+29. BOX EXIT cancels in both stages; exact original view, ZOOM retained.
+30. BOX same point/tiny rectangle rejected; movement clears warning.
+31. BOX TIME keeps MAN bounds; AUTO follows window.
+32. BOX PHASE does not change TIME window; Phase INIT retains PHASE.
+33. Equation VAR hidden in SELECT.
+34. Equation F3 VAR visible only in supported EDIT; FUNC/VAR EXIT preserves cursor.
+35. Equation F1 INIT resets expressions/n only, including unfinished draft.
+36. IC F1 INIT resets current IC only, including list/vector/draft.
+37. Equation blank/partial draft has no immediate required warning.
+38. Equation NEXT blocks incomplete fields and focuses first error; INIT remains usable.
+39. IC blank/partial draft preserved across back/forward navigation.
+40. IC NEXT validates all before numeric commit; first-error focus, no draft leaks.
+41. Existing red domain/singularity/magnitude status stays nonfatal.
+42. Valid-domain TRACE remains usable; no invalid continuation/false segment.
+43. Valid-domain G-Solve remains usable with readable result footer.
+44. MENU/Fugue reentry including RTC-driven busy; no clock-setting changes.
+45. SAVE/RCL/migration unchanged; IC runtime drafts remain unsaved until NEXT.
+46. LCD contrast, repeat response, long draft/navigation soak and heap/stack margin.
+
+Earlier milestones below are historical.
+
+---
+
 # UI consistency priority retest — v0.12.0-beta.3
 
 **HARDWARE TEST REQUIRED — all36 new cases pending.** Record OS/version, release

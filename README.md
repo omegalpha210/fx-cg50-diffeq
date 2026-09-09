@@ -10,9 +10,9 @@ Solve, graph, and explore ordinary differential equations on your calculator.
 DIFFEQ is a native **fx-CG50 add-in** with colorful solution curves, slope fields,
 TRACE, G-Solve, numerical tables, and phase analysis for two-variable systems.
 
-**Public Beta · v0.12.0-beta.3 · [MIT License](LICENSE)**
+**Public Beta · v0.12.0-beta.4 · [MIT License](LICENSE)**
 
-**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.3)**
+**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.4)**
 · [All releases](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [Report a bug](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -155,7 +155,7 @@ Explicit TIME `x=` queries use the selected solver at the requested in-range x;
 they are not replaced by Phase's cached interpolation.
 
 Graph Settings uses **F1 INIT** to reset Grid, Axis Label and field style/color.
-The Style row uses LEFT/RIGHT only and leaves F1/F2 blank; move to another row to INIT.
+The Style row uses LEFT/RIGHT; F1 INIT is visible and works on every Settings row. F2 stays blank.
 First-order lists keep the **191-character** editor limit, with separate count
 and length messages. Up to ten solution columns can be explored with x frozen.
 
@@ -182,7 +182,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 ## Install on your calculator
 
-1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.3).
+1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.4).
 2. Download **DIFFEQ.g3a**. `SHA256SUMS.txt` is available to check your download.
 3. Connect the fx-CG50 by USB, select USB Flash mode, and open its storage drive.
 4. Copy `DIFFEQ.g3a` to the drive's **root directory**, outside `@MainMem`.
@@ -202,11 +202,11 @@ Older add-ins may reject new saves; adaptations are explained in the
 | Main Menu | Digits 1–6 open 1st/2nd/N-th/SYS/RCL/SAVE; UP/DOWN selects, EXE or F6 OPEN opens; F1–F5 blank |
 | Selected ordinary field | UP/DOWN selects cyclically; LEFT/RIGHT starts editing; EXE runs NEXT/GRAPH/DONE/OPEN |
 | Editing | EXE commits and selects the next field; the last field stays. EXIT commits and stays |
-| Equation | FUNC is available in EDIT; VAR appears only where relevant. EXIT closes the token bar first |
+| Equation | F1 INIT; F2 FUNC/F3 VAR only in EDIT (VAR in supported modes). EXIT closes the token bar first |
 | OUTPUT | LEFT/RIGHT toggles ON/OFF; F1 INIT, F3 COLOR, F6 DONE. EXE follows the output rows |
 | Parameters | F1 INIT; F2 ADV → EVENT/INFO; Method: LEFT/RIGHT toggles RK4/RK45; F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
-| Graph (except 2D SYS) | Arrows pan; F1 TRACE, F2 ZOOM, F3 V-WIN, F4 TABLE, F5 G-SLV, F6 magenta PREV |
-| 2D SYS Graph | F4 VIEW → F1 TIME / F2 PHASE / F3 TABLE; Phase uses F5 ANLYS |
+| Graph (except 2D SYS) | Arrows pan; F1 TRACE, F2 ZOOM, F3 V-WIN, F4 TABLE, F5 G-SLV, F6 yellow/black INIT; EXIT returns Parameters |
+| 2D SYS Graph | F4 VIEW → F1 TIME / F2 PHASE / F3 TABLE; Phase uses F5 ANLYS; F6 INIT retains selected view |
 | Phase analysis | F1 FIELD, F2 NULL, F3 EQPT, F4 INFO; LEFT/RIGHT cycles equilibria, EXIT returns |
 | TIME TRACE | LEFT/RIGHT moves, UP/DOWN switches curves; F1 x=, F2–F4 speed, F5/F6 configured endpoints, EXIT returns |
 | Phase TRACE | Shows x, y1 and y2 along the retained trajectory; cached/interpolated x queries, no time-range extension |
@@ -222,17 +222,28 @@ retains Method and Event; V-WIN resets window geometry; Graph Settings resets
 Grid/Label/field style/color; Output resets dependent outputs/colors. ADV is black
 with white text and opens utilities without calculating. SELECT lists wrap at the
 ends; editor cursors, Graph/TRACE/Phase and Table navigation retain their behavior.
-Main shows only MENU help (red MENU), with a subtle SYS/RCL divider. Generic
-EXE OPEN/NEXT/GRAPH hints are omitted; retained EDIT, palette and G-Solve selection
-hints use the same normal-weight blue EXE, with no duplicate glyph overdraw.
-Solver range rows show **AUTO/MAN** from their existing shared state; RK45 uses
-**h0** for its initial step, while RK4 retains h. Tiny **TIME/PHASE** and enabled-only
-**EVT** labels clarify the graph view. Compact labels and result footers remain
-readable above curves/markers; the existing 2px selected-curve blink is preserved.
-Output previews use a short colored line, including when OFF. Input errors keep
-the field/draft visible; numerical END stays on Graph/Table. Critical SAVE/load/
-resize/convert confirmations share F5 NO/EXIT and F6 YES/EXE, ignoring opening HOLD.
-[UI conventions and full screen/key audit](docs/UI_CONVENTIONS.md).
+Main uses a clear 3px pale-blue divider and MENU-only help (red MENU). Generic
+EXE OPEN/NEXT/GRAPH hints stay hidden; EDIT/palette/BOX/curve confirmation keeps
+normal-weight blue EXE. Solver AUTO/MAN and RK45 h0 are unchanged. **TIME/PHASE**
+appears only for switchable SYS2 VIEW; enabled **EVT** is independent of equation type.
+
+**Graph F6 INIT** restores the current view's graph-entry window, retaining
+TIME/PHASE choice and manual solver preferences. Compatible cached samples are
+reused; replaced/incomplete cache or Event report uses the existing safe redraw.
+**ZOOM F4 ORIG** remains the factory window. **F2 ZOOM → F5 BOX** starts at the
+plot center: arrows move 4 pixels, EXE fixes Point1, arrows select Point2, EXE
+commits a rectangle at least 6 pixels wide/high. A pale stipple preserves curves;
+EXIT cancels either stage without changing the view. TIME/PHASE windows stay separate.
+
+TRACE, G-Solve and BOX share a local 9px black cross with white center; existing 2px
+curve blink stays. Long G-Solve shows neutral CALCULATING... after about 156ms,
+with EXIT cancellation and no percentage. Equation/IC F1 INIT resets only its
+own inputs. Incomplete drafts remain editable until NEXT validates all fields
+and focuses the first error. IC numeric values update only after complete validation;
+unfinished IC drafts are runtime-only. Red numerical/domain END remains nonfatal,
+with valid-side TRACE/G-Solve available. Output color-line previews persist when OFF.
+[Full interaction audit and limits](docs/INTERACTION_AUDIT.md),
+[UI conventions](docs/UI_CONVENTIONS.md), [BOX and updated screens](docs/ui-review/interaction-overview.png).
 
 [Updated Main, SAVE and workflow screens](docs/ui-review/workflow-overview.png)
 

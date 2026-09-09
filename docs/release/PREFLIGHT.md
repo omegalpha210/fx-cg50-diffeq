@@ -1,7 +1,23 @@
+# v0.12.0-beta.4 preflight
+
+Development 83de31314b6c1df0052aab7a412eb914af69ec48, hardware-crash-fix; public parent f95cf5f (beta.3).
+Gates: 44 host/UBSan groups, clean 27-unit strict SH build/link, zero warnings, 13
+package checks, existing numerical/parser/storage tests, new BOX/draft/INIT/marker/
+busy regressions, protected source/default audit, memory and current captures.
+Preserve public ancestry/tags, MIT and notices. Exclude manuals, private history,
+paths, secrets, logs, toolchains and binaries from public source. Check README links
+and GitHub rendering. Repeat all gates from exact tag; upload new prerelease and
+re-download every asset to verify bytes/SHA256/GitHub digests and source tree.
+Exact final identifiers/results are recorded in Release VALIDATION.md.
+
+Previous records below are historical.
+
+---
+
 # v0.12.0-beta.3 preflight
 
 Development 15fb84fc2078d90906f0445fe69184004c0f9b21, hardware-crash-fix; public parent4dcb2d6 (beta.2).
-Preserve public history and existing tags. Gates:42 host/UBSan groups; clean27-unit
+Preserve public history and existing tags. Gates:42 host/UBSan groups; clean 27-unit
 strict SH compile/link; zero warnings;13 package checks; semantic colors, normal
 single-painted EXE glyphs, overlay/marker coordinates and all existing regressions.
 No BSS/data growth. Current captures and both README links/GitHub Markdown render.
@@ -35,7 +51,7 @@ The following records are historical.
 
 Development12877bc (hardware-crash-fix), public parent3892707 (v0.11.0-beta.1).
 Preserve public ancestry, all existing tags and private development history.
-Required gates:39 host/UBSan groups, clean strict SH compile/link,13 package checks,
+Required gates:39 host/UBSan groups, clean strict SH compile/link, 13 package checks,
 Event numerical/memory audit, no-work/no-I/O INFO and navigation, SAVE v10/v3–v9
 migration, README EN/KO and two production-rendered images, unchanged MIT/third-party
 notices, common private-path/secret scan of candidate and reachable public history.
@@ -52,7 +68,7 @@ The following records are historical.
 
 Development source e885230 (hardware-crash-fix), public parent713ddc2. Preserve
 public ancestry and all old tags; synchronize only public-safe source/docs.
-Required gates: all36 host/UBSan tests, full strict SH compile/link,13 G3A checks,
+Required gates: all36 host/UBSan tests, full strict SH compile/link, 13 G3A checks,
 coefficient/benchmark/memory audit, README EN/KO assets/links, private-path/secret
 and public-history scan, unchanged MIT/dependency notices. Repeat from public
 candidate and exact new tag before uploading. Download assets and compare bytes

@@ -11,8 +11,8 @@ from pathlib import Path
 app = str(Path(sys.argv[1]).resolve())
 time_graph = "4 2 F6 F6 F6 F6 "
 phase_graph = time_graph + "F4 F2 "
-time_bar = ["TRACE", "ZOOM", "V-WIN", "VIEW", "G-SLV", "PREV"]
-phase_bar = ["TRACE", "ZOOM", "V-WIN", "VIEW", "ANLYS", "PREV"]
+time_bar = ["TRACE", "ZOOM", "V-WIN", "VIEW", "G-SLV", "INIT"]
+phase_bar = ["TRACE", "ZOOM", "V-WIN", "VIEW", "ANLYS", "INIT"]
 view_bar = ["TIME", "PHASE", "TABLE", "", "", ""]
 analysis_bar = ["FIELD", "NULL", "EQPT", "INFO", "", ""]
 
@@ -177,5 +177,5 @@ print(
 )
 
 # Parameter INIT remains the TIME-window solver default even after Phase use.
-parameter_init = tail(run(phase_graph + "F6 F1"))
+parameter_init = tail(run(phase_graph + "EXIT F1"))
 assert "TEXT 144 35 -6\n" in parameter_init and "TEXT 144 57 6\n" in parameter_init

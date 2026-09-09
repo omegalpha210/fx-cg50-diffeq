@@ -31,12 +31,13 @@ for entry in ['1 1','1 2','1 3','1 4','2','3 9 F6','4 9 F6']:
     out=run(invalid+' F2 EXIT R:EXIT R:EXIT')
     assert 'Syntax error' not in out and 'sinh(' in tail(out)
     assert bar(out)[1]=='FUNC' and plot(out)==plot(run(invalid))
-    assert 'Syntax error' in run(invalid+' F2 EXIT EXIT')
+    assert 'Syntax error' not in run(invalid+' F2 EXIT EXIT')
+    assert 'Syntax error' in run(invalid+' F2 EXIT F6')
 for entry in ['3 9 F6','4 9 F6']:
-    for edit in ['', ' LEFT', ' LEFT ACON SIN']:
+    for edit in [' LEFT', ' LEFT ACON SIN']:
         base=entry+edit
-        assert plot(run(base+' F1 EXIT R:EXIT'))==plot(run(base))
-        assert plot(run(base+' F1 EXE'))==plot(run(base+' EXE'))
+        assert plot(run(base+' F3 EXIT R:EXIT'))==plot(run(base))
+        assert plot(run(base+' F3 EXE'))==plot(run(base+' EXE'))
 
 # Fixed Xdot=.025, independently selected x=.6. Mode changes are only button state.
 graph='2 F6 F6 F3 DOWN DOWN DOWN 0 DOT 0 2 5 EXE EXIT EXE '
@@ -52,7 +53,7 @@ for key,multiple in [('F2',1),('F3',2),('F4',3)]:
 assert abs(point(run(graph+'F1 F4 EXIT F1 RIGHT'))-.025)<1e-7
 for speed in ['F3','F4']:
     out=run(graph+'F1 '+speed+' '+'R:RIGHT '*260+'DOWN BLINK BLINK EXIT')
-    assert 'Partial: Cancelled' not in out and bar(out)==['TRACE','ZOOM','V-WIN','TABLE','G-SLV','PREV']
+    assert 'Partial: Cancelled' not in out and bar(out)==['TRACE','ZOOM','V-WIN','TABLE','G-SLV','INIT']
     assert 'y\'' in out
     before=run(trace+speed);blink=run(trace+speed+' '+'BLINK '*100)
     assert point(blink)==point(before) and plot(blink)==plot(before) and solves(blink)==solves(before)

@@ -3,7 +3,7 @@ import os,re,subprocess,sys,tempfile
 from pathlib import Path
 app=str(Path(sys.argv[1]).resolve())
 EDIT=': commit / next   EXIT: commit'
-BASE=['TRACE','ZOOM','V-WIN','TABLE','G-SLV','PREV']
+BASE=['TRACE','ZOOM','V-WIN','TABLE','G-SLV','INIT']
 def run(keys,directory=None,image=False):
     if directory is None:
         with tempfile.TemporaryDirectory() as directory:return run(keys,directory,image)
@@ -59,14 +59,14 @@ for prefix in ['4 9 F6 F6','4 9 F6 F6 F6 F4']:
 graph='2 F6 F6 F6 '
 out,rgb=run(graph,image=True);assert bar(out)==BASE
 _,prev=run('2 F6',image=True)
-assert pixel(rgb,327,203)==rgb565(0xf81f) and pixel(prev,7,203)==rgb565(0x1a98)
-assert 'TEXT 14 9 Parameter\n' in tail(run(graph+'F6'))
+assert pixel(rgb,327,203)==rgb565(0xffe0) and pixel(prev,7,203)==rgb565(0xffe0)
+assert 'TEXT 14 9 Parameter\n' in tail(run(graph+'EXIT'))
 assert bar(run(graph+'F1'))==['x=','NORMAL','FAST','FASTER','LEFT','RIGHT']
-assert bar(run(graph+'F2'))==['IN','OUT','AUTO','ORIG','','']
+assert bar(run(graph+'F2'))==['IN','OUT','AUTO','ORIG','BOX','']
 assert bar(run(graph+'F5'))==['ROOT','MAX','MIN','Y-ICPT','ICPT','>']
 for menu in ['F1','F2','F5']:
     out,rgb=run(graph+menu+' EXIT',image=True)
-    assert bar(out)==BASE and pixel(rgb,327,203)==rgb565(0xf81f)
+    assert bar(out)==BASE and pixel(rgb,327,203)==rgb565(0xffe0)
 
 # Both color rows use the same framed box geometry, with their own palettes.
 settings='1 4 F6 F6 F5 DOWN DOWN DOWN '

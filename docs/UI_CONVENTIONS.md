@@ -1,3 +1,44 @@
+# Current UI conventions — v0.12.0-beta.4
+
+The complete before/after interaction inventory is [INTERACTION_AUDIT](INTERACTION_AUDIT.md).
+[USER_GUIDE](USER_GUIDE.md) is the current full F-key table. Historical beta.3 audit
+below is retained as evidence; these current rules supersede its changed controls.
+
+- Semantic color follows action, not slot: INIT yellow/black, ADV black/white,
+  V-WIN orange, SET green, NEXT cyan, PREV magenta, GRAPH/RUN red. Graph no longer
+  uses PREV; its base F6 is INIT, and EXIT goes back. Established speed/COLOR styles stay.
+- Graph Settings INIT is visible and works on every row, including Style. Style
+  changes with LEFT/RIGHT, Color via RIGHT/F3. Equation/IC F1 INIT is screen-scoped.
+- Generic EXE OPEN/NEXT/GRAPH help stays hidden. Retained EDIT/palette/curve/BOX
+  confirmation EXE is blue, normal weight and single-painted. Main MENU alone is red.
+- F2 FUNC/F3 VAR on Equation are EDIT-only; VAR only in its supported modes. Token
+  palettes own their token bar and EXIT preserves the editor. Event has its own bar.
+- Incomplete Equation/IC drafts are allowed until NEXT (or SELECT EXE). Focus the
+  first error inline and keep INIT usable. Parent EXIT never forces validation.
+  Parameters/Event/GRAPH safety checks retain their prior policy.
+- SELECT lists alone wrap; cursor/graph/data movement retains its semantics.
+  Stage1/3–3/3 only Equation/IC/Parameters; V-WIN only Parameters/Graph.
+- AUTO/MAN reads existing range state; RK4 h/RK45 h0 retain the same stored value.
+  TIME/PHASE only when SYS2 VIEW is available; enabled EVT is type-independent.
+- Graph INIT restores the current view's entry geometry, retaining selected view
+  and manual numerical preferences. AUTO follows geometry. Reuse compatible cache;
+  safe redraw is allowed when cache/Event-report coverage has been replaced.
+  ORIG keeps factory semantics. BOX commits only on valid second-point EXE;
+  cancel restores exact pixels and leaves both windows/settings unchanged.
+- Point markers are9px black crosses with white3px center, clipped to plot.
+  Event squares/EQPT diamonds remain distinct. Selected2px curve/blink remains.
+- Active results/cursors, persistent nonfatal red status and small static labels
+  must remain readable. Input errors stay field-inline; numerical END/Partial stays
+  over valid Graph/Table. Do not disable valid-domain TRACE/G-Solve or join gaps.
+- Long G-Solve uses delayed neutral busy feedback with cancel-first polling and
+  complete teardown; never fake percentage progress or draw from interrupts.
+- Critical confirmations stay F5 NO/EXIT and F6 YES/EXE, ignoring opening HOLD.
+  BOX point confirmation also requires a fresh EXE; arrows support repeat.
+
+---
+
+# Historical beta.3 audit (before beta.4)
+
 # UI consistency audit — v0.12.0-beta.3
 
 Baseline: development 9e64365 / public 4dcb2d6 (beta.2). Source inventory below
