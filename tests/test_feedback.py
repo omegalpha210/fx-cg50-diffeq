@@ -94,7 +94,7 @@ assert 'Curve color' in tail(run(output+'DOWN F3'))
 choices=['LEFT LEFT','LEFT','','DOWN LEFT LEFT','DOWN LEFT','DOWN']
 for color,moves in zip([0x001f,0xf800,0xf81f,0,0x07ff,0x37e6],choices):
     chosen=output+'F3 '+moves+' EXE '
-    _,rgb=run(chosen,image=True);assert pixel(rgb,334,38)==rgb565(color)
+    _,rgb=run(chosen,image=True);assert pixel(rgb,341,40)==rgb565(color)
     assert plot(run(chosen+'F3 DOWN EXIT'))==plot(run(chosen))
     assert plot(run(chosen+'F2 F4 F2 F4'))==plot(run(chosen))
     assert plot(run(chosen+'EXIT EXIT EXIT F6 F6 F4'))==plot(run(chosen))
@@ -104,7 +104,7 @@ with tempfile.TemporaryDirectory() as directory:
     chosen=output+'F3 DOWN LEFT LEFT EXE '
     baseline=run(chosen,directory)
     run(chosen+'EXIT EXIT EXIT EXIT 6 EXE EXE',directory)
-    restored=run('5 2 F1 F6 F6 F4',directory)
+    restored=run('5 2 F6 F6 F6 F4',directory)
     assert plot(restored)==plot(baseline)
     recalled=run(chosen+'EXIT F6 EXIT EXIT EXIT EXIT 5 1 F6 F6 F4',directory)
     assert plot(recalled)==plot(baseline)

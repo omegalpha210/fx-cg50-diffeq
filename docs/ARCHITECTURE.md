@@ -2,7 +2,17 @@
 
 The application is native C11. The numerical engine, expression compiler, equation model, graph geometry and UI are independent modules. The target links against installed gint headers and `Gint::Gint`; host tests link the same mathematical core against the host C library.
 
-## UI controls (v0.12 beta.2)
+## UI consistency (v0.12 beta.3)
+
+Shared helpers own semantic softkeys, disjoint normal-font help segments,
+field-preserving errors and F5 NO/F6 YES confirmations. Existing solver_custom and
+method control AUTO/MAN and h/h0 labels without new model state. graph_labels is
+shared by fresh/cached frames; Event squares precede equilibrium markers, with
+compact labels/status and active result footers above curves. No numerical loop
+or storage protocol changes. Full inventory and rendering defect evidence:
+[UI_CONVENTIONS](UI_CONVENTIONS.md).
+
+## UI controls (v0.12 beta.2 baseline)
 
 Main digit/EXE/F6 selection shares one handler. SAVE confirmation owns NO/YES and
 calls the existing backend only after a fresh EXE/F6 key. No new app/session state.

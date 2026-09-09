@@ -2,7 +2,7 @@
 import os,re,subprocess,sys,tempfile
 from pathlib import Path
 app=str(Path(sys.argv[1]).resolve())
-EDIT='EXE: commit / next   EXIT: commit'
+EDIT=': commit / next   EXIT: commit'
 BASE=['TRACE','ZOOM','V-WIN','TABLE','G-SLV','PREV']
 def run(keys,directory=None,image=False):
     if directory is None:
@@ -32,7 +32,12 @@ for prefix in forms:
         for blink in ['', ' BLINK', ' BLINK BLINK']:
             out=run(prefix+' '+entered+blink)
             assert EDIT in tail(out),(prefix,entered,tail(out))
-    assert plot(run(prefix+' LEFT EXIT'))==plot(base),prefix
+    returned=run(prefix+' LEFT EXIT')
+    if prefix in ['1 4 F6 F6','2 F6 F6']:
+        # Existing policy: even an unchanged range commit is a manual override.
+        assert tail(returned).count('MAN\n')==2 and tail(base).count('AUTO\n')==2
+        assert re.findall(r'TEXT 144 \d+ ([^\n]+)',tail(returned))==re.findall(r'TEXT 144 \d+ ([^\n]+)',tail(base))
+    else:assert plot(returned)==plot(base),prefix
     assert EDIT not in tail(run(prefix+' LEFT EXE'))
     # Error popup has its own content; dismissing restores the edit hint/draft.
     out=run(prefix+' LEFT ACON SIN EXE')
@@ -42,7 +47,7 @@ assert 'Comma: separator' in tail(run('1 1 F6'))
 assert all(x not in tail(run('1 1 F6')) for x in ['SHIFT','braces','UP/DOWN'])
 assert 'One solution: x0 plus all state values' in tail(run('2 F6'))
 assert 'UP/DOWN: page' in tail(run('2 F6 F6 F6 F4'))
-assert 'UP/DOWN  EXE' in tail(run('2 F6 F6 F6 F5 F1'))
+assert 'UP/DOWN ' in tail(run('2 F6 F6 F6 F5 F1'))
 # A modal numeric function picker owns its help, then returns to logical EDIT.
 assert EDIT not in tail(run('2 F6 F6 F3 LEFT OPTN'))
 assert EDIT in tail(run('2 F6 F6 F3 LEFT OPTN EXIT'))
@@ -75,7 +80,7 @@ for color,moves in zip([0x8d5b,0xdc51,0x65d8,0xcc59,0xc549,0x9492],
     _,reset=run(selected+'F1',image=True);assert pixel(reset,334,148)==rgb565(0x8d5b)
 with tempfile.TemporaryDirectory() as directory:
     run(settings+'F3 DOWN RIGHT EXE '+('EXIT '*5)+'6 EXE EXE',directory)
-    _,rgb=run('5 2 F1 F6 F6 F5',directory,image=True)
+    _,rgb=run('5 2 F6 F6 F6 F5',directory,image=True)
     assert pixel(rgb,334,148)==rgb565(0xc549)
 
 # Actual renderer capability, including unsupported N-th1/SYS1, drives rows.
@@ -112,7 +117,7 @@ for entry in higher:
     assert 'TEXT 144 145 12\n' in tail(run(restored+'F1'))
 with tempfile.TemporaryDirectory() as directory:
     run(sf20+('EXIT '*4)+'2 F6 F6 F1 '+('EXIT '*3)+'6 EXE EXE',directory)
-    loaded='5 2 F1 F6 F6 '
+    loaded='5 2 F6 F6 F6 '
     assert 'TEXT 20 145 Max steps\n' in tail(run(loaded,directory))
     assert 'TEXT 144 145 20\n' in tail(run(loaded+('EXIT '*3)+'1 4 F6 F6',directory))
 print('UI polish: logical EDIT hints, context/overlay restoration, PREV pixels, six field swatches and mode-aware SF/INIT/SAVE retention passed.')

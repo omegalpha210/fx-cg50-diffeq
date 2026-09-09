@@ -122,34 +122,51 @@ bool ui_select_move(int key,int *selected,int count)
     if(count<1 || (key!=KEY_UP && key!=KEY_DOWN))return false;
     *selected=(*selected+count+(key==KEY_UP ? -1:1))%count;return true;
 }
-/* Paint the complete hint once, then recolor key glyphs at measured positions.
-   This preserves the font's spacing across token boundaries. */
+/* dtext() and bounded dtext_opt() use the same normal-weight gint primitive.
+   Draw disjoint segments once. dnsize(empty) is -char_spacing, NOT zero; a
+   leading token must start at x, not x-1 (the beta.2 overdraw defect). */
+static void help_segment(int x,int y,const char *text,int offset,int count,int color,int spacing)
+{
+    if(count<=0)return;
+    int width=0;if(offset){dnsize(text,offset,NULL,&width,NULL);width+=spacing;}
+    dtext_opt(UI_X+x+width,UI_Y+y,color,C_NONE,DTEXT_LEFT,DTEXT_TOP,text+offset,count);
+}
 void ui_help(int x,int y,const char *text,bool main_menu)
 {
-    ui_text(x,y,UI_MUTED,"%s",text);
+    int start=0,spacing;dnsize("",0,NULL,&spacing,NULL);spacing=-spacing;
+    if(main_menu && !strncmp(text,"MENU:",5)) {
+        help_segment(x,y,text,0,4,C_RED,spacing);start=4;
+    }
     for(const char *p=text;(p=strstr(p,"EXE"));p+=3) {
         if((p!=text && (isalnum((unsigned char)p[-1]) || p[-1]=='_')) ||
             isalnum((unsigned char)p[3]) || p[3]=='_')continue;
-        int width=0;dnsize(text,(int)(p-text),NULL,&width,NULL);
-        ui_text(x+width+(p!=text),y,C_BLUE,"EXE");
+        int offset=(int)(p-text);
+        help_segment(x,y,text,start,offset-start,UI_MUTED,spacing);
+        help_segment(x,y,text,offset,3,C_BLUE,spacing);start=offset+3;
     }
-    if(main_menu && !strncmp(text,"MENU:",5))ui_text(x,y,C_RED,"MENU");
+    help_segment(x,y,text,start,(int)strlen(text)-start,UI_MUTED,spacing);
+}
+typedef enum {SOFTKEY_NORMAL,SOFTKEY_INIT,SOFTKEY_ADV,SOFTKEY_VWIN,
+    SOFTKEY_SET,SOFTKEY_NEXT,SOFTKEY_PREV,SOFTKEY_EXECUTE} SoftkeyStyle;
+static SoftkeyStyle softkey_style(const char *label)
+{
+    if(!strcmp(label,"INIT") || !strcmp(label,"NORMAL"))return SOFTKEY_INIT;
+    if(!strcmp(label,"ADV"))return SOFTKEY_ADV;
+    if(!strcmp(label,"V-WIN"))return SOFTKEY_VWIN;
+    if(!strcmp(label,"SET") || !strcmp(label,"FAST"))return SOFTKEY_SET;
+    if(!strcmp(label,"NEXT") || !strcmp(label,"FASTER"))return SOFTKEY_NEXT;
+    if(!strcmp(label,"PREV"))return SOFTKEY_PREV;
+    if(!strcmp(label,"GRAPH") || !strcmp(label,"RUN"))return SOFTKEY_EXECUTE;
+    return SOFTKEY_NORMAL;
 }
 void ui_softkeys(const char *a,const char *b,const char *c,const char *d,const char *e,const char *f)
 {
     const char *keys[]={a,b,c,d,e,f};
     for(int i=0;i<6;i++) {
-        int background=UI_BLUE,foreground=C_WHITE;
-        if(!strcmp(keys[i],"PREV")){background=0xf81f;foreground=C_BLACK;}
-        if(!strcmp(keys[i],"NEXT")){background=UI_CYAN;foreground=C_BLACK;}
-        if(!strcmp(keys[i],"V-WIN")){background=C_RGB(31,17,0);foreground=C_BLACK;}
-        if(!strcmp(keys[i],"SET")){background=UI_BRIGHT_GREEN;foreground=C_BLACK;}
-        if(!strcmp(keys[i],"INIT")){background=UI_YELLOW;foreground=C_BLACK;}
-        if(!strcmp(keys[i],"ADV")){background=C_BLACK;foreground=C_WHITE;}
-        if(!strcmp(keys[i],"NORMAL")){background=UI_YELLOW;foreground=C_BLACK;}
-        if(!strcmp(keys[i],"FAST")){background=UI_BRIGHT_GREEN;foreground=C_BLACK;}
-        if(!strcmp(keys[i],"FASTER")){background=UI_CYAN;foreground=C_BLACK;}
-        if(i==5 && !strcmp(keys[i],"GRAPH"))background=C_RED;
+        static const int backgrounds[]={UI_BLUE,UI_YELLOW,C_BLACK,C_RGB(31,17,0),
+            UI_BRIGHT_GREEN,UI_CYAN,0xf81f,C_RED};
+        SoftkeyStyle style=softkey_style(keys[i]);int background=backgrounds[style];
+        int foreground=style==SOFTKEY_NORMAL || style==SOFTKEY_ADV || style==SOFTKEY_EXECUTE ? C_WHITE:C_BLACK;
         if(!strcmp(keys[i],"COLOR")) {
             static const int colors[]={0xf800,0xfc40,UI_BRIGHT_GREEN,UI_CYAN,0xf81f};
             ui_rect(i*64,198,63,18,C_WHITE);
@@ -167,7 +184,7 @@ void ui_softkeys(const char *a,const char *b,const char *c,const char *d,const c
 }
 void ui_short(char *out,unsigned capacity,const char *text,int width)
 {
-    snprintf(out,capacity,"%s",text);
+    if(out!=text)snprintf(out,capacity,"%s",text);
     int w=0;dsize(out,NULL,&w,NULL);
     if(w<=width) return;
     size_t n=strlen(out);
@@ -188,8 +205,9 @@ void ui_row(int row,const char *label,const char *value,bool selected)
     ui_line(8,y+20,376,y+20,UI_LINE);
 }
 void ui_field(int row,const char *label,const char *value,bool selected)
+{ui_field_at(31+row*22,label,value,selected);}
+void ui_field_at(int y,const char *label,const char *value,bool selected)
 {
-    int y=31+row*22;
     ui_rect(4,y-4,376,21,selected ? UI_BLUE:C_WHITE);
     ui_text(14,y,selected ? C_WHITE:UI_INK,"%s",label);
     ui_text(122,y,selected ? C_WHITE:UI_MUTED,":");
@@ -205,6 +223,15 @@ void ui_form_hint(const UiInlineEdit *edit,const char *context)
 void ui_color_swatch(int x,int y,int color)
 {
     ui_rect(x,y,29,13,UI_INK);ui_rect(x+2,y+2,25,9,color);
+}
+void ui_field_error(const char *message)
+{
+    char text[192];snprintf(text,sizeof(text),"%s",message);
+    for(char *p=text;*p;p++)if(*p=='\n')*p=' ';
+    ui_short(text,sizeof(text),text,UI_W-16);
+    ui_rect(0,179,UI_W,19,C_WHITE);ui_text(8,184,C_RED,"%s",text);
+    ui_softkeys("","","","","","EDIT");dupdate();
+    for(;;){int key=ui_getkey().key;if(key==KEY_EXIT || key==KEY_EXE || key==KEY_F6)return;}
 }
 void ui_message(const char *title,const char *message)
 {
@@ -230,25 +257,18 @@ void ui_message(const char *title,const char *message)
 bool ui_confirm(const char *title,const char *message)
 {
     ui_frame(title,NULL);ui_text(10,62,UI_INK,"%s",message);
-    ui_softkeys("YES","","","","","NO");dupdate();
-    for(;;) {
-        int key=ui_getkey().key;
-        if(key==KEY_F1 || key==KEY_EXE) return true;
-        if(key==KEY_EXIT || key==KEY_F6) return false;
-    }
-}
-bool ui_save_confirm(void)
-{
-    ui_frame("Save session",NULL);ui_text(10,62,UI_INK,"Save current session?");
-    ui_form_hint(NULL,"EXE: YES   EXIT: NO");
     ui_softkeys("","","","","NO","YES");dupdate();
     for(;;) {
         key_event_t event=ui_getkey();
         if(event.type==KEYEV_HOLD)continue; /* Opening key repeat is not new consent. */
         int key=event.key;
-        if(key==KEY_F6 || key==KEY_EXE)return true;
-        if(key==KEY_F5 || key==KEY_EXIT)return false;
+        if(key==KEY_F6 || key==KEY_EXE) return true;
+        if(key==KEY_EXIT || key==KEY_F5) return false;
     }
+}
+bool ui_save_confirm(void)
+{
+    return ui_confirm("Save session","Save current session?");
 }
 int ui_digit(int key)
 {
@@ -267,7 +287,6 @@ int ui_choose(const char *title,const char *const *items,int count,int selected)
             char number[16];snprintf(number,sizeof(number),"%d",page*7+row+1);
             ui_field(row,number,items[page*7+row],page*7+row==selected);
         }
-        ui_form_hint(NULL,"EXE: open");
         ui_softkeys("",count>7 ? "PG-":"",count>7 ? "PG+":"","","","OPEN");dupdate();
         int key=ui_getkey().key;
         ui_select_move(key,&selected,count);

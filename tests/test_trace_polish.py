@@ -83,5 +83,5 @@ for page in ['F1','F2','F3','DOWN','UP']:
 long_input='1 4 F6 DOWN '+('0 '*192)
 assert 'Input too long; Max: 191 characters' in tail(run(long_input))
 assert 'Input too long' in tail(run(long_input+'EXE')) and 'Max: 191 characters' in tail(run(long_input+'EXE'))
-assert 'MENU: return to MAIN MENU' in tail(run(''))
+assert ': return to MAIN MENU' in tail(run(''))
 print('TRACE colors/black text/selection, exact configured jumps, same-input crossing, Y pan, settings arrows, ten families/frozen columns and bounded length feedback passed.')

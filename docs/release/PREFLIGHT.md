@@ -1,3 +1,19 @@
+# v0.12.0-beta.3 preflight
+
+Development 15fb84fc2078d90906f0445fe69184004c0f9b21, hardware-crash-fix; public parent4dcb2d6 (beta.2).
+Preserve public history and existing tags. Gates:42 host/UBSan groups; clean27-unit
+strict SH compile/link; zero warnings;13 package checks; semantic colors, normal
+single-painted EXE glyphs, overlay/marker coordinates and all existing regressions.
+No BSS/data growth. Current captures and both README links/GitHub Markdown render.
+Audit safe snapshot, public history and unchanged MIT/dependency notices. Repeat
+all gates from the exact public tag, publish prerelease and verify all downloaded
+assets byte-for-byte/SHA256 plus remote tree and tag ancestry. Exact outcomes are
+in Release VALIDATION.md. Private history/manuals/logs/builds remain excluded.
+
+Previous preflights below are historical.
+
+---
+
 # v0.12.0-beta.2 preflight
 
 Development 9e64365 (hardware-crash-fix), public parent 9b4ac21 (v0.12.0-beta.1).

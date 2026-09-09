@@ -1,3 +1,24 @@
+# UI consistency memory update — v0.12.0-beta.3
+
+| SH target | beta.2 | beta.3 | Delta |
+| --- | ---: | ---: | ---: |
+| text | 206064 | 206816 | +752 |
+| data | 704 | 704 | 0 |
+| BSS | 71952 | 71952 | 0 |
+| largest application frame (ui_graph) | 2572 | 2568 | -4 |
+| G3A bytes | 235448 | 236200 | +752 |
+
+No persistent allocation, numerical workspace or trajectory/framebuffer copy added.
+Help uses bounded normal-font segments; legends/status use small local text and
+backplates. No3px selected-curve pass. Remaining measured frames: phase_equilibria2144,
+model_convert_system1944,ui_table1768,app_run1336 B. Per-function .su measurements
+exclude nested library/gint/OS/interrupt high-water. Physical stack margin and
+key-repeat/LCD performance remain **HARDWARE TEST REQUIRED**.
+
+Earlier milestone records below are historical.
+
+---
+
 # UI/UX polish memory update — v0.12.0-beta.2
 
 | SH target | beta.1 baseline | beta.2 | Delta |

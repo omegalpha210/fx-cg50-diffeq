@@ -7,8 +7,8 @@ static bool accept_event(Document *d,UiInlineEdit *edit)
     if(edit->text[0]) {
         ExprProgram program;ExprError error=expr_compile(edit->text,model_event_scope(d),&program);
         if(error.status!=EXPR_OK) {
-            char message[96];snprintf(message,sizeof(message),"%s at character %d",expr_status_text(error.status),error.position+1);
-            ui_message("Check Event E",message);edit->cursor=error.position;return false;
+            char message[96];snprintf(message,sizeof(message),"E: %s @%d",expr_status_text(error.status),error.position+1);
+            ui_field_error(message);edit->cursor=error.position;return false;
         }
     }
     memcpy(d->event.text,edit->text,sizeof(d->event.text));edit->active=false;return true;
@@ -25,7 +25,7 @@ void ui_event(Document *d)
             ui_field(2,"Direction",directions[d->event.direction],selected==2);
             ui_field(3,"Action",d->event.action==EVENT_STOP ? "STOP":"MARK",selected==3);
             if(edit.active)ui_inline_draw(&edit,138,53,226,C_WHITE,UI_BLUE);
-            ui_form_hint(&edit,selected==1 ? (d->kind==EQ_SECOND ? "E=0; y1 is y'":"E(x, state)=0; EXE: done"):
+            ui_form_hint(&edit,selected==1 ? (d->kind==EQ_SECOND ? "E=0; y1 is y'":"E(x, state)=0"):
                 (selected==2 ? "Crossing direction for increasing x":"LEFT/RIGHT: toggle"));
         }
         if(menu)ui_equation_menu(menu,page,variables);
@@ -92,7 +92,7 @@ static void info_row(const SolverReport *r,int index,const char **label,char *va
     case 3:snprintf(value,size,"%d",r->dim);break;
     case 4:snprintf(value,size,"%.9g",r->xmin);break;
     case 5:snprintf(value,size,"%.9g",r->xmax);break;
-    case 6:*label=r->method==ODE_RK45 ? "Initial h":"h";snprintf(value,size,"%.9g",r->h);break;
+    case 6:*label=r->method==ODE_RK45 ? "h0":"h";snprintf(value,size,"%.9g",r->h);break;
     case 7:snprintf(value,size,"%.9g",r->reltol);break;
     case 8:snprintf(value,size,"%.9g",r->abstol);break;
     case 9:*label=r->method==ODE_RK45 ? "Accepted":"Steps";snprintf(value,size,"%lu",(unsigned long)r->work.accepted);break;

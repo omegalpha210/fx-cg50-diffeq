@@ -370,7 +370,8 @@ bool trace_cache_time_window(const Document *d,ViewWindow *window)
 }
 static void cached_render(Document *d,CompiledModel *m)
 {
-    graph_backdrop(d,m);trace_cache_render(d);graph_phase_markers(d,-1);graph_event_markers(d);
+    graph_backdrop(d,m);trace_cache_render(d);graph_event_markers(d);graph_phase_markers(d,-1);
+    graph_labels(d,m);
     if(samples.has_invalid)ui_text(7,4,C_RED,"ERROR: Numerical limit");
 }
 static OdeStatus follow_point(Document *d,CompiledModel *m,const TracePoint *point,bool redraw)

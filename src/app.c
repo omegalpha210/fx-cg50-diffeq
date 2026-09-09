@@ -69,15 +69,15 @@ bool app_compile(App *a)
     compile_error_equation=-1;
     ModelError error=model_compile(&a->doc,&a->model);
     if(error.values!=ODE_OK) {
-        ui_message("Cannot calculate",ode_status_text(error.values));return false;
+        ui_field_error(ode_status_text(error.values));return false;
     }
     if(error.expression.status!=EXPR_OK) {
         char message[128],label[24];
         if(error.equation==ODE_MAX_DIM)snprintf(label,sizeof(label),"Event E (including IC)");
         else model_equation_label(&a->doc,error.equation,label,sizeof(label));
-        snprintf(message,sizeof(message),"%s: %s at character %d.",label,
+        snprintf(message,sizeof(message),"%s: %s @%d",label,
             expr_status_text(error.expression.status),error.expression.position+1);
-        ui_message("Check equation",message);
+        ui_field_error(message);
         compile_error_equation=error.equation;
         compile_error_position=error.expression.position;
         return false;
@@ -148,7 +148,7 @@ static bool inline_value(const UiInlineEdit *edit,double *out)
     double value=0;ExprStatus status=error.status;
     if(status==EXPR_OK)status=expr_eval(&program,0,NULL,0,&value);
     if(status!=EXPR_OK || !isfinite(value) || fabs(value)>1e100) {
-        ui_message("Invalid value",status==EXPR_OK ?
+        ui_field_error(status==EXPR_OK ?
             "Magnitude must be at most 1e100.":expr_status_text(status));
         return false;
     }
@@ -186,9 +186,9 @@ static bool accept_equation_edit(Document *document,int selected,const UiInlineE
     if(error.status!=EXPR_OK) {
         char message[128],label[24];
         model_equation_label(document,selected,label,sizeof(label));
-        snprintf(message,sizeof(message),"%s: %s at character %d.",label,
+        snprintf(message,sizeof(message),"%s: %s @%d",label,
             expr_status_text(error.status),error.position+1);
-        ui_message("Check equation",message);return false;
+        ui_field_error(message);return false;
     }
     snprintf(document->text[selected],EXPR_TEXT,"%s",edit->text);return true;
 }
@@ -200,8 +200,10 @@ static ScreenTransition screen_main(App *a,AppUi *ui)
         "Higher-order equation (1-9)","First-order system (1-9)",
         "Recall saved session","Save current session"};
     ui_frame("Differential Equation",NULL);
-    for(int i=0;i<6;i++)ui_field(i,labels[i],descriptions[i],i==ui->main_selected);
-    ui_help(8,174,"MENU: return to MAIN MENU, EXE: Enter",true);
+    for(int i=0;i<6;i++)ui_field_at(31+i*22+(i>=4 ? 4:0),labels[i],descriptions[i],i==ui->main_selected);
+    /* This gap is not an item: SYS -> RCL keeps the same six indices. */
+    ui_rect(10,114,365,5,C_WHITE);ui_line(10,116,374,116,UI_LINE);
+    ui_help(8,184,"MENU: return to MAIN MENU",true);
     ui_softkeys("","","","","","OPEN");dupdate();
     int key=ui_getkey().key,choice=-1;
     if(key==KEY_EXIT)return stay();
@@ -262,20 +264,14 @@ static ScreenTransition screen_dimension(App *a,AppUi *ui)
         if(key==KEY_EXIT && !edit.active)return back_screen();
         if((edit.active && (key==KEY_EXE || key==KEY_EXIT)) || key==KEY_F6) {
             if(strlen(edit.text)!=1 || edit.text[0]<'1' || edit.text[0]>'9') {
-                ui_message("Invalid dimension","Enter one integer from 1 to 9.");continue;
+                ui_field_error("Enter one integer from 1 to 9.");continue;
             }
             int dimension=edit.text[0]-'0';
             edit.active=false;
             if(key!=KEY_F6)continue;
             if(a->doc.kind!=(int)ui->dimension_kind || a->doc.dim!=dimension) {
                 if(ui->has_session && input_fingerprint(&a->doc)!=pristine_input) {
-                    ui_frame("Change Equation Size",NULL);
-                    ui_text(12,64,UI_INK,"Replace equation and ICs");
-                    ui_text(12,84,UI_INK,"with defaults?");
-                    ui_softkeys("","","","","NO","YES");dupdate();
-                    int choice;
-                    do {choice=ui_getkey().key;}while(choice!=KEY_F5 && choice!=KEY_F6 && choice!=KEY_EXIT);
-                    if(choice!=KEY_F6)continue;
+                    if(!ui_confirm("Change Equation Size","Replace equation and ICs with defaults?"))continue;
                 }
                 new_document(a,ui->dimension_kind,dimension);
                 ui->ic=(UiStageState){0};ui->parameters=(UiStageState){0};
@@ -311,7 +307,7 @@ static ScreenTransition screen_equation(App *a,AppUi *ui)
                 if(edit->active && index==*selected)
                     ui_inline_draw(edit,138,31+(row+row_offset)*22,226,C_WHITE,UI_BLUE);
             }
-            ui_form_hint(edit,"EXE: NEXT   LEFT/RIGHT: edit");
+            ui_form_hint(edit,"LEFT/RIGHT: edit");
         }
         if(menu){ui_progress(0);ui_equation_menu(menu,menu_page,variables);}
         else ui_softkeys(variables ? "VAR":"",edit->active ? "FUNC":"","","","","NEXT");
@@ -329,7 +325,7 @@ static ScreenTransition screen_equation(App *a,AppUi *ui)
                 ui_inline_insert(edit,token);menu=0;continue;
             }
             if(key>=KEY_F1 && key<=KEY_F5)continue;
-            menu=0;
+            menu=0;ui_progress(1); /* Restore stage before an inline validation error. */
         }
         if((key==KEY_F1 && !variables) || (key==KEY_F2 && !edit->active))continue;
         if(key==KEY_F1 || key==KEY_F2){menu=key==KEY_F1 ? 1:2;menu_page=0;continue;}
@@ -385,10 +381,9 @@ static ScreenTransition screen_calculate(App *a,AppUi *ui)
     ModelWork plan=model_preflight(&a->doc,&a->doc.solver);
     if(plan.status!=ODE_OK) {
         solver_report_begin(&a->doc,&a->model);solver_report_end(&a->model,plan.status);
-        ui->parameters.selected=3;ui->parameters.edit.active=false; /* h / Initial h */
-        ui_message("Calculation not started",plan.status==ODE_STEP_LIMIT ?
-            "Too many integration steps.\nIncrease h or Max Steps.":
-            (plan.status==ODE_WORK_LIMIT ? "Total calculation too large.\nIncrease h, shorten range or use fewer ICs.":ode_status_text(plan.status)));
+        ui->parameters.selected=3;ui->parameters.edit.active=false; /* h / h0 */
+        ui_field_error(plan.status==ODE_STEP_LIMIT ? "Too many steps; increase h / Max Steps":
+            (plan.status==ODE_WORK_LIMIT ? "Work limit; shorten range / fewer ICs":ode_status_text(plan.status)));
         return back_screen();
     }
     if(!app_compile(a)) {

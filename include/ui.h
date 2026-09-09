@@ -32,12 +32,15 @@ void ui_line(int x1,int y1,int x2,int y2,int color);
 void ui_softkeys(const char *a,const char *b,const char *c,const char *d,const char *e,const char *f);
 void ui_row(int row,const char *label,const char *value,bool selected);
 void ui_field(int row,const char *label,const char *value,bool selected);
+void ui_field_at(int y,const char *label,const char *value,bool selected);
 /* Caller-owned overlays take priority. Ordinary forms use logical EDIT state,
    then a useful SELECT context (NULL leaves the bottom help line blank). */
 void ui_form_hint(const UiInlineEdit *edit,const char *context);
 void ui_color_swatch(int x,int y,int color);
 void ui_short(char *out,unsigned capacity,const char *text,int width);
 void ui_message(const char *title,const char *message);
+/* Keep the current field/draft visible; acknowledgement returns to editing. */
+void ui_field_error(const char *message);
 bool ui_confirm(const char *title,const char *message);
 bool ui_save_confirm(void);
 int ui_choose(const char *title,const char *const *items,int count,int selected);

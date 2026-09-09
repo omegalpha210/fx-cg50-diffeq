@@ -19,6 +19,8 @@ void drect(int x1,int y1,int x2,int y2,int color);
 void dline(int x1,int y1,int x2,int y2,int color);
 void dpixel(int x,int y,int color);
 void dtext(int x,int y,int color,const char *text);
+enum {DTEXT_LEFT=0,DTEXT_CENTER=1,DTEXT_RIGHT=2,DTEXT_TOP=0,DTEXT_MIDDLE=1,DTEXT_BOTTOM=2};
+void dtext_opt(int x,int y,int fg,int bg,int halign,int valign,const char *text,int size);
 void dsize(const char *text,const font_t *font,int *w,int *h);
 void dnsize(const char *text,int size,const font_t *font,int *w,int *h);
 void dsetvram(uint16_t *main,uint16_t *secondary);

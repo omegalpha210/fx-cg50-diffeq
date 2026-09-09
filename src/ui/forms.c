@@ -20,7 +20,7 @@ static bool number_value(NumberEdit *e,double *out)
     double value=0;ExprStatus status=error.status;
     if(status==EXPR_OK)status=expr_eval(&p,0,NULL,0,&value);
     if(status!=EXPR_OK || !isfinite(value)) {
-        ui_message("Invalid value",expr_status_text(status));return false;
+        ui_field_error(status==EXPR_OK ? "Value must be finite.":expr_status_text(status));return false;
     }
     *out=value;return true;
 }
@@ -63,7 +63,7 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
         if(selected<0 || selected>=count){selected=count-1;edit.active=false;}
         int top=selected>6 ? selected-6:0,field=rows[selected];
         bool adaptive=d->adaptive.method==ODE_RK45;
-        const char *labels[]={"Xrange min","Xrange max",adaptive ? "Initial h":"h","Step","SF",
+        const char *labels[]={"Xrange min","Xrange max",adaptive ? "h0":"h","Step","SF",
             "Max steps","Method","RelTol","AbsTol"};
         char values[9][48];
         snprintf(values[0],48,"%.9g",d->solver.xmin);snprintf(values[1],48,"%.9g",d->solver.xmax);
@@ -76,6 +76,8 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
         for(int row=top;row<count && row<top+7;row++) {
             int item=rows[row];
             ui_field(row-top,labels[item],edit.active && row==selected ? edit.text:values[item],row==selected);
+            if(item<=1 && !(edit.active && row==selected))
+                ui_text(334,31+(row-top)*22,row==selected ? C_WHITE:UI_MUTED,"%s",d->solver_custom ? "MAN":"AUTO");
         }
         number_cursor(&edit,selected-top);
         ui_form_hint(&edit,adaptive && field==2 ? "Initial step; RK45 adjusts internally":
@@ -98,7 +100,7 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
             double value;OdeSettings before=d->solver;OdeAdaptive old=d->adaptive;
             if(!number_value(&edit,&value))continue;
             if(field>=3 && field<=5 && (value<0 || value>100000 || value!=floor(value))) {
-                ui_message("Invalid setting","Use an integer within the setting limit.");continue;
+                ui_field_error("Use an integer within the setting limit.");continue;
             }
             if(field==0)d->solver.xmin=value;
             if(field==1)d->solver.xmax=value;
@@ -112,7 +114,7 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
             if(status==ODE_OK)status=ode_adaptive_validate(&d->adaptive);
             if(status!=ODE_OK) {
                 d->solver=before;d->adaptive=old;
-                ui_message("Invalid parameter",status==ODE_BAD_STEP ? "h must be finite and > 0.":ode_status_text(status));continue;
+                ui_field_error(status==ODE_BAD_STEP ? "h must be finite and > 0.":ode_status_text(status));continue;
             }
             if(field<=1)d->solver_custom=1;
             edit.active=false;
@@ -174,7 +176,7 @@ void ui_vwindow(Document *d)
             if(selected==1)active->xmax=value;
             if(selected==2)active->xscale=value;
             if(selected==3 && !model_set_xdot(active,value)) {
-                *active=before;ui_message("Invalid Xdot","Xdot must be positive and finite.");continue;
+                *active=before;ui_field_error("Xdot must be positive and finite.");continue;
             }
             if(selected==4)active->ymin=value;
             if(selected==5)active->ymax=value;
@@ -182,7 +184,7 @@ void ui_vwindow(Document *d)
             ViewWindow *v=active;
             if(v->xmin>=v->xmax || v->ymin>=v->ymax || v->xscale<=0 || v->yscale<=0
                 || !isfinite(v->xmax-v->xmin) || !isfinite(v->ymax-v->ymin)) {
-                *active=before;ui_message("Invalid window","Require min < max and positive scales.");continue;
+                *active=before;ui_field_error("Require min < max and positive scales.");continue;
             }
             if(selected<=3)model_sync_solver_window(d);
             if(phase)d->phase_ready=1;
@@ -273,14 +275,14 @@ UiStageAction ui_initial_conditions(Document *d,UiStageState *state)
         if(edit.active) {
             int action=stage_leave(key) || key==KEY_UP || key==KEY_DOWN ? 1:number_key(&edit,event);
             if(!action)continue;
-            if(edit.limited){ui_message("Initial values",initial_values_error(IC_LIST_LENGTH));continue;}
+            if(edit.limited){ui_field_error(initial_values_error(IC_LIST_LENGTH));continue;}
             if(scalar && selected==1) {
                 InitialValues values;IcListStatus status=initial_values_parse(edit.text,&values);
-                if(status!=IC_LIST_OK){ui_message("Initial values",initial_values_error(status));continue;}
+                if(status!=IC_LIST_OK){ui_field_error(initial_values_error(status));continue;}
                 initial_values_apply(d,&values);
             } else {
                 double value;if(!number_value(&edit,&value))continue;
-                if(fabs(value)>1e100){ui_message("Initial value","Magnitude must be at most 1e100.");continue;}
+                if(fabs(value)>1e100){ui_field_error("Magnitude must be at most 1e100.");continue;}
                 if(selected)d->ic[0].y[selected-1]=value;
                 else {d->ic[0].x=value;if(scalar)for(int i=1;i<d->nic;i++)d->ic[i].x=value;}
                 if(!scalar)d->nic=1;
@@ -295,7 +297,7 @@ UiStageAction ui_initial_conditions(Document *d,UiStageState *state)
         }
         key=ui_field_complete(key,false,&selected,count);event.key=(unsigned)key;
         if(key==KEY_EXIT || key==KEY_F6) {
-            if(key==KEY_F6 && !d->nic){ui_message("Initial values","Enter y0 before continuing.");continue;}
+            if(key==KEY_F6 && !d->nic){ui_field_error("Enter y0 before continuing.");continue;}
             state->selected=selected;state->edit=edit;return stage_action(key);
         }
         ui_field_select(&edit,event,current,&selected,count);
@@ -305,6 +307,7 @@ static int choose_color(const char *title,const char *const names[6],int (*color
 {
     int selected=initial<6 ? (int)initial:0;
     for(;;) {
+        ui_rect(0,179,UI_W,19,C_WHITE); /* Only the palette owns contextual help. */
         ui_rect(71,42,242,139,UI_INK);ui_rect(74,45,236,133,C_WHITE);
         ui_text(84,53,UI_INK,"%s",title);
         for(int i=0;i<6;i++) {
@@ -314,7 +317,7 @@ static int choose_color(const char *title,const char *const names[6],int (*color
             ui_rect(x,y,48,22,color((unsigned)i));
         }
         ui_text(84,151,UI_INK,"%s",names[selected]);
-        ui_help(84,165,"EXE: select   EXIT: cancel",false);
+        ui_help(84,165,"EXE: SELECT   EXIT: cancel",false);
         ui_softkeys("","","","","","");dupdate();
         int key=ui_getkey().key;
         if(key==KEY_EXIT)return -1;
@@ -334,7 +337,9 @@ void ui_output(Document *d)
         for(int row=0;row<7 && page*7+row<d->dim;row++) {
             int index=page*7+row;char label[20];model_variable_label(d,index,label,sizeof(label));
             ui_field(row,label,d->enabled&(1u<<index) ? "ON":"OFF",index==selected);
-            ui_color_swatch(326,32+row*22,graph_palette_color(model_color(d,0,index)));
+            /* A curve preview keeps its chosen color even when output is OFF. */
+            ui_rect(326,30+row*22,34,15,C_WHITE);
+            ui_rect(329,36+row*22,28,2,graph_palette_color(model_color(d,0,index)));
         }
         ui_form_hint(NULL,"LEFT/RIGHT: ON/OFF toggle, F3: COLOR");
         ui_softkeys("INIT","","COLOR","","","DONE");dupdate();

@@ -10,9 +10,9 @@
 DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식의 수치해를
 컬러 그래프·기울기장·TRACE·G-Solve·표로 살펴보고, 2변수 시스템의 위상을 분석할 수 있습니다.
 
-**공개 베타 · v0.12.0-beta.2 · [MIT 라이선스](LICENSE)**
+**공개 베타 · v0.12.0-beta.3 · [MIT 라이선스](LICENSE)**
 
-**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.2)**
+**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.3)**
 · [전체 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [버그 신고](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -35,7 +35,7 @@ DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식�
 
 | 3. 계산 설정 | 4. 그래프 탐색 |
 |---|---|
-| ![RK45, Initial h=0.1, RelTol=1e-6, AbsTol=1e-9인 Parameters](docs/images/solver-parameters.png) | ![기울기장을 끈 상태의 magenta와 cyan 해 곡선](docs/images/graph-solution.png) |
+| ![RK45, h0=0.1, RelTol=1e-6, AbsTol=1e-9인 Parameters](docs/images/solver-parameters.png) | ![기울기장을 끈 상태의 magenta와 cyan 해 곡선](docs/images/graph-solution.png) |
 | 적분 구간, h와 기울기장 밀도를 설정합니다. | GRAPH를 눌러 계산한 뒤 이동·확대·TRACE·표를 사용합니다. |
 
 단계 이동은 **F6 NEXT**, 계산은 **F6 GRAPH**입니다. 일반 필드를 편집하지 않고
@@ -86,7 +86,7 @@ N1(빨강)은 `f1=0`, N2(파랑)는 `f2=0`입니다. **F4 VIEW → F1 TIME**으�
 | **Dormand–Prince RK45** | embedded local error에 따른 adaptive h | non-stiff 해의 변화에 맞춰 간격 자동 조절 |
 
 Parameters 세 번째 **Method** 행에서 LEFT/RIGHT로 전환합니다. 계산은 GRAPH에서 시작합니다.
-RK45는 **Initial h / RelTol / AbsTol / Max steps**를 표시하며 기본값은 .1 / 1e-6 / 1e-9 / 20000입니다.
+RK45는 **h0 / RelTol / AbsTol / Max steps**를 표시하며 기본값은 .1 / 1e-6 / 1e-9 / 20000입니다.
 Max steps는 거절을 포함한 시도 횟수입니다. Step은 숨기고 SF는 scalar 1차에서만 표시합니다.
 두 방식이 h 값을 공유하며 tolerance와 숨겨진 Step을 보존합니다. INIT는 Method를 유지하고
 해당 방식의 설정을 초기화합니다. v3~v8 저장은 RK4, v9는 저장된 Method로 읽으며 모든 구버전의 Event는 OFF입니다.
@@ -169,7 +169,7 @@ Parameters **F3 V-WIN**에서 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax
 
 ## 계산기에 설치하기
 
-1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.2)를 엽니다.
+1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.3)를 엽니다.
 2. **DIFFEQ.g3a**를 받습니다. 다운로드 확인용 `SHA256SUMS.txt`도 제공됩니다.
 3. fx-CG50을 USB로 연결하고 USB Flash 모드를 선택한 뒤 컴퓨터에서 계산기 드라이브를 엽니다.
 4. `DIFFEQ.g3a`를 드라이브 **최상위**에 복사합니다. `@MainMem` 폴더 안에 넣지 않습니다.
@@ -209,7 +209,14 @@ INIT는 노란 배경/검정 글씨로 해당 화면의 설정만 초기화합�
 유지하고, V-WIN은 창의 기하 설정, Graph Settings는 Grid/Label/기울기장 스타일·색,
 Output은 종속변수 ON/OFF·색을 초기화합니다. ADV는 검정 배경/흰 글씨이며 계산 없이 유틸리티를 엽니다.
 SELECT 목록만 끝에서 순환하고 편집 커서·Graph/TRACE/Phase·Table 이동은 기존 동작을 유지합니다.
-도움말 EXE는 파랑, Main의 MENU만 빨강입니다.
+Main은 빨간 MENU 안내만 남기며 SYS/RCL 사이에 작은 구분선을 표시합니다. 단순 OPEN/NEXT/GRAPH와
+같은 EXE 안내는 생략하고, EDIT·palette·G-Solve 선택에 필요한 EXE는 normal-weight 파랑으로
+한 번씩 그립니다. Solver 범위의 기존 공통 상태를 **AUTO/MAN**, RK45 초기 step을 **h0**로
+표시합니다(RK4는 h). Graph의 작은 **TIME/PHASE**, Event 활성 시 **EVT**와 overlay 배치를
+정리했습니다. 선택 곡선은 기존 2px·blink를 유지합니다. Output은 OFF에서도 선택 색의 짧은
+선을 보여줍니다. 입력 오류는 field/draft를 보존하고 계산 END는 Graph/Table에 남깁니다.
+SAVE/load/resize/convert 확인은 F5 NO/EXIT, F6 YES/EXE이며 opening HOLD를 무시합니다.
+[UI 규칙·전체 화면/F-key audit](docs/UI_CONVENTIONS.md).
 
 [갱신한 Main·SAVE·입력 화면 모음](docs/ui-review/workflow-overview.png)
 

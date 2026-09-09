@@ -18,6 +18,8 @@ bool graph_point(const ViewWindow *v,double x,double y,int *px,int *py);
 bool graph_follow_window(ViewWindow *v,double x,double y);
 void graph_backdrop(Document *d,CompiledModel *m);
 void graph_event_markers(const Document *d);
+/* Small, read-only view/event/Phase legends; never a reserved plot header. */
+void graph_labels(const Document *d,const CompiledModel *m);
 void graph_solution_segment(const ViewWindow *v,double x0,double y0,double x1,double y1,int color);
 bool graph_zoom(ViewWindow *v,double factor,double dx,double dy);
 int graph_color(int family,int variable,int dimension);

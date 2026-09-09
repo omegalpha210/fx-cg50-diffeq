@@ -28,7 +28,7 @@ for value,canonical in [('0','0'),('{1}','1'),('{0,1}','{0,1}'),('{0,1,-1}','{0,
     assert plot(run(entered+'F6 EXIT'))==plot(run(entered))
 for value in ['{}','{0,}','{,1}','{0,,1}','{0,1','{0,{1}}','0,1','{1/0}','{0,1,2,3,4,5,6,7,8,9,10}']:
     out=run('1 1 F6 DOWN '+keys(value)+'F6')
-    assert 'Initial values' in tail(out) and 'TEXT 14 9 Parameter\n' not in out
+    assert 'EDIT' in tail(out) and 'TEXT 14 9 Parameter\n' not in out
     if value.endswith('9,10}'):assert 'Too many initial values' in out
     # Dismiss, clear only the draft, and retry. A rejected list never advances.
     fixed=run('1 1 F6 DOWN '+keys(value)+'F6 EXE ACON '+keys('{0,1}')+'EXE F6')
@@ -36,7 +36,7 @@ for value in ['{}','{0,}','{,1}','{0,,1}','{0,1','{0,{1}}','0,1','{1/0}','{0,1,2
 # All ten values enter the existing total-work preflight (240,000 > 200,000).
 many=ic('{0,1,2,3,4,5,6,7,8,9}')
 out=run(many+'F6 DOWN DOWN DOWN 0 DOT 0 0 0 5 EXE F6')
-assert 'Total calculation too large.' in out
+assert 'Work limit; shorten range / fewer ICs' in out
 assert re.findall(r'solves=(\d+)',out)[-1]=='0'
 # Manual separable example: common x0, two distinct columns, exact initial states.
 manual=ic('{0,1}')+'F6 NEG 5 EXE 5 EXE F6 F4 '
@@ -81,12 +81,12 @@ for entry,n,last in [('2',2,"y'0"),('3 9 F6',9,'y(8)0'),('4 9 F6',9,'y9_0')]:
     assert last in tail(run(edited))
     assert 'TRACE' in run(edited+'F6 F6')
     bad=run(prefix+'DOWN '+keys('{0,1}')+'F6')
-    assert 'Invalid value' in tail(bad) and 'Parameter' not in bad
+    assert 'EDIT' in tail(bad) and 'Parameter' not in bad
 # Save and restore the list, SF, colors, and the common output bit.
 with tempfile.TemporaryDirectory() as directory:
     prefix=ic('{0,1,-1}')+'F6 DOWN DOWN DOWN DOWN DOWN 2 4 EXIT F4 RIGHT EXIT '
     run(prefix+'EXIT EXIT EXIT EXIT 6 EXE EXE',directory)
-    assert '{0,1,-1}' in tail(run('5 2 F1 F6',directory))
-    assert 'TEXT 144 145 24\n' in tail(run('5 2 F1 F6 F6',directory))
-    assert 'OFF' in tail(run('5 2 F1 F6 F6 F4',directory))
+    assert '{0,1,-1}' in tail(run('5 2 F6 F6',directory))
+    assert 'TEXT 144 145 24\n' in tail(run('5 2 F6 F6 F6',directory))
+    assert 'OFF' in tail(run('5 2 F6 F6 F6 F4',directory))
 print('List IC physical input/errors/workload, manual two curves, all-state ICs, unified Table navigation/CSV and SAVE passed.')

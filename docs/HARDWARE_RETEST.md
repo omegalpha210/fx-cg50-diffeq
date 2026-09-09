@@ -1,3 +1,49 @@
+# UI consistency priority retest — v0.12.0-beta.3
+
+**HARDWARE TEST REQUIRED — all36 new cases pending.** Record OS/version, release
+SHA256, exact keys, expected/observed screen, timing and save-file behavior.
+
+1. Main MENU-only hint.
+2. Main MENU red.
+3. Equation no generic EXE NEXT hint.
+4. IC no generic EXE NEXT hint.
+5. Parameters no redundant EXE hint.
+6. EDIT blue EXE normal weight.
+7. Color chooser EXE normal weight.
+8. All retained EXE glyph thickness matches normal text.
+9. RK4 h.
+10. RK45 h0.
+11. AUTO indicator follows existing window policy.
+12. MAN indicator preserves direct range commits.
+13. Main SYS/RCL divider contrast.
+14. Numeric 1–6 unaffected.
+15. TIME label.
+16. PHASE label.
+17. EVT only when enabled.
+18. TIME+EVT collision and END status.
+19. PHASE+EVT collision and N1/N2 legend.
+20. TRACE cursor/selected-curve/label/footer priority.
+21. G-Solve prompt and bottom-edge result pointer priority.
+22. Event squares centered on curve; equilibrium diamonds remain visible.
+23. Selected2px curve visibility/blink, including Black↔Blue.
+24. Output horizontal color line preview.
+25. Output OFF retains color preview.
+26. Field-inline input error vs plot/table END vs critical confirmation hierarchy.
+27. SELECT highlight vs EDIT caret clarity.
+28. Semantic F-key colors in every screen/slot.
+29. All INIT yellow/black with separate reset scopes.
+30. ADV black/white; EVENT/INFO no solve or I/O.
+31. V-WIN access only Parameters/Graph.
+32. 1/3,2/3,3/3 alignment; submenus no progress.
+33. SAVE/RCL/load/resize/convert fresh F5 NO/F6 YES, EXE/EXIT, opening HOLD ignored; native migration unchanged.
+34. MENU/Fugue reentry and session retention.
+35. LCD contrast: divider, AUTO/MAN, h0, view labels, lines and blue EXE.
+36. Key-repeat responsiveness and graph/menu navigation soak.
+
+Earlier milestone records below are historical.
+
+---
+
 # UI/UX polish priority retest — v0.12.0-beta.2
 
 **HARDWARE TEST REQUIRED — all36 new cases pending.** Record OS/version, release

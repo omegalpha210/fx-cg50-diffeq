@@ -25,7 +25,7 @@ assert metrics(run(event))==metrics(run(event+('RIGHT LEFT '*100)))
 assert 'FUNC' in bar(run(event+'DOWN LEFT')) and 'VAR' not in bar(run(event+'DOWN LEFT'))
 draft=event+'DOWN A:SUB SUB 1 0 '
 assert tail(run(draft+'F2 EXIT')).count('y-10')>=1
-assert 'Check Event E' in run(draft+'ADD EXE')
+assert 'E: Syntax error' in run(draft+'ADD EXE')
 for entry in ['2','3 9 F6','4 9 F6']:
     screen=entry+' F6 F6 F2 F1 DOWN LEFT '
     assert bar(run(screen))[:2]==['VAR','FUNC']
@@ -55,9 +55,9 @@ for method in ['', 'DOWN DOWN RIGHT ']:
     # Explicit SAVE/RCL; v10 config survives, runtime report does not.
     with tempfile.TemporaryDirectory() as directory:
         run(setting+'F6 EXIT '+('EXIT '*5)+'6 EXE EXE',directory)
-        loaded=run('5 2 F1 F6 F6 F2 F1',directory)
+        loaded=run('5 2 F6 F6 F6 F2 F1',directory)
         assert all(x in tail(loaded) for x in ['y-10','RISING','STOP','ON'])
-        assert 'No solver run yet' in run('5 2 F1 F6 F6 F2 F2',directory)
+        assert 'No solver run yet' in run('5 2 F6 F6 F6 F2 F2',directory)
 # INIT moved into ADV and retains the chosen method.
 reset=tail(run(params+'DOWN DOWN RIGHT DOWN 2 EXIT F1'))
 assert 'RK45' in reset and 'TEXT 144 101 0.1\n' in reset

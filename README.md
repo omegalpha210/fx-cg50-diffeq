@@ -10,9 +10,9 @@ Solve, graph, and explore ordinary differential equations on your calculator.
 DIFFEQ is a native **fx-CG50 add-in** with colorful solution curves, slope fields,
 TRACE, G-Solve, numerical tables, and phase analysis for two-variable systems.
 
-**Public Beta · v0.12.0-beta.2 · [MIT License](LICENSE)**
+**Public Beta · v0.12.0-beta.3 · [MIT License](LICENSE)**
 
-**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.2)**
+**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.3)**
 · [All releases](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [Report a bug](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -36,7 +36,7 @@ Open any image for its full-size view, especially on a phone.
 
 | 3. Choose solver settings | 4. Draw and explore |
 |---|---|
-| ![RK45 selected with Initial h=0.1, RelTol=1e-6 and AbsTol=1e-9](docs/images/solver-parameters.png) | ![Magenta and cyan solution curves with slope field disabled](docs/images/graph-solution.png) |
+| ![RK45 selected with h0=0.1, RelTol=1e-6 and AbsTol=1e-9](docs/images/solver-parameters.png) | ![Magenta and cyan solution curves with slope field disabled](docs/images/graph-solution.png) |
 | Choose RK4 or RK45, its settings, and optional field density. | Press GRAPH. Pan, zoom, trace, or open a table. |
 
 Headers show **1/3 → 2/3 → 3/3**. Use EXIT to go back from IC or Parameters.
@@ -91,7 +91,7 @@ range. See [numerical methods and bounds](docs/PHASE_NUMERICS.md).
 | **Dormand–Prince RK45** | Adaptive h with embedded local error estimate | Adjust the step automatically as a non-stiff solution changes |
 
 In Parameters, select **Method** and press LEFT/RIGHT. Switching does not start
-calculation. RK45 shows **Initial h**, **RelTol**, **AbsTol**, and **Max steps**;
+calculation. RK45 shows **h0**, **RelTol**, **AbsTol**, and **Max steps**;
 Step is hidden. Defaults are .1, 1e-6, 1e-9 and 20000 attempts, including rejected
 trials. SF remains first-order-only. Both methods share the saved h value;
 tolerances and hidden Step persist. INIT retains Method and resets its settings.
@@ -182,7 +182,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 ## Install on your calculator
 
-1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.2).
+1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.3).
 2. Download **DIFFEQ.g3a**. `SHA256SUMS.txt` is available to check your download.
 3. Connect the fx-CG50 by USB, select USB Flash mode, and open its storage drive.
 4. Copy `DIFFEQ.g3a` to the drive's **root directory**, outside `@MainMem`.
@@ -222,7 +222,17 @@ retains Method and Event; V-WIN resets window geometry; Graph Settings resets
 Grid/Label/field style/color; Output resets dependent outputs/colors. ADV is black
 with white text and opens utilities without calculating. SELECT lists wrap at the
 ends; editor cursors, Graph/TRACE/Phase and Table navigation retain their behavior.
-Contextual EXE text is blue; only Main's MENU token is red.
+Main shows only MENU help (red MENU), with a subtle SYS/RCL divider. Generic
+EXE OPEN/NEXT/GRAPH hints are omitted; retained EDIT, palette and G-Solve selection
+hints use the same normal-weight blue EXE, with no duplicate glyph overdraw.
+Solver range rows show **AUTO/MAN** from their existing shared state; RK45 uses
+**h0** for its initial step, while RK4 retains h. Tiny **TIME/PHASE** and enabled-only
+**EVT** labels clarify the graph view. Compact labels and result footers remain
+readable above curves/markers; the existing 2px selected-curve blink is preserved.
+Output previews use a short colored line, including when OFF. Input errors keep
+the field/draft visible; numerical END stays on Graph/Table. Critical SAVE/load/
+resize/convert confirmations share F5 NO/EXIT and F6 YES/EXE, ignoring opening HOLD.
+[UI conventions and full screen/key audit](docs/UI_CONVENTIONS.md).
 
 [Updated Main, SAVE and workflow screens](docs/ui-review/workflow-overview.png)
 

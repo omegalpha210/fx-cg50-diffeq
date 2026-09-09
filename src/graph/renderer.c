@@ -136,16 +136,29 @@ void graph_backdrop(Document *d,CompiledModel *m)
     slope_field(d,m,false);
     graph_phase_layers(d,m);
 }
+void graph_labels(const Document *d,const CompiledModel *m)
+{
+    graph_phase_labels(d,m);
+    char text[16];int width;
+    snprintf(text,sizeof(text),"%s%s",d->view.phase ? "PHASE":"TIME",d->event.enabled ? " EVT":"");
+    dsize(text,NULL,&width,NULL);
+    ui_rect(UI_W-8-width,2,width+4,13,C_WHITE);
+    ui_text(UI_W-6-width,4,UI_MUTED,"%s",text);
+}
 static void graph_status(GraphResult result)
 {
-    if(result.status==ODE_EVENT_STOP){ui_text(7,4,UI_INK,"END: Event");return;}
     if(result.status!=ODE_OK) {
-        ui_rect(0,0,384,18,C_WHITE);
-        if(result.status==ODE_HAS_INVALID)
-            ui_text(7,4,C_RED,"ERROR: %s",ode_status_text(result.invalid));
+        /* Termination is below corner legends, never on top of VIEW/EVT/N1. */
+        char text[96],visible[96];
+        if(result.status==ODE_EVENT_STOP)snprintf(text,sizeof(text),"END: Event");
+        else if(result.status==ODE_HAS_INVALID)
+            snprintf(text,sizeof(text),"END: %s",ode_status_text(result.invalid));
         else if(result.failed_family>=0)
-            ui_text(7,4,C_RED,"Partial: %s (IC %d)",ode_status_text(result.status),result.failed_family+1);
-        else ui_text(7,4,C_RED,"Partial: %s",ode_status_text(result.status));
+            snprintf(text,sizeof(text),"Partial: %s (IC %d)",ode_status_text(result.status),result.failed_family+1);
+        else snprintf(text,sizeof(text),"Partial: %s",ode_status_text(result.status));
+        ui_short(visible,sizeof(visible),text,UI_W-14);
+        int width;dsize(visible,NULL,&width,NULL);ui_rect(5,18,width+4,15,C_WHITE);
+        ui_text(7,20,result.status==ODE_EVENT_STOP ? UI_INK:C_RED,"%s",visible);
     }
 }
 static bool captured_point(double x,const double *y,uint32_t step,void *ctx)
@@ -167,7 +180,8 @@ GraphResult graph_render(Document *d,CompiledModel *m,bool first)
     }
     bool system=model_phase_supported(d);
     if(system && trace_cache_matches(d)) {
-        graph_backdrop(d,m);trace_cache_render(d);graph_phase_markers(d,-1);graph_event_markers(d);
+        graph_backdrop(d,m);trace_cache_render(d);graph_event_markers(d);graph_phase_markers(d,-1);
+        graph_labels(d,m);
         GraphResult cached=trace_cache_result();graph_status(cached);return cached;
     }
     solver_report_begin(d,m);
@@ -197,8 +211,13 @@ GraphResult graph_render(Document *d,CompiledModel *m,bool first)
     }
     if(capture)trace_capture_end(result.status==ODE_OK || result.status==ODE_HAS_INVALID || result.status==ODE_EVENT_STOP);
     solver_report_end(m,result.status==ODE_HAS_INVALID ? result.invalid:result.status);
+    /* Paint order: grid/axes -> fields/nullclines -> trajectories -> Event
+       squares -> EQPT diamonds -> legends/status. UI interaction highlights
+       and pointers follow; active result text and softkeys are painted last.
+       Cached and freshly integrated plots use the same marker order. */
     graph_event_markers(d);
     graph_phase_markers(d,-1);
+    graph_labels(d,m);
     graph_status(result);
     ui_softkeys("TRACE","ZOOM","V-WIN",system ? "VIEW":"TABLE",system && d->view.phase ? "ANLYS":"G-SLV","PREV");
     return result;
@@ -218,7 +237,7 @@ void graph_event_markers(const Document *d)
         /* Square outline/orange center distinguishes EQPT diamonds and cursor. */
         for(int dx=-3;dx<=3;dx++)for(int dy=-3;dy<=3;dy++)
             if(x+dx>=PLOT_LEFT && x+dx<=PLOT_RIGHT && y+dy>=PLOT_TOP && y+dy<=PLOT_BOTTOM)
-                dpixel(x+dx,y+dy,dx==-3 || dx==3 || dy==-3 || dy==3 ? C_BLACK:C_RGB(31,15,0));
+                dpixel(UI_X+x+dx,UI_Y+y+dy,dx==-3 || dx==3 || dy==-3 || dy==3 ? C_BLACK:C_RGB(31,15,0));
     }
 }
 OdeStatus graph_highlight_curve(Document *d,CompiledModel *m,int family,int variable)

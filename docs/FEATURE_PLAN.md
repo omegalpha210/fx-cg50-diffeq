@@ -1,5 +1,11 @@
 # fx-CG50 feature plan
 
+Current milestone: v0.12.0-beta.3 UI consistency audit, complete in source/host/SH
+validation. [Rules and evidence](UI_CONVENTIONS.md). All36 new device retests are
+pending. After hardware dogfooding, review v1.0.0-rc.1 readiness; do not add a new
+numerical feature or automatically declare v1.0. The historical implementation
+plan below contains superseded controls; USER_GUIDE is the current key map.
+
 Reference analysis was completed after the verified minimal G3A milestone and was expanded into the screen-level `UI_REFERENCE_AUDIT.md`. The A/B baseline and C extensions are complete in code and host validation for 0.1.0. User hardware tests confirmed baseline 1st/2nd calculation and solution graphs; the UI reference build requires the focused retest in `HARDWARE_RETEST.md`.
 
 ## A. Reproduce original behavior

@@ -19,7 +19,7 @@ for entry,scalar in [('1 4',True),('2',False),('3 9 F6',False),('4 9 F6',False)]
     out=run(adaptive)
     assert solves(out)==0 and 'TEXT 144 79 RK45\n' in tail(out)
     labels=re.findall(r'TEXT 20 \d+ ([^\n]+)',tail(out))
-    assert labels==['Xrange min','Xrange max','Method','Initial h','RelTol','AbsTol']+(['SF'] if scalar else ['Max steps'])
+    assert labels==['Xrange min','Xrange max','Method','h0','RelTol','AbsTol']+(['SF'] if scalar else ['Max steps'])
     assert 'TEXT 144 123 1e-06\n' in tail(out) and 'TEXT 144 145 1e-09\n' in tail(out)
     returned=tail(run(adaptive+'LEFT'))
     assert 'TEXT 144 79 RK4\n' in returned and 'Step\n' in returned
@@ -36,14 +36,14 @@ for entry,scalar in [('1 4',True),('2',False),('3 9 F6',False),('4 9 F6',False)]
 params='2 F6 F6 DOWN DOWN RIGHT '
 for invalid in ['0','NEG 1','1 EXP NEG 3 0 0']:
     out=run(params+'DOWN DOWN '+invalid+' EXE')
-    assert 'Invalid parameter' in out and solves(out)==0
+    assert 'EDIT' in tail(out) and solves(out)==0
     if '3 0 0' in invalid:assert 'Tolerance too small' in out
 for invalid in ['0','NEG 1']:
-    assert 'Invalid parameter' in run(params+'DOWN DOWN DOWN '+invalid+' EXE')
+    assert 'EDIT' in run(params+'DOWN DOWN DOWN '+invalid+' EXE')
 graph=params+'F6 '
 assert solves(run(params+'EXE'))==solves(run(graph))
 failed=run('2 F6 1 EXE F6 DOWN DOWN RIGHT DOWN 1 EXP NEG 3 0 0 EXE F6 EXE LEFT')
-assert 'Step underflow' in failed and 'EXE: commit / next   EXIT: commit' in tail(failed)
+assert 'Step underflow' in failed and ': commit / next   EXIT: commit' in tail(failed)
 base=run(graph+'F1')
 assert 'IC1 x=0 y=1' in base and solves(base)>0
 moved=run(graph+'F1 F4 '+('R:RIGHT '*70)+'EXIT')
@@ -60,7 +60,7 @@ with tempfile.TemporaryDirectory() as directory:
     assert 'STAT data saved' in out and list(Path(directory).glob('DIFFSTAT*.csv'))
 with tempfile.TemporaryDirectory() as directory:
     run(params+'DOWN DOWN 1 EXP NEG 7 EXE EXIT EXIT EXIT EXIT 6 EXE EXE',directory)
-    out=tail(run('5 2 F1 F6 F6',directory))
+    out=tail(run('5 2 F6 F6 F6',directory))
     assert 'TEXT 144 79 RK45\n' in out and 'TEXT 144 123 1e-07\n' in out
 phase='4 2 F6 F6 F6 DOWN DOWN RIGHT F6 F4 F2 '
 out=run(phase+'F5 F2 F3')

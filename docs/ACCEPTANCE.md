@@ -1,3 +1,29 @@
+# UI consistency acceptance — v0.12.0-beta.3
+
+Baseline development9e64365 / public4dcb2d6. Full screen/F-key inventory, installed
+gint font reproduction, implementation and current rules: [UI_CONVENTIONS](UI_CONVENTIONS.md).
+
+- **42/42 host/UBSan groups PASS**,31.06s development final; all prior41 retained.
+- Semantic F-key colors across all slots, normal single-painted EXE glyphs,
+  removed redundant help, Main grouping, h0/AUTO/MAN and Output line previews.
+- Field-preserving validation and consistent F5 NO/F6 YES confirmations.
+- TIME/PHASE/EVT and shared cached/fresh labels; Event marker screen offset fixed;
+  TRACE/G-Solve/Phase overlays remain readable with existing2px/blink policy.
+- All numerical/parser/ODE, Event algorithms, storage and migration preserved.
+  Graph changes are painting/layering only; no new state or trajectory allocation.
+- Clean27-unit SH compile/link, zero warnings,13/13 package checks,236200-byte G3A.
+- text206816,data704,BSS71952,max ui_graph2568; data/BSS0, maxframe−4 versus beta.2.
+- 24-screen [visual audit](ui-review/consistency-overview.png), refreshed workflow
+  and existing gallery; installed-font ink masks/paint counts/widths and handler tests.
+
+**HARDWARE TEST REQUIRED:** all36 new items in [HARDWARE_RETEST](HARDWARE_RETEST.md).
+Exact public commit/tag, independent candidate/exact-tag runs and downloaded asset
+verification belong to Release VALIDATION.md; host frames do not prove device behavior.
+
+Earlier milestone records below are historical.
+
+---
+
 # UI/UX polish acceptance — v0.12.0-beta.2
 
 Baseline development12877bc, public9b4ac21 / v0.12.0-beta.1. The installed tools,

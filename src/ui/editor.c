@@ -135,7 +135,7 @@ void ui_inline_draw_cursor(const UiInlineEdit *edit,int x,int y,int width,int fo
         visible[strlen(visible)-1]=0;
     }
     ui_rect(x-3,y-3,width+5,18,background);ui_text(x,y,foreground,"%s",visible);
-    dnsize(visible,edit->cursor-start,NULL,&w,NULL);
+    w=0;if(edit->cursor>start)dnsize(visible,edit->cursor-start,NULL,&w,NULL);
     if(cursor)ui_line(x+w,y-1,x+w,y+12,foreground);
 }
 bool ui_edit(const char *title,char *text,unsigned capacity,int position)
@@ -154,7 +154,7 @@ bool ui_edit(const char *title,char *text,unsigned capacity,int position)
             ui_text(12,54+row*16,UI_INK,"%s",line);
         }
         int row=edit.cursor/40,w=0;
-        dnsize(edit.text+row*40,edit.cursor%40,NULL,&w,NULL);
+        if(edit.cursor%40)dnsize(edit.text+row*40,edit.cursor%40,NULL,&w,NULL);
         ui_line(12+w,53+row*16,12+w,65+row*16,UI_TEAL);
         ui_text(8,151,UI_MUTED,"Use * for products; functions need ( ).");
         ui_text(8,169,UI_MUTED,"Radians.  %d / %u characters",(int)strlen(edit.text),limit-1);

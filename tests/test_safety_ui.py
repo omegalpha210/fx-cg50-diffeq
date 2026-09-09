@@ -51,7 +51,7 @@ for h in ['0','NEG 1']:
     assert 'h must be finite and > 0.' in out and solves(out)==0
 for h in ['0 DOT 0 0 0 1','1 EXP NEG 3 0 0']:
     out=run(params+h+' EXE F6 EXE')
-    assert 'Too many integration steps.' in out and 'Increase h or Max Steps.' in out
+    assert 'Too many steps; increase h / Max Steps' in out
     assert 'TEXT 14 9 Parameter\n' in tail(out) and solves(out)==0
 assert solves(run(params+'0 DOT 0 0 1 EXE F6'))>0
 assert solves(run('2 F6 F6 0 EXE 0 DOT 0 1 EXE DOWN 0 DOT 0 0 0 1 EXE F6'))>0

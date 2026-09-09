@@ -1,4 +1,4 @@
-# DIFF EQ 사용 설명서 — v0.12.0-beta.2
+# DIFF EQ 사용 설명서 — v0.12.0-beta.3
 
 기본 RK4와 TRACE·G-Solve·10개 초기값·SYS 2D Phase 기능을 보존하면서
 Main/SAVE 확인, INIT/ADV, 순환 selector와 3단계 진행 표시를 정리했습니다.
@@ -64,12 +64,12 @@ ADV·FUNC/VAR 등의 submenu와 Graph/보조 화면에는 progress를 표시하�
 보조 화면 EXIT는 진입 단계·선택 행으로 복귀합니다. SET은 중간 메뉴 없이 Graph settings를 바로 엽니다. Private Constants는 제거되었습니다. On/Off는 LEFT/RIGHT로 전환하고 EXE로 DONE을 실행합니다.
 PREV는 magenta, NEXT는 cyan, V-WIN은 orange, SET은 bright green입니다.
 실제 계산을 실행하는 F6 GRAPH는 red입니다. 모든 INIT는 Yellow/Black, ADV는 Black/White입니다.
-도움말의 EXE 토큰은 Blue이고, 나머지 도움말 색은 유지합니다. Main의 첫 MENU 토큰만 Red입니다.
+단순 OPEN/NEXT/GRAPH와 같은 EXE 안내는 표시하지 않습니다. EDIT commit, palette SELECT, G-Solve 곡선 SELECT에 남긴 EXE는 한 번만 그리는 normal-weight Blue이고, 나머지 도움말 색은 유지합니다. Main의 첫 MENU 토큰만 Red입니다.
 문자 위치는 실제 font metrics를 사용하며 EDIT의 기존 확정/이동 semantics는 같습니다.
 
 Graph 기본 F6 PREV는 기존 magenta 스타일이며 Solver Parameters로 돌아갑니다.
 TRACE는 별도 BACK 없이 EXIT로 닫습니다. ZOOM/G-Solve의 기존 bar를 유지하며, 하위 메뉴를 EXIT로 닫으면 PREV가 복원됩니다.
-Main 하단은 `MENU: return to MAIN MENU, EXE: Enter`이며 MENU의 실제 계산기 Main Menu 복귀 동작은 동일합니다.
+Main 하단은 `MENU: return to MAIN MENU`이며 MENU의 실제 계산기 Main Menu 복귀 동작은 동일합니다.
 EXIT 순서는 Graph → Parameters → IC → Equation → subtype/order → Main입니다.
 2nd 및 Main에서 RCL로 연 Equation은 Main으로 돌아갑니다. Main의 EXIT는 Main에 머뭅니다.
 계산기 메뉴에는 **MENU**로 이동합니다. 같은 실행으로 복귀하면 현재 입력을 유지합니다.
@@ -78,13 +78,14 @@ EXIT 순서는 Graph → Parameters → IC → Equation → subtype/order → Ma
 Main의 숫자 **1/2/3/4/5/6**은 각각 1st/2nd/N-th/SYS/RCL/SAVE입니다. F1~F5는 비어 있습니다.
 UP/DOWN으로 선택한 항목은 EXE 또는 **F6 OPEN**으로 엽니다. 숫자 shortcut도 같은 handler를 사용합니다.
 진짜 새 실행은 첫 항목, 내부 복귀는 기존 selector를 유지합니다. Main 하단은
-`MENU: return to MAIN MENU, EXE: Enter`이며 첫 MENU는 Red, EXE는 Blue입니다.
+`MENU: return to MAIN MENU`이며 첫 MENU는 Red입니다.
+SYS/RCL 사이에는 작은 간격과 구분선이 있고 추가 선택 행은 없습니다.
 일반 선택 메뉴는 UP/DOWN, EXE 또는 F6 OPEN, 숫자 shortcut을 지원합니다.
 N-th/SYS 개수는 1~9 한 자리 정수를 입력한 뒤 첫 EXE로 확정하고 **두 번째 EXE 또는 F6 OPEN**으로 엽니다.
 EXIT 편집 확정은 화면에 머뭅니다. 잘못된 값은 오류를 표시합니다.
 새 기본 문서의 첫 크기 지정과 같은 크기 재진입은 확인창이 없습니다. 실제 식·IC 등의
 사용자 데이터가 있는 문서의 크기 변경은 Change Equation Size를 표시합니다.
-**F5 NO 또는 EXIT**는 기존 데이터를 유지하고, **F6 YES**만 기본 식·IC로 교체합니다.
+**F5 NO 또는 EXIT**는 기존 데이터를 유지하고, **F6 YES 또는 EXE**는 기본 식·IC로 교체합니다. 확인창을 연 HOLD는 무시합니다.
 
 계산 중 EXIT 또는 AC로 중단 요청을 보낼 수 있습니다. 마지막으로 수락된 점까지의 결과가 남으며 중단 상태가 표시됩니다.
 
@@ -174,9 +175,9 @@ IC set을 뜻하지 않습니다. 고차/SYS의 새 UI는 한 벡터만 받으�
 
 **Solver Parameters**의 x min/max는 적분 구간입니다. 처음에는 `ceil(V-Window Xmin)`과
 `floor(V-Window Xmax)`이며 사용자가 V-Window/Graph pan/zoom을 조작하면 따라갑니다. TRACE runtime 추적은 이 자동 범위도 변경하지 않습니다. 직접 편집한 범위는 user override로
-유지됩니다. **SF(0~100, 기본값 12)는 scalar 1차 네 모드에서만 Parameters에 표시합니다.**
+유지됩니다. 범위 전체의 기존 상태를 두 행의 **AUTO/MAN**으로 표시합니다. 직접 확정하면 값이 같아도 MAN이며, INIT는 AUTO를 복구합니다. 편집 중인 행의 상태 표시는 잠시 숨깁니다. **SF(0~100, 기본값 12)는 scalar 1차 네 모드에서만 Parameters에 표시합니다.**
 Method는 세 번째 행이며 LEFT/RIGHT로 RK4/RK45를 전환합니다. 계산은 GRAPH/EXE에서 시작합니다.
-RK4는 h → Step → (1차 SF) → Max steps, RK45는 Initial h → RelTol → AbsTol → (1차 SF) → Max steps입니다.
+RK4는 h → Step → (1차 SF) → Max steps, RK45는 h0 → RelTol → AbsTol → (1차 SF) → Max steps입니다.
 2nd/N-th/SYS는 차수·변수 개수 1을 포함하여 SF 행이 없습니다. RK45의 숨겨진 Step은 사용하지 않습니다.
 UP/DOWN, 편집 EXE의 다음 행, 선택 행 도움말도 표시되는 행만 따릅니다.
 Parameter F1 INIT는 Method를 유지하고 자동 범위 추종, h=.1, Max Steps=20000을 복구합니다.
@@ -196,6 +197,7 @@ OFF는 이 사용자 출력들에서 숨김입니다. 숨겨진 y' 같은 내부
 SYS 2D Phase는 Output ON/OFF와 무관하게 두 state를 사용합니다. 다른 모드의 기존 phase projection은 두 축 state가 모두 ON일 때 표시합니다. 원래 독립 G/L 선택이 제공하던 차이와
 이번 통합의 호환성 정책은 [OUTPUT audit](OUTPUT_LIST_AUDIT.md)에 기록했습니다.
 
+행 오른쪽의 짧은 수평선이 실제 곡선 색을 보여주며 OFF에서도 색을 유지합니다.
 색은 선택 행에서 **F3 COLOR**로만 엽니다. 방향키로 고르고 EXE 적용, EXIT 취소입니다.
 지원 색상은 Blue, Red, Magenta, Black, Cyan, Bright Green(0x37e6)이며 기존 palette를 유지합니다.
 기본 순서는 Magenta → Cyan → Bright Green → Red → Blue → Black이고 7번째부터 반복합니다.
@@ -348,7 +350,7 @@ Phase TRACE는 x, y1, y2를 표시하며 NORMAL/FAST/FASTER, LEFT/RIGHT, F5/F6 e
 
 `|value| > 1e100`은 application guard, NaN/Inf와 수학 domain 오류는 별도 원인입니다.
 guard는 유지하며 실패한 점을 그리거나 빈 구간 양쪽을 선으로 연결하지 않습니다.
-Graph의 `ERROR: Magnitude > 1e100` 등은 계산된 유효한 구간을 폐기하지 않습니다.
+Graph의 `END: Magnitude > 1e100` 등은 계산된 유효한 구간을 폐기하지 않습니다.
 명시적 사용자 중단은 별도의 `Partial: Cancelled`입니다.
 
 TRACE는 남아 있는 유효 점에서 계속 이동하며 경계에서는 `TRACE: Numerical limit`을 표시합니다.
@@ -423,7 +425,7 @@ RelTol은 상대 오차 목표, AbsTol은 작은 값의 절대 오차 바닥입�
 기존 numeric editor의 EXP와 NEG로 입력합니다. 0/음수/NaN/Inf는 거부하고
 RelTol<100×machine epsilon, AbsTol<최소 normal double은 Tolerance too small입니다.
 
-같은 h 값을 공유하므로 방식 전환 시 보존됩니다. RK45 Initial h=.1은 첫 제안이며
+같은 h 값을 공유하므로 방식 전환 시 보존됩니다. RK45 h0=.1은 첫 제안이며
 실제 내부 h는 자동으로 변합니다. RelTol/AbsTol과 숨겨진 RK4 Step도 방식 전환·RAM Recall·새 식에서 유지됩니다.
 RK45 Max steps는 IC/방향 또는 수치 query당 수락+거절 시도 합계(기본20000, 상한100000)입니다.
 전체 동작에서 최대200000시도/800000 RHS/2400000 RHS×차원을 runtime에 제한합니다.
@@ -556,3 +558,17 @@ slot은 교체될 수 있습니다. 원본 보존이 필요하면 기존 파일�
 4. **N-th → 3**에서 `sin(x)-y1-y2`를 입력하고 OPTN → Convert to system를 실행하면 `y1'=y2`, `y2'=y3`, `y3'=sin(x)-y2-y3`로 변환됩니다.
 
 오차 확인 예제: 일반 1차 `y`, y(0)=1, x=1에서 h=.1의 RK4 값은 약 2.718279744입니다. h=.05, .025로 줄이면 host global error가 각각 약 1/15.35, 1/15.67로 줄었습니다. 목표 하드웨어 수학 라이브러리에서의 실제 값은 따로 검증해야 합니다.
+
+
+## UI consistency (beta.3)
+
+Graph 우측 위에 작은 TIME/PHASE를, Event enabled일 때만 EVT를 표시합니다.
+Field/nullcline/곡선 위에 Event square와 equilibrium diamond를 그리고, 작은 배경을 둔
+legend/view/status 및 활성 커서·결과 footer를 조합합니다. END는 legend 아래 줄을 사용합니다.
+TRACE/G-Solve 선택 곡선은 기존2px와 blink, Black↔Blue를 유지합니다. 결과 pointer가 footer
+문자를 덮지 않습니다. Event marker의 화면 좌표 오프셋을 수정했으며 수치 root는 바뀌지 않았습니다.
+입력 오류는 원래 title/field/draft를 유지하는 빨간 footer입니다. EXE/EXIT/F6 EDIT 후 수정합니다.
+계산 종료는 유효한 곡선/Table과 함께 END/partial 이유를 표시하며, 긴 INFO·저장 결과는 기존
+정보창을 사용합니다. SAVE/load/resize/convert 확인은 모두 **F5 NO/EXIT**, **F6 YES/EXE**이고
+확인창을 연 키의 HOLD는 무시합니다. 현재 전체 F-key 표와 규칙은 [UI conventions](UI_CONVENTIONS.md),
+[24개 renderer 화면](ui-review/consistency-overview.png)을 참고하십시오. 실기 화면은 아직 재검증 전입니다.

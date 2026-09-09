@@ -35,7 +35,7 @@ static bool graph_more(App *a,GraphResult last)
             snprintf(text,sizeof(text),"%s view\n%s\nSteps: %u\nX: %.7g to %.7g\nY: %.7g to %.7g\n%s: %.7g",
                 a->doc.view.phase ? "PHASE":"TIME",ode_status_text(last.status),last.steps,
                 v->xmin,v->xmax,v->ymin,v->ymax,
-                a->doc.adaptive.method==ODE_RK45 ? "RK45 initial h":"Integration h",a->doc.solver.h);
+                a->doc.adaptive.method==ODE_RK45 ? "RK45 h0":"Integration h",a->doc.solver.h);
             ui_message("Graph details",text);
         }
         return false;
@@ -64,7 +64,7 @@ static bool graph_more(App *a,GraphResult last)
     if(choice==4)return true;
     if(choice==5) {
         char text[256];
-        if(d->adaptive.method==ODE_RK45)snprintf(text,sizeof(text),"%s\nAttempts: %lu  IC: %d\nX: %.7g to %.7g\nY: %.7g to %.7g\nRK45 initial h: %.7g\nRelTol %.3g  AbsTol %.3g",
+        if(d->adaptive.method==ODE_RK45)snprintf(text,sizeof(text),"%s\nAttempts: %lu  IC: %d\nX: %.7g to %.7g\nY: %.7g to %.7g\nRK45 h0: %.7g\nRelTol %.3g  AbsTol %.3g",
             ode_status_text(last.status),(unsigned long)last.steps,last.failed_family+1,d->view.xmin,d->view.xmax,
             d->view.ymin,d->view.ymax,d->solver.h,d->adaptive.reltol,d->adaptive.abstol);
         else snprintf(text,sizeof(text),"%s\nSteps: %lu  IC: %d\nX: %.7g to %.7g\nY: %.7g to %.7g\nIntegration h: %.7g\nRedraw Step: %d",
@@ -92,6 +92,7 @@ void ui_trace(App *a)
     bool valid=false,input_error=false,boundary=false;OdeStatus follow_error=ODE_OK;
     for(;;) {
         trace_overlay_restore();
+        graph_labels(d,&a->model);
         GsolveCurve curve={0,0};
         if(d->view.phase) {
             int visible=0;
@@ -107,6 +108,9 @@ void ui_trace(App *a)
             prepared=selected;
         }
         if(valid)trace_overlay_show(d,&point,curve.variable,blink.highlighted);
+        /* Repaint tiny text backplates over the reversible cross cursor, and
+           again after XOR removal. No trajectory or framebuffer copy. */
+        graph_labels(d,&a->model);
         ui_rect(0,179,384,19,C_WHITE);
         if(edit.active) {
             ui_text(8,184,UI_BLUE,"x=");ui_inline_draw(&edit,25,184,210,UI_BLUE,C_WHITE);
@@ -194,7 +198,7 @@ void ui_trace(App *a)
         if(key==KEY_UP){selected=(selected+count-1)%count;boundary=false;}
         if(key==KEY_DOWN){selected=(selected+1)%count;boundary=false;}
     }
-    trace_overlay_restore();ui_blink_stop(&blink);ui_trace_input(false);
+    trace_overlay_restore();graph_labels(d,&a->model);ui_blink_stop(&blink);ui_trace_input(false);
 }
 static void curve_name(const Document *d,GsolveCurve curve,char *out,unsigned size)
 {
@@ -217,8 +221,9 @@ static bool choose_curve(App *a,GsolveCurve *curve,const GsolveCurve *excluded,c
         }
         graph_render(&a->doc,&a->model,false);
         if(blink.highlighted)graph_highlight_curve(&a->doc,&a->model,curve->family,curve->variable);
-        ui_rect(0,0,384,19,C_WHITE);char name[32];curve_name(&a->doc,*curve,name,sizeof(name));
-        char hint[96];snprintf(hint,sizeof(hint),"%s %s   UP/DOWN  EXE",prompt,name);
+        graph_labels(&a->doc,&a->model);
+        ui_rect(0,0,280,18,C_WHITE);char name[32];curve_name(&a->doc,*curve,name,sizeof(name));
+        char hint[96];snprintf(hint,sizeof(hint),"%s %s UP/DOWN EXE: SELECT",prompt,name);
         ui_help(7,4,hint,false);
         ui_softkeys("","","","","","CANCEL");dupdate();
         int key=ui_blink_key(&blink).key;
@@ -234,6 +239,7 @@ static bool gsolve_input(App *a,GsolveCurve curve,const char *label,double *valu
     UiBlink blink;ui_blink_start(&blink);bool error=false;
     graph_render(&a->doc,&a->model,false);
     graph_highlight_curve(&a->doc,&a->model,curve.family,curve.variable);
+    graph_labels(&a->doc,&a->model);
     for(;;) {
         ui_rect(0,179,384,19,C_WHITE);ui_text(8,184,UI_BLUE,"%s=",label);
         ui_inline_draw_cursor(&edit,31,184,200,UI_BLUE,C_WHITE,edit.active && blink.highlighted);
@@ -273,12 +279,15 @@ static void show_results(App *a,GsolveCurve curve,const GsolveCurve *other,
         graph_render(&a->doc,&a->model,false);
         graph_highlight_curve(&a->doc,&a->model,curve.family,curve.variable);
         if(other)graph_highlight_curve(&a->doc,&a->model,other->family,other->variable);
+        if(result.status==ODE_OK && result.count)result_pointer(&a->doc,result.point[selected]);
+        graph_labels(&a->doc,&a->model);
+        /* A cross at the bottom edge must not cut through result text. */
         ui_rect(0,179,384,19,C_WHITE);
         if(result.status!=ODE_OK)ui_text(7,184,C_RED,"%s: %s",mode,ode_status_text(result.status));
         else if(!result.count)ui_text(7,184,UI_BLUE,"%s: Not found%s",mode,
             result.has_invalid ? " (valid regions)":"");
         else {
-            GsolvePoint point=result.point[selected];result_pointer(&a->doc,point);
+            GsolvePoint point=result.point[selected];
             ui_text(7,184,UI_BLUE,"X=%.8g  Y=%.8g  %s %d/%d",point.x,point.y,mode,
                 selected+1,result.count);
         }
@@ -405,7 +414,8 @@ UiGraphAction ui_graph(App *a,bool first)
             if(pending && next.status!=ODE_OK && next.status!=ODE_HAS_INVALID && next.status!=ODE_EVENT_STOP) {
                 change_restore(d,&before);notice=next.status;
                 if(system && !phase && trace_cache_matches(d)) {
-                    graph_backdrop(d,&a->model);trace_cache_render(d);graph_phase_markers(d,-1);graph_event_markers(d);
+                    graph_backdrop(d,&a->model);trace_cache_render(d);graph_event_markers(d);graph_phase_markers(d,-1);
+                    graph_labels(d,&a->model);
                 }
             } else {result=next;if(pending)a->dirty=true;}
             pending=false;phase=system && d->view.phase;
@@ -416,9 +426,11 @@ UiGraphAction ui_graph(App *a,bool first)
         else ui_softkeys("TRACE","ZOOM","V-WIN",system ? "VIEW":"TABLE",phase ? "ANLYS":"G-SLV","PREV");
         if(menu==ANALYSIS && eq_shown) {
             const PhaseResults *r=graph_phase_results();
+            if(selected>=0 && (unsigned)selected<r->count)graph_phase_markers(d,selected);
+            graph_labels(d,&a->model);
             ui_rect(0,163,384,35,C_WHITE);
             if(selected>=0 && (unsigned)selected<r->count) {
-                const PhaseRoot *p=&r->root[selected];graph_phase_markers(d,selected);
+                const PhaseRoot *p=&r->root[selected];
                 ui_text(6,165,UI_BLUE,"EQPT %d/%u%s y1=%.6g y2=%.6g",selected+1,r->count,
                     r->truncated ? "+":"",p->y[0],p->y[1]);
                 ui_text(6,182,UI_BLUE,"Linearized: %s",phase_type_name(p->type));

@@ -7,6 +7,8 @@
 static uint16_t pixels[DWIDTH*DHEIGHT];
 uint16_t *gint_vram=pixels;
 static unsigned frame,clears;
+static unsigned text_glyphs;
+unsigned host_text_glyphs(void){return text_glyphs;}
 unsigned host_clear_count(void){return clears;}
 static char title[128];
 void host_metrics_print(void);
@@ -29,23 +31,30 @@ void dline(int x1,int y1,int x2,int y2,int color)
 }
 void dnsize(const char *text,int size,const font_t *font,int *w,int *h)
 {
-    (void)font;int width=0,chars=0;
+    (void)font;int width=0;
     for(int i=0;text[i] && (size<0 || i<size);i++) {
         unsigned ch=(unsigned char)text[i];if(ch<32 || ch>126)continue;
-        width+=font_width[ch-32]+(chars++>0);
+        width+=font_width[ch-32]+1;
     }
-    if(w)*w=width;if(h)*h=9;
+    /* gint subtracts trailing char_spacing even for an empty prefix. */
+    if(w)*w=width-1;if(h)*h=9;
 }
 void dsize(const char *text,const font_t *font,int *w,int *h) {dnsize(text,-1,font,w,h);}
 void dtext(int x,int y,int color,const char *text)
+{dtext_opt(x,y,color,C_NONE,DTEXT_LEFT,DTEXT_TOP,text,-1);}
+void dtext_opt(int x,int y,int color,int background,int halign,int valign,const char *text,int size)
 {
-    printf("TEXT %d %d %s\n",x,y,text);
-    if(x==14 && y==9)snprintf(title,sizeof(title),"%s",text);
-    for(unsigned i=0;text[i];i++) {
+    int width,height;dnsize(text,size,NULL,&width,&height);
+    if(halign==DTEXT_RIGHT)x-=width-1;if(halign==DTEXT_CENTER)x-=width/2;
+    if(valign==DTEXT_BOTTOM)y-=height-1;if(valign==DTEXT_MIDDLE)y-=height/2;
+    printf("TEXT %d %d %.*s\n",x,y,size<0 ? (int)strlen(text):size,text);
+    if(x==14 && y==9)snprintf(title,sizeof(title),"%.*s",size<0 ? (int)strlen(text):size,text);
+    for(int i=0;text[i] && (size<0 || i<size);i++) {
         unsigned ch=(unsigned char)text[i];if(ch<32 || ch>126)continue;
-        int index=(int)ch-32;
+        int index=(int)ch-32;text_glyphs++;
         for(int yy=0;yy<11;yy++)for(int xx=0;xx<font_width[index];xx++)
             if(font_rows[index][yy]&(1u<<xx))dpixel(x+xx,y+yy,color);
+            else if(background!=C_NONE)dpixel(x+xx,y+yy,background);
         x+=font_width[index]+1;
     }
 }

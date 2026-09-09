@@ -23,7 +23,7 @@ int main(void)
         assert(solver_report()->work.rhs>0 && solver_report()->work.min_h<=solver_report()->work.max_h);
         int marker_x,marker_y;const EventMarker *mark=&solver_report()->markers.point[0];
         assert(graph_point(&d.view,mark->x,mark->y[0],&marker_x,&marker_y));
-        assert(gint_vram[marker_y*DWIDTH+marker_x]==C_RGB(31,15,0));
+        assert(gint_vram[(UI_Y+marker_y)*DWIDTH+UI_X+marker_x]==C_RGB(31,15,0));
         assert(trace_prepare(&d,&m,0,0));TracePoint point;assert(trace_point_near(0,&point));
         assert(trace_navigate(&d,&m,6,true,&point)==ODE_EVENT_STOP);
         assert(fabs(point.x-log(10))<3e-6 && fabs(point.y[0]-10)<1e-10);

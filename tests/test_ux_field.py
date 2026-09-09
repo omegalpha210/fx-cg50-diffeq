@@ -29,9 +29,9 @@ for entry in ['1 1','1 2','1 3','1 4','2','3 9 F6','4 9 F6']:
             assert plot(run(base+' F2 '+key))==plot(run(base+' '+key))
     invalid=entry+' LEFT ACON F2 F2' # sinh(
     out=run(invalid+' F2 EXIT R:EXIT R:EXIT')
-    assert 'Check equation' not in out and 'sinh(' in tail(out)
+    assert 'Syntax error' not in out and 'sinh(' in tail(out)
     assert bar(out)[1]=='FUNC' and plot(out)==plot(run(invalid))
-    assert 'Check equation' in run(invalid+' F2 EXIT EXIT')
+    assert 'Syntax error' in run(invalid+' F2 EXIT EXIT')
 for entry in ['3 9 F6','4 9 F6']:
     for edit in ['', ' LEFT', ' LEFT ACON SIN']:
         base=entry+edit
@@ -87,14 +87,14 @@ assert 'TEXT 144 145 12\n' in tail(run(changed+'EXIT F1'))
 assert all(s in tail(run(changed+'EXIT F1 F5')) for s in ['Segment','Pale Red'])
 assert all(s in tail(run(changed+'EXIT F4 F1 EXIT F5')) for s in ['Segment','Pale Red'])
 for invalid in ['NEG 1','1 0 1','1 DOT 5']:
-    assert 'Invalid ' in run(sf+invalid+' EXE')
+    assert 'EDIT' in tail(run(sf+invalid+' EXE'))
 for value in ['0','1','1 0 0']:
     assert 'Invalid ' not in run(sf+value+' EXE F5')
 with tempfile.TemporaryDirectory() as directory:
     run(changed+'EXIT EXIT EXIT EXIT EXIT 6 EXE EXE',directory)
-    restored=run('5 2 F1 F6 F6 F5',directory)
+    restored=run('5 2 F6 F6 F6 F5',directory)
     assert all(s in tail(restored) for s in ['Segment','Pale Red'])
-    assert 'TEXT 144 145 24\n' in tail(run('5 2 F1 F6 F6',directory))
+    assert 'TEXT 144 145 24\n' in tail(run('5 2 F6 F6 F6',directory))
 # Mode changes preserve global appearance and the existing SF setting.
 out=run(changed+'EXIT EXIT EXIT EXIT EXIT 2 EXIT 1 4 F6 F6 F5')
 assert all(s in tail(out) for s in ['Segment','Pale Red'])

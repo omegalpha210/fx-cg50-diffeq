@@ -27,8 +27,8 @@ for keys,expected in [('A:ADD','x'),('ADD','+'),('A:SUB','y'),('SUB','-'),
                       ('NEG','-'),('A:NEG','-'),('XOT','x'),('S:SQUARE','sqrt('),
                       ('S:EXP ADD','pi+'),('A:ADD ADD A:SUB SUB NEG','x+y--')]:
     run('1 4 '+keys,['TEXT 144 57 '+expected+'\n'])
-run('1 4 SIN F6',['Check equation','Syntax error'],['Initial Conditions'])
-run('1 4 SIN F3 EXE',['Check equation','sin('],['View Window'])
+run('1 4 SIN F6',['Syntax error','Syntax error'],['Initial Conditions'])
+run('1 4 SIN F3 EXE',['Syntax error','sin('],['View Window'])
 run('1 4 LEFT ACON F2 F2',['sinh('],['Insert function'])
 run('1 4 LEFT ACON F1 F1',[],['Insert variable'])
 run('1 4 NEG A:SUB EXE',['-y'],['Initial Conditions'])
@@ -54,12 +54,12 @@ for entry,title,formula in families:
 
 run('4 9 F6 '+'DOWN '*8+'0 EXE F6 '+'DOWN '*9,["y9'",'Initial Conditions','y9'])
 for invalid in ['0','1 0','NEG 2','1 DOT 5','LEFT ACON']:
-    run('3 '+invalid+' F6',['Invalid dimension'],['DIFF EQ / Higher order'])
+    run('3 '+invalid+' F6',['Enter one integer from 1 to 9.'],['DIFF EQ / Higher order'])
 run('3 3 F6 5 EXE EXIT EXE F6',['TEXT 144 57 5\n'],['Change Equation Size'])
 run('3 3 F6 5 EXE EXIT 2 F6 F5 EXIT',['Change Equation Size','Differential Equation'])
 kept=run('3 3 F6 5 EXE EXIT 2 F6 F5 3 F6')
 assert 'TEXT 144 57 5\n' in kept[kept.rfind('TEXT 14 9 DIFF EQ /'):]
-run('3 3 F6 OPTN F1',['Convert to system','1st order system','y3'])
+run('3 3 F6 OPTN F6',['Convert to system','1st order system','y3'])
 run('1',['OPEN'],['PG-','PG+','OK'])
 run('2 F6 F4 DOWN 2 EXE F5',["y'0",'Initial Conditions'],['ADD','DROP','IC 2'])
 run('2 F6 NEG 2 EXE',['Initial Conditions','x0','-2','y0'],['Expression editor'])
@@ -67,7 +67,7 @@ run('1 4 F6 F5 F6 F6',['TRACE'],['No initial conditions.'])
 run('2 F6 F5',["y'0"],['No initial conditions.','ADD','DROP'])
 run('1 4 NEG A:SUB F3 EXIT F6 DOWN 2 F6 F4 EXIT DOWN DOWN DOWN 0 DOT 0 5 F5 EXIT',
     ['-y','Initial Conditions','Output selection','Parameter','0.05'])
-run('2 F6 SIN F1 EXE',['Invalid value','sin('])
+run('2 F6 SIN F1 EXE',['Syntax error','sin('])
 # Repeated PREV/NEXT retains edited fields and manual parameters exactly.
 edited='1 4 NEG A:SUB F6 DOWN 2 F6 NEG 3 EXE 3 EXE DOWN 0 DOT 0 5 EXE'
 baseline=run(edited)
@@ -91,7 +91,7 @@ assert 'TEXT 144 35 -3\n' in tail and 'TEXT 144 57 3\n' in tail
 run('1 4 F6 F6 F3 0 DOT 1 EXE 0 DOT 2 EXE EXIT',['TEXT 144 35 0.1\n','TEXT 144 57 0.2\n'])
 run('1 4 F6 F6 F3 DOWN DOWN DOWN 0 DOT 0 5 EXE',['dot','0.05','12.6'])
 run('1 4 F6 F6 F3 S:EXP EXE',['3.14159265'])
-run('1 4 F6 F6 F3 A:ADD EXE',['Invalid value'])
+run('1 4 F6 F6 F3 A:ADD EXE',['Variable not allowed'])
 run('1 4 F6 F6 F3 NEG 7 EXE EXIT EXIT EXIT EXIT EXIT 2 F6 F6 F3',['View Window','-7'])
 
 graph='2 F6 F6 F6 '

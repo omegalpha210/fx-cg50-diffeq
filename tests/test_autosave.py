@@ -21,9 +21,9 @@ with tempfile.TemporaryDirectory(dir='.') as directory:
     cold=execute('1 4',directory)
     assert 'TEXT 144 57 sin(x)-y\n' in cold and 'TEXT 144 57 -y\n' not in cold
     assert 'reads=0 writes=0 opens=0 closes=0' in cold
-    restored=execute('5 2 F1',directory)
+    restored=execute('5 2 F6',directory)
     assert 'TEXT 144 57 -y\n' in restored
     assert slots=={p.name:p.read_bytes() for p in Path(directory).glob('DIFFEQ?.dat')}
-    recalled=execute('5 2 F1 EXIT 5 1',directory)
+    recalled=execute('5 2 F6 EXIT 5 1',directory)
     assert 'TEXT 144 57 -y\n' in recalled
 print('Explicit session policy: no edit/EXIT writes, SAVE, cold defaults, RCL, retained slots passed.')

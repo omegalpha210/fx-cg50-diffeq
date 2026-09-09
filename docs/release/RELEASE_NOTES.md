@@ -1,23 +1,24 @@
-# DIFFEQ v0.12.0-beta.2 — UI/UX polish
+# DIFFEQ v0.12.0-beta.3 — UI consistency
 
-- Simplified Main controls: digits 1–6 open every item; EXE/F6 OPEN use the current selection.
-- Added SAVE confirmation: F5 NO/EXIT cancels; F6 YES/EXE saves once through the existing backend.
-- Unified yellow/black F1 INIT with separate solver, window, graph-setting and output scopes. Method and Event are retained by Parameters INIT.
-- Renamed solver utilities to black/white ADV: F1 EVENT, F2 INFO; opening utilities does not calculate or save.
-- Added cyclic vertical SELECT navigation and Equation/IC/Parameters 1/3–3/3 indicators. EXIT goes back; IC/Parameters PREV removed.
-- V-Window is available from Parameters and Graph. Equation/IC no longer expose it.
-- Style uses LEFT/RIGHT with F1/F2 blank on that row; use another Graph Settings row for F1 INIT. Output INIT moved to F1; F3 COLOR retained.
-- Improved one-line contextual hints: blue EXE, and red MENU only on Main. EN/KO controls and production-rendered screenshots are refreshed.
+- Unified semantic softkeys, including GRAPH/RUN red in every key position.
+- Simplified contextual help and Main grouping; kept OPEN/NEXT/GRAPH meanings.
+- Fixed thick leading EXE: empty-prefix font width caused a one-pixel duplicate
+  overpaint. All retained EXE hints now use normal glyphs painted once, in blue.
+- Added RK45 h0 and existing solver-range AUTO/MAN labels without changing solvers.
+- Added small TIME/PHASE and enabled-only EVT labels; improved graph overlay order,
+  corrected Event marker screen offset, protected G-Solve result text from pointers.
+- Preserved selected curves' existing 2px blink and Black/Blue contrast policy.
+- Added Output horizontal line previews; OFF preserves the selected color.
+- Kept input errors in their fields and numerical END on Graph/Table. Critical
+  SAVE/load/resize/convert confirmations share F5 NO/F6 YES, EXIT/EXE and HOLD guard.
+- Refreshed EN/KO guidance and renderer screenshots; documented the full UI audit.
 
-All **41 host/UBSan groups**, clean strict SH compile/link with **zero warnings**,
-and **13 package checks** are required from candidate and exact tagged source.
-Initialized data remains **704 B**, BSS **71952 B**, largest single application
-frame **2572 B**. Exact source, binary hash and results are in the Release assets.
+42/42 host/UBSan groups, clean27-unit SH build/link with zero warnings,13/13 G3A
+checks are required from candidate and exact tagged source. BSS71952/data704 B
+unchanged; maximum single application frame2568 B (4 B lower). Release VALIDATION
+records exact source, timings and hash. No numerical solver, Event algorithm,
+parser, storage protocol or migration change; SAVE v10 and v3–v9 readers retained.
 
-RK4/RK45, Event/Diagnostics, parser, TRACE/G-Solve/Phase/Table numerical logic,
-SAVE/RCL backend and session migration are preserved. SAVE still writes v10 and
-reads same-device v3–v9; older versions may reject new saves.
-
-**HARDWARE TEST REQUIRED:** 36 new UI cases, LCD/key timing, MENU/Fugue reentry,
-native SAVE/RCL, Event/RK45 smoke and stack high-water. See [hardware checklist](../HARDWARE_RETEST.md)
-and [user guide](../USER_GUIDE.md). Host-rendered screenshots are not device photos.
+**HARDWARE TEST REQUIRED:** all36 new checks in [HARDWARE_RETEST](../HARDWARE_RETEST.md),
+including LCD/key-repeat, native SAVE/RCL, MENU/Fugue and stack high-water. Host
+frames are not device photos. [UI audit/rules](../UI_CONVENTIONS.md), [guide](../USER_GUIDE.md).
