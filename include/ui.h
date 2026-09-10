@@ -51,7 +51,13 @@ bool ui_trace_cancel(void *unused);
 void ui_trace_input(bool active);
 key_event_t ui_trace_key(UiBlink *blink);
 key_event_t ui_getkey(void);
-typedef struct {uint32_t start,last;unsigned frame;bool visible;} UiBusy;
+typedef enum {UI_BUSY_RESULT,UI_BUSY_TRACE,UI_BUSY_TABLE,UI_BUSY_DRAW} UiBusyArea;
+typedef struct {
+    uint32_t start,last;unsigned frame;bool visible;
+    const char *label;UiBusyArea area;OdeCancel cancel;void *context;
+} UiBusy;
+void ui_defer_input(void);
+void ui_busy_begin(UiBusy *busy,const char *label,UiBusyArea area,OdeCancel cancel,void *context);
 void ui_busy_start(UiBusy *busy);
 bool ui_busy_cancel(void *context);
 void ui_busy_end(UiBusy *busy);
@@ -76,6 +82,7 @@ bool ui_number(const char *title,double *value);
 UiStageAction ui_parameters(Document *d,UiStageState *state);
 void ui_event(Document *d);
 void ui_solver_info(void);
+void ui_vwindow_reset(Document *d);
 void ui_vwindow(Document *d);
 void ui_graph_settings(Document *d);
 /* Only changed fields own text; at most10*(EXPR_TEXT) heap bytes, never saved.

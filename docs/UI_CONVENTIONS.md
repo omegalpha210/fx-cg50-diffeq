@@ -1,3 +1,36 @@
+# Current UI conventions — v0.12.0-beta.6
+
+[Overlay inventory and implementation](OVERLAY_AUDIT.md) defines the current rules.
+- Graph warning/instruction uses common logical(7,4), normal text and measured
+  opaque white padding. Active instruction temporarily owns the channel, restoring
+  the persistent warning afterward. Result/data panels remain lower-left;
+  TIME/PHASE/EVT remain top-right. Phase legends stay on their compact second row.
+- All G-Solve graph-selection operations use exactly
+  `UP/DOWN: SELECT GRAPH, EXE: SELECT` (252px). EXE is blue, normal, painted once.
+  Single graph skips selection; ICPT retains its necessary two selections.
+- Selection/result EXIT returns to G-Solve submenu; the next fresh EXIT returns
+  Graph. Held EXIT crosses no extra layer, including native blink waits. Scratch
+  G-Solve cancellation never publishes trajectory Partial: Cancelled.
+- Graph F6 INIT == V-WIN F1 INIT == ZOOM ORIG: shared factory active-window reset,
+  preserving appearance, numerical preferences, Event/Output and MAN range. AUTO
+  retains existing window synchronization. The Graph entry snapshot is removed.
+  TRACE F1 INIT remains entry cursor/curve reset with speed retained.
+- G-Solve results keep a fixed lower panel and translate Y minimally only if the
+  full9px marker needs room. Keep X/scales/Y span/result/index/solver unchanged;
+  visible markers cause no movement, invalid results cause no pan. No new query
+  during result cycling; use existing bounded display samples.
+- Busy is neutral `<label> <spinner>` with `/ - \ |`, delayed156.25ms and <=8Hz.
+  TRACE uses its lower data panel; G-Solve retains that area; Table has its
+  preparation area; Drawing uses the preparation strip. Cancellation polling first.
+  Native uploads only the small rectangle with the installed synchronous driver;
+  source pixels are restored immediately, and finish clears the LCD patch.
+- BOX instruction joins the top-left channel; its transaction/hold rules stay.
+  Beta.5 native tiles and fixed-X/Y-follow TRACE are retained. No broad red domain shading.
+
+Earlier milestone records below are historical.
+
+---
+
 # Current UI conventions — v0.12.0-beta.5
 
 [Full tiles/TRACE audit](TILES_TRACE_AUDIT.md) supplements the retained beta.4

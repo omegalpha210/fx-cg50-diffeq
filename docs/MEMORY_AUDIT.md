@@ -1,3 +1,35 @@
+# Overlay/navigation memory — v0.12.0-beta.6
+
+| SH measurement (B) | beta.5 | beta.6 | Delta |
+|---|---:|---:|---:|
+| text | 214208 | 215952 | +1744 |
+| data | 752 | 752 | 0 |
+| BSS | 72352 | 72192 | -160 |
+| largest application frame | 2664 (app_run) | 2664 (app_run) | 0 |
+| G3A | 243640 | 245384 | +1744 |
+
+Graph-entry snapshot156 B is removed; remaining BSS/data changes are layout and
+alignment around tiny overlay flags/row metadata. UiBusy is bounded local metadata,
+reusing the existing RTC driver. No new framebuffer, trajectory/result copy, heap
+image or per-operation large UI buffer. Inactive scratch remains24096 B; native
+TraceSamples21244 B leaves2852 B for transient busy pixels during staging. Host
+ABI leaves2840 B. Largest CALCULATING patch114x12 uses2736 B; Drawing81x12 uses1944 B.
+Table143x12 uses3432 B in the inactive existing14592 B footer capacity. Buffers are
+not simultaneously owned by an active overlay and a busy transaction.
+
+Source pixels are restored immediately after synchronous partial LCD upload.
+Selected curve masks and top/bottom19-row restoration reuse existing scratch.
+G-Solve uses local results; Y-follow does not copy or recompute those results.
+Next largest frames: phase_equilibria2144, model_convert_system1944,
+ui_initial_conditions1860, ui_table1796 (+28), ui_graph1588 (+64) B.
+The unchanged menu assets remain832 B geometry +8 B palette; PNG exports3378 B.
+Single .su frames are not combined stack high-water; runtime heap/stack, interrupts,
+OS/Fugue and physical LCD transfer margin remain HARDWARE TEST REQUIRED.
+
+Earlier milestone records below are historical.
+
+---
+
 # Tiles / fixed TRACE memory — v0.12.0-beta.5
 
 | SH measurement (B) | beta.4 | beta.5 | Delta |

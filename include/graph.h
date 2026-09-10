@@ -26,9 +26,13 @@ void graph_event_markers(const Document *d);
 /* Small, read-only view/event/Phase legends; never a reserved plot header. */
 void graph_labels(const Document *d,const CompiledModel *m);
 void graph_solution_segment(const ViewWindow *v,double x0,double y0,double x1,double y1,int color);
-typedef struct {ViewWindow time,phase;bool phase_saved,valid;double xmin,xmax;} GraphEntryView;
-void graph_entry_capture(GraphEntryView *entry,const Document *d);
-void graph_entry_restore(const GraphEntryView *entry,Document *d);
+/* Shared instruction/warning channel, separate from result/footer and VIEW/EVT. */
+#define GRAPH_MESSAGE_X 7
+#define GRAPH_MESSAGE_Y 4
+#define GRAPH_RESULT_TOP 179
+typedef enum {GRAPH_INSTRUCTION,GRAPH_WARNING,GRAPH_STATUS} GraphMessageStyle;
+void graph_message(const char *text,GraphMessageStyle style);
+bool graph_result_visible_y(ViewWindow *view,double x,double y);
 bool graph_box_window(ViewWindow *view,int x1,int y1,int x2,int y2);
 void graph_status(GraphResult result);
 bool graph_redraw_cached(Document *d,CompiledModel *m,double xmin,double xmax);

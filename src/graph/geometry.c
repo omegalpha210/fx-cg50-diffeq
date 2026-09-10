@@ -123,19 +123,25 @@ bool graph_field_direction(const ViewWindow *v,double slope,double *dx,double *d
     return true;
 }
 
-void graph_entry_capture(GraphEntryView *entry,const Document *d)
+/* Minimal Y translation: keep a full9px marker above the fixed result panel.
+   No horizontal change; visible points do not move, unlike TRACE hysteresis. */
+bool graph_result_visible_y(ViewWindow *v,double x,double y)
 {
-    *entry=(GraphEntryView){.time=d->view,.phase=d->phase_view,.phase_saved=d->phase_ready,
-        .valid=true,.xmin=d->solver.xmin,.xmax=d->solver.xmax};
-}
-void graph_entry_restore(const GraphEntryView *entry,Document *d)
-{
-    if(!entry->valid)return;
-    bool phase=model_phase_supported(d) && d->view.phase;
-    ViewWindow *v=model_view(d);const ViewWindow *initial=phase ? &entry->phase:&entry->time;
-    v->xmin=initial->xmin;v->xmax=initial->xmax;v->ymin=initial->ymin;v->ymax=initial->ymax;
-    v->xscale=initial->xscale;v->yscale=initial->yscale;
-    /* Projection, appearance and all numerical preferences stay as selected. */
+    if(!isfinite(x) || !isfinite(y) || fabs(x)>1e100 || fabs(y)>1e100 || x<v->xmin || x>v->xmax)return false;
+    double span=v->ymax-v->ymin;
+    if(!isfinite(span) || span<=0)return false;
+    const int top=PLOT_TOP+7,bottom=GRAPH_RESULT_TOP-8;
+    int px,py;
+    if(graph_point(v,x,y,&px,&py) && py>=top && py<=bottom)return false;
+    double offset=(y-v->ymin)/span*(PLOT_BOTTOM-PLOT_TOP);
+    if(!isfinite(offset))return false;
+    int target=offset>PLOT_BOTTOM-top ? top:bottom;
+    double low=y-span*((double)(PLOT_BOTTOM-target)/(PLOT_BOTTOM-PLOT_TOP));
+    ViewWindow next=*v;next.ymin=low;next.ymax=low+span;
+    if(!isfinite(low) || !isfinite(next.ymax) || low>=next.ymax
+        || fabs((next.ymax-low)-span)>1e-12*span
+        || !graph_point(&next,x,y,&px,&py) || py<top || py>bottom)return false;
+    *v=next;return true;
 }
 bool graph_box_window(ViewWindow *v,int x1,int y1,int x2,int y2)
 {
@@ -149,4 +155,17 @@ bool graph_box_window(ViewWindow *v,int x1,int y1,int x2,int y2)
     if(!isfinite(next.xmin) || !isfinite(next.xmax) || !isfinite(next.ymin) || !isfinite(next.ymax)
         || next.xmin>=next.xmax || next.ymin>=next.ymax)return false;
     *v=next;return true;
+}
+
+void ui_vwindow_reset(Document *d)
+{
+    ViewWindow *active=model_view(d);
+    bool phase=model_phase_supported(d) && d->view.phase;
+    int grid=active->grid,labels=active->labels;
+    int projection=active->phase,px=active->phase_x,py=active->phase_y;
+    if(phase){model_phase_window_defaults(active);d->phase_ready=1;}
+    else model_window_defaults(active);
+    active->grid=grid;active->labels=labels;active->phase=projection;
+    active->phase_x=px;active->phase_y=py;
+    model_sync_solver_window(d);
 }

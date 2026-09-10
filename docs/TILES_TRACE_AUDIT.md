@@ -1,3 +1,5 @@
+> Beta.5 record: Graph INIT, G-Solve overlays and busy rendering are superseded by [OVERLAY_AUDIT](OVERLAY_AUDIT.md). Tile and fixed-TRACE contracts remain.
+
 # Native tiles and fixed-horizontal TRACE — beta.5
 
 Baseline: development 83de313 / public 4deabae (v0.12.0-beta.4).

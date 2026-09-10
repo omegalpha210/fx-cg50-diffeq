@@ -99,7 +99,7 @@ assert solves(run(trace+'F4 '+'R:RIGHT '*400+'EXIT')) == solves(base)
 assert 'Partial: Cancelled' not in run(trace+'F4 '+'R:RIGHT '*400+'EXIT')
 assert window(run(trace+'EXIT RIGHT F3'))[0] > entry[0]
 assert solves(run(trace+'EXIT RIGHT')) > solves(base)
-assert window(run(trace+'EXIT RIGHT F6 F3')) == entry
+assert window(run(trace+'EXIT RIGHT F6 F3')) == window(run(trace+'EXIT F3 F1 F6 F3'))
 
 # Narrow PHASE horizontal slab: traversal stops before leaving it, even if a
 # later oscillator state would reenter. Integration-time endpoints stay distinct.

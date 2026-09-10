@@ -198,13 +198,7 @@ void ui_vwindow(Document *d)
         key=ui_field_complete(key,false,&selected,7);event.key=(unsigned)key;
         if(key==KEY_EXIT || key==KEY_F6)return;
         if(key==KEY_F1){
-            int grid=active->grid,labels=active->labels;
-            int projection=active->phase,px=active->phase_x,py=active->phase_y;
-            if(phase){model_phase_window_defaults(active);d->phase_ready=1;}
-            else model_window_defaults(active);
-            active->grid=grid;active->labels=labels;active->phase=projection;
-            active->phase_x=px;active->phase_y=py;
-            model_sync_solver_window(d);selected=0;continue;
+            ui_vwindow_reset(d);selected=0;continue;
         }
         double current=selected==0 ? active->xmin:(selected==1 ? active->xmax:(selected==2 ? active->xscale:
             (selected==3 ? dot:(selected==4 ? active->ymin:(selected==5 ? active->ymax:active->yscale)))));

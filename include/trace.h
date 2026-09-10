@@ -33,6 +33,14 @@ void trace_cache_invalidate(void);
 GraphResult trace_cache_result(void);
 /* Draw cached solution segments only; the caller owns backdrop and overlays. */
 void trace_cache_render(const Document *d);
+/* G-Solve borrows inactive overlay scratch; no TRACE cursor/session is created. */
+void graph_overlay_begin(int top);
+void graph_overlay_restore(void);
+void graph_overlay_point(int x,int y);
+void graph_overlay_curves(const Document *d,int family,int variable,int other_family,int other_variable,bool highlighted);
+void graph_overlay_curve(const Document *d,int family,int variable,bool highlighted);
+uint16_t *graph_busy_pixels(unsigned *capacity,bool staging);
+OdeStatus graph_plot_prepare(Document *d,CompiledModel *m,OdeCancel cancel,void *context);
 bool trace_cache_phase_window(const Document *d,ViewWindow *window);
 bool trace_cache_time_window(const Document *d,ViewWindow *window);
 const OdeSettings *trace_extent(void);

@@ -1,3 +1,19 @@
+# Current overlay ownership — beta.6
+
+Graph message styling lives in graph_message; transient top/footer patches and
+reversible highlights reuse inactive TRACE scratch. G-Solve owns only its local
+selection/results; UI display cancellation cannot change canonical SolverReport.
+Ordinary plot streaming fills the existing cache without a second solve. A missing
+display cache can be prepared transactionally without committing solver diagnostics.
+Graph-entry snapshot is removed. ui_vwindow_reset in shared geometry is the single
+factory initializer for Graph/V-WIN/ORIG; TRACE entry metadata remains separate.
+Result Y visibility uses only window/result arguments. UiBusy shares RTC timing,
+callback-first cancellation and bounded rectangle uploads. See OVERLAY_AUDIT.md.
+
+Earlier milestone records below are historical.
+
+---
+
 # Current beta.5 interaction ownership
 
 Main/subtype use src/ui/menu.c with const authored geometry and partial two-tile

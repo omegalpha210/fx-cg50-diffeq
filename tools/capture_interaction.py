@@ -31,12 +31,12 @@ cases=[
  ('phase','SYS2 / PHASE',phase),
  ('trace','TRACE / local9px cross','2 F6 F6 F6 F1 RIGHT RIGHT'),
  ('icpt','G-Solve ICPT / shared cross','2 F6 F6 F6 F5 F5'),
- ('busy','Delayed G-Solve / deterministic clock','2 F6 F6 DOWN DOWN RIGHT F6 F5 F5'),
+ ('busy','Delayed G-Solve / deterministic clock','2 F6 F6 DOWN DOWN RIGHT F6 TICKS:8 F5 F5'),
  ('zoom','ZOOM / F5 BOX',zoom),
  ('point1','BOX / center start',zoom+'F5'),
  ('rectangle','BOX / Point2 and pale stipple',point2),
  ('result','BOX / committed bounds',box),
- ('init','Graph F6 INIT / entry restored',box+'F6'),
+ ('init','Graph F6 INIT / factory window',box+'F6'),
  ('domain','Domain limit / valid curve retained',domain),
  ('domain-trace','Domain status / TRACE usable',domain+'F1'),
  ('domain-gsolve','Domain status / G-Solve usable',domain+'F5 F4'),
@@ -55,7 +55,7 @@ for i,(name,title,keys) in enumerate(cases):
  with tempfile.TemporaryDirectory() as directory:
   run=subprocess.run([str(root/'build-host/host_app')],cwd=directory,
       env=dict(os.environ,DIFFEQ_HOST_KEYS=keys,DIFFEQ_HOST_OUT=directory,DIFFEQ_HOST_MAX_FRAMES='10000',
-          **({'DIFFEQ_HOST_TICK_STEP':'8','DIFFEQ_HOST_TICK_LIMIT':'64'} if name=='busy' else {})),
+          **({'DIFFEQ_HOST_TICK_LIMIT':'128'} if name=='busy' else {})),
       capture_output=True,text=True,timeout=30,check=True)
   assert 'SCRIPT COMPLETE' in run.stdout and 'runtime error:' not in run.stderr
   frames=sorted(Path(directory).glob('*.ppm'))

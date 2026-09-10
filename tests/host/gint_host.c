@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <time.h>
 #include <gint/rtc.h>
 #include <gint/display.h>
@@ -106,6 +107,8 @@ key_event_t getkey(void)
     char token[32];int n=0;
     while(*cursor && *cursor!=' ' && *cursor!=',' && *cursor!='\n' && n<31)token[n++]=*cursor++;
     token[n]=0;char *name=token;unsigned shift=0,alpha=0,repeat=0;
+    if(!strncmp(name,"TICKS:",6)) {host_tick_step((unsigned)strtoul(name+6,NULL,10));return getkey();}
+    if(!strncmp(name,"CANCEL:",7)) {host_cancel_after((unsigned)strtoul(name+7,NULL,10));return getkey();}
     if(!strcmp(name,"BLINK")) {
         puts("KEY BLINK");
         return (key_event_t){.type=KEYEV_NONE};
@@ -142,3 +145,8 @@ uint32_t rtc_ticks(void)
     struct timespec t;clock_gettime(CLOCK_MONOTONIC,&t);
     return (uint32_t)((t.tv_sec%86400)*128+(t.tv_nsec*128)/1000000000);
 }
+
+/* Key/editor-only targets do not link graph scratch; production UI targets use
+   the strong implementation backed by their existing TRACE union. */
+__attribute__((weak)) uint16_t *graph_busy_pixels(unsigned *capacity,bool staging)
+{(void)staging;static uint16_t pixels[1420];*capacity=1420;return pixels;}

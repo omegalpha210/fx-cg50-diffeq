@@ -28,7 +28,7 @@ Reproduce with an existing compiler/CMake/Python and Pillow:
 python3 tools/capture_readme.py
 ```
 
-The v0.12.0-beta.5 Parameters capture shows RK45 h0/AUTO rows, F1 INIT and F2 ADV. Scalar Graph frames have no TIME label; SYS2 uses TIME/PHASE and enabled Event adds EVT.
+The v0.12.0-beta.6 Parameters capture shows RK45 h0/AUTO rows, F1 INIT and F2 ADV. Scalar Graph frames have no TIME label; SYS2 uses TIME/PHASE and enabled Event adds EVT.
 Equation/IC show F1 INIT, Graph shows F6 INIT, and TRACE uses a 9px local cross.
 Equation/IC/Parameters headers show 1/3, 2/3 and 3/3. V-WIN setup uses Parameters. All eight original gallery
 frames are reproduced with the exact public candidate renderer; graph examples
@@ -44,3 +44,11 @@ frames in docs/ui-review, six 3x nearest-neighbor menu previews, and eight indiv
 PNGs in assets/menu. The renderer uses the same const geometry as the add-in;
 [provenance and motif formulas](../../assets/menu/README.md). README warning examples
 link the current tiles overview. Source images contain no CASIO/manual artwork.
+
+Beta.6 retains gallery size and regenerates changed UI views. G-Solve has reversible
+cached curve emphasis and Y-only result-marker visibility; common top-left messages
+and the fixed lower data panel have separate ownership. Review-only busy and
+selection views: `python3 tools/capture_overlays.py`, docs/ui-review/overlay-overview.png.
+Busy uses deterministic host RTC/poll fixtures. Native partial uploads keep prior
+LCD pixels outside the small updated patch until the final full render; these
+host VRAM captures do not establish actual device timing or LCD sequencing.

@@ -19,10 +19,9 @@ static bool accept_window(Document *d,ViewWindow before,OdeSettings solver)
     ModelWork plan=model_preflight(d,&d->solver);
     if(plan.status==ODE_OK)return true;
     *model_view(d)=before;d->solver=solver;
-    ui_rect(0,198,384,18,UI_BLUE);
-    ui_text(7,202,C_WHITE,"Too many steps: increase h / Max Steps");dupdate();
+    graph_overlay_begin(0);graph_message("Too many steps: increase h / Max Steps",true);dupdate();
     int key;do {key=ui_getkey().key;}while(key!=KEY_EXE && key!=KEY_EXIT);
-    return false;
+    graph_overlay_restore();return false;
 }
 static bool graph_more(App *a,GraphResult last)
 {
@@ -149,12 +148,7 @@ void ui_trace(App *a,GraphResult result)
     trace_overlay_restore();graph_labels(d,&a->model);graph_status(result);
     ui_blink_stop(&blink);ui_trace_input(false);
 }
-static void curve_name(const Document *d,GsolveCurve curve,char *out,unsigned size)
-{
-    char variable[16];model_variable_label(d,curve.variable,variable,sizeof(variable));
-    snprintf(out,size,"IC%d %s",curve.family+1,variable);
-}
-static bool choose_curve(App *a,GsolveCurve *curve,const GsolveCurve *excluded,const char *prompt)
+static bool choose_curve(App *a,GsolveCurve *curve,const GsolveCurve *excluded)
 {
     int count=gsolve_curve_count(&a->doc),selected=0;
     if(count<1)return false;
@@ -162,34 +156,33 @@ static bool choose_curve(App *a,GsolveCurve *curve,const GsolveCurve *excluded,c
         gsolve_curve_at(&a->doc,0,curve);
         return !excluded || curve->family!=excluded->family || curve->variable!=excluded->variable;
     }
-    UiBlink blink;ui_blink_start(&blink);
+    UiBlink blink;ui_blink_start(&blink);graph_overlay_begin(0);
+    bool accepted=false;
     for(;;) {
-        gsolve_curve_at(&a->doc,selected,curve);
+        graph_overlay_restore();gsolve_curve_at(&a->doc,selected,curve);
         if(excluded && curve->family==excluded->family && curve->variable==excluded->variable) {
             selected=(selected+1)%count;continue;
         }
-        GraphResult rendered=graph_render(&a->doc,&a->model,false);
-        if(blink.highlighted)graph_highlight_curve(&a->doc,&a->model,curve->family,curve->variable);
-        graph_labels(&a->doc,&a->model);
-        graph_status(rendered);
-        ui_rect(0,18,280,18,C_WHITE);char name[32];curve_name(&a->doc,*curve,name,sizeof(name));
-        char hint[96];snprintf(hint,sizeof(hint),"%s %s UP/DOWN EXE: SELECT",prompt,name);
-        ui_help(7,20,hint,false);
+        graph_overlay_curve(&a->doc,curve->family,curve->variable,blink.highlighted);
+        /* Active instruction temporarily owns the channel; the exact saved
+           warning and graph pixels return when this operation layer closes. */
+        graph_message("UP/DOWN: SELECT GRAPH, EXE: SELECT",false);
         ui_softkeys("","","","","","CANCEL");dupdate();
-        int key=ui_blink_key(&blink).key;
-        if(key==KEY_EXIT || key==KEY_F6){ui_blink_stop(&blink);return false;}
+        key_event_t event=ui_blink_key(&blink);int key=event.key;
+        if(event.type==KEYEV_HOLD && (key==KEY_F6 || key==KEY_EXE))continue;
+        if(key==KEY_EXIT || key==KEY_F6)break;
         if(key==KEY_UP)selected=(selected+count-1)%count;
         if(key==KEY_DOWN)selected=(selected+1)%count;
-        if(key==KEY_EXE){ui_blink_stop(&blink);return true;}
+        if(key==KEY_EXE){accepted=true;break;}
     }
+    graph_overlay_restore();ui_blink_stop(&blink);return accepted;
 }
 static bool gsolve_input(App *a,GsolveCurve curve,const char *label,double *value)
 {
     UiInlineEdit edit;ui_inline_begin(&edit,"",false);int selected=0;
     UiBlink blink;ui_blink_start(&blink);bool error=false;
-    GraphResult rendered=graph_render(&a->doc,&a->model,false);
-    graph_highlight_curve(&a->doc,&a->model,curve.family,curve.variable);
-    graph_labels(&a->doc,&a->model);graph_status(rendered);
+    graph_overlay_begin(GRAPH_RESULT_TOP);
+    graph_overlay_curve(&a->doc,curve.family,curve.variable,true);
     for(;;) {
         ui_rect(0,179,384,19,C_WHITE);ui_text(8,184,UI_BLUE,"%s=",label);
         ui_inline_draw_cursor(&edit,31,184,200,UI_BLUE,C_WHITE,edit.active && blink.highlighted);
@@ -201,9 +194,9 @@ static bool gsolve_input(App *a,GsolveCurve curve,const char *label,double *valu
             if(!trace_value(&edit,&number)){error=true;continue;}
             *value=number;error=false;edit.active=false;
             if(key==KEY_EXIT)continue;
-            ui_blink_stop(&blink);return true;
+            graph_overlay_restore();ui_blink_stop(&blink);return true;
         }
-        if(key==KEY_EXIT){ui_blink_stop(&blink);return false;}
+        if(key==KEY_EXIT){graph_overlay_restore();ui_blink_stop(&blink);return false;}
         if((key>=KEY_F1 && key<=KEY_F5) || key==KEY_OPTN)continue;
         bool numeric=ui_digit(key)>=0 || key==KEY_DOT || key==KEY_NEG || key==KEY_SUB
             || key==KEY_ADD || key==KEY_EXP || key==KEY_DEL || key==KEY_ACON
@@ -214,50 +207,56 @@ static bool gsolve_input(App *a,GsolveCurve curve,const char *label,double *valu
             ui_field_select(&edit,event,text,&selected,1);}
     }
 }
-static void result_pointer(const Document *d,GsolvePoint point)
-{
-    int px,py;if(!graph_point(&d->view,point.x,point.y,&px,&py))return;
-    graph_point_cross(px,py,NULL);
-}
 static void show_results(App *a,GsolveCurve curve,const GsolveCurve *other,
-    const char *mode,GsolveResults result)
+    const char *mode,GsolveResults result,GraphResult canonical)
 {
     if(result.status==ODE_CANCELLED)return;
-    int selected=0;
+    int selected=0;graph_overlay_begin(GRAPH_RESULT_TOP);
     for(;;) {
-        GraphResult rendered=graph_render(&a->doc,&a->model,false);
-        graph_highlight_curve(&a->doc,&a->model,curve.family,curve.variable);
-        if(other)graph_highlight_curve(&a->doc,&a->model,other->family,other->variable);
-        if(result.status==ODE_OK && result.count)result_pointer(&a->doc,result.point[selected]);
-        graph_labels(&a->doc,&a->model);
-        graph_status(rendered);
-        /* A cross at the bottom edge must not cut through result text. */
-        ui_rect(0,179,384,19,C_WHITE);
+        graph_overlay_restore();
+        if(result.status==ODE_OK && result.count) {
+            GsolvePoint point=result.point[selected];
+            if(graph_result_visible_y(&a->doc.view,point.x,point.y)) {
+                /* Existing prepared display samples only. Never rerun G-Solve
+                   or redefine canonical trajectory/Event diagnostics for a pan. */
+                graph_backdrop(&a->doc,&a->model);trace_cache_render(&a->doc);
+                graph_event_markers(&a->doc);graph_labels(&a->doc,&a->model);graph_status(canonical);
+                a->dirty=true;graph_overlay_begin(GRAPH_RESULT_TOP);
+            }
+            graph_overlay_curves(&a->doc,curve.family,curve.variable,other ? other->family:-1,other ? other->variable:0,true);
+            int px,py;
+            if(graph_point(&a->doc.view,point.x,point.y,&px,&py))graph_overlay_point(px,py);
+        }
+        graph_labels(&a->doc,&a->model);graph_status(canonical);
+        ui_rect(0,GRAPH_RESULT_TOP,384,19,C_WHITE);
         if(result.status!=ODE_OK)ui_text(7,184,C_RED,"%s: %s",mode,ode_status_text(result.status));
         else if(!result.count)ui_text(7,184,UI_BLUE,"%s: Not found%s",mode,
             result.has_invalid ? " (valid regions)":"");
         else {
             GsolvePoint point=result.point[selected];
-            ui_text(7,184,UI_BLUE,"X=%.8g  Y=%.8g  %s %d/%d",point.x,point.y,mode,
-                selected+1,result.count);
+            ui_text(7,184,UI_BLUE,"X=%.8g  Y=%.8g  %s %d/%d",point.x,point.y,mode,selected+1,result.count);
         }
         ui_softkeys("","","","","","BACK");dupdate();
-        int key=ui_getkey().key;
-        if(key==KEY_EXIT || key==KEY_F6 || key==KEY_EXE)return;
+        key_event_t event=ui_getkey();int key=event.key;
+        if(event.type==KEYEV_HOLD && (key==KEY_F6 || key==KEY_EXE))continue;
+        if(key==KEY_EXIT || key==KEY_F6 || key==KEY_EXE)break;
         if(result.count && key==KEY_LEFT)selected=(selected+result.count-1)%result.count;
         if(result.count && key==KEY_RIGHT)selected=(selected+1)%result.count;
     }
+    graph_overlay_restore();graph_labels(&a->doc,&a->model);graph_status(canonical);
 }
 static void show_gsolve_notice(App *a,const char *mode,const char *message)
 {
+    (void)a;graph_overlay_begin(GRAPH_RESULT_TOP);
     for(;;) {
-        graph_render(&a->doc,&a->model,false);
-        ui_rect(0,179,384,19,C_WHITE);ui_text(7,184,UI_BLUE,"%s: %s",mode,message);
+        ui_rect(0,GRAPH_RESULT_TOP,384,19,C_WHITE);ui_text(7,184,UI_BLUE,"%s: %s",mode,message);
         ui_softkeys("","","","","","BACK");dupdate();
-        int key=ui_getkey().key;if(key==KEY_EXIT || key==KEY_F6 || key==KEY_EXE)return;
+        key_event_t event=ui_getkey();int key=event.key;
+        if(event.type!=KEYEV_HOLD && (key==KEY_EXIT || key==KEY_F6 || key==KEY_EXE))break;
     }
+    graph_overlay_restore();
 }
-static void gsolve_run(App *a,int operation)
+static void gsolve_run(App *a,int operation,GraphResult canonical)
 {
     GsolveCurve curve={0,0},other={0,0};int count=gsolve_curve_count(&a->doc);
     double target=0;const char *name="ROOT";
@@ -267,18 +266,29 @@ static void gsolve_run(App *a,int operation)
     if(operation==6)name="X-CAL";
     if(operation==1)name="MAX";
     if(operation==2)name="MIN";
+    if(count>0) {
+        /* Normally the existing graph stream already owns this cache. If not,
+           prepare bounded display scratch while the original plot is untouched. */
+        UiBusy busy;ui_busy_start(&busy);
+        OdeStatus prepared=graph_plot_prepare(&a->doc,&a->model,ui_busy_cancel,&busy);
+        ui_busy_end(&busy);
+        if(prepared!=ODE_OK) {
+            if(prepared!=ODE_CANCELLED)show_gsolve_notice(a,name,ode_status_text(prepared));
+            return;
+        }
+    }
     if(operation==4) {
         if(count<2) {
             show_gsolve_notice(a,name,"Not available");return;
         }
         if(count==2){gsolve_curve_at(&a->doc,0,&curve);gsolve_curve_at(&a->doc,1,&other);}
-        else if(!choose_curve(a,&curve,NULL,"Curve A")
-            || !choose_curve(a,&other,&curve,"Curve B"))return;
+        else if(!choose_curve(a,&curve,NULL)
+            || !choose_curve(a,&other,&curve))return;
         UiBusy busy;ui_busy_start(&busy);
         GsolveResults result=gsolve_intersections(&a->doc,&a->model,curve,other,ui_busy_cancel,&busy);
-        ui_busy_end(&busy);show_results(a,curve,&other,name,result);return;
+        ui_busy_end(&busy);show_results(a,curve,&other,name,result,canonical);return;
     }
-    if(!choose_curve(a,&curve,NULL,"Select")) {
+    if(!choose_curve(a,&curve,NULL)) {
         if(count<1)show_gsolve_notice(a,name,"Not available");
         return;
     }
@@ -296,13 +306,13 @@ static void gsolve_run(App *a,int operation)
         if(x>=xmin && x<=xmax && status==ODE_OK) {
             result.count=1;result.point[0]=point;
         }
-        show_results(a,curve,NULL,name,result);return;
+        show_results(a,curve,NULL,name,result,canonical);return;
     }
     GsolveMode mode=operation==1 ? GSOLVE_MAXIMUM:(operation==2 ? GSOLVE_MINIMUM:
         (operation==6 ? GSOLVE_XCAL:GSOLVE_ROOT));
     UiBusy busy;ui_busy_start(&busy);
     GsolveResults result=gsolve_search(&a->doc,&a->model,curve,mode,target,ui_busy_cancel,&busy);
-    ui_busy_end(&busy);show_results(a,curve,NULL,name,result);
+    ui_busy_end(&busy);show_results(a,curve,NULL,name,result,canonical);
 }
 static void gsolve_menu(App *a,GraphResult *last)
 {
@@ -320,8 +330,7 @@ static void gsolve_menu(App *a,GraphResult *last)
         if(page==0 && key>=KEY_F1 && key<=KEY_F5)operation=key-KEY_F1;
         if(page==1 && (key==KEY_F1 || key==KEY_F2))operation=key==KEY_F1 ? 5:6;
         if(operation>=0) {
-            gsolve_run(a,operation);
-            *last=graph_render(&a->doc,&a->model,false);
+            gsolve_run(a,operation,*last);
         }
     }
 }
@@ -353,18 +362,15 @@ static void change_restore(Document *d,const GraphChange *before)
     d->view.phase=before->projection;d->phase_view=before->phase_window;*model_view(d)=before->window;d->solver=before->solver;
     d->phase_field=before->field;d->phase_nullclines=before->nullclines;d->phase_ready=before->ready;
 }
-/* The dispatcher can leave Graph for V-WIN/Table without growing its stack.
-   This tiny snapshot therefore survives those returns until a new calculation. */
-static GraphEntryView entry_view;
+
 static bool zoom_box(App *a,GraphResult result)
 {
     int x=192,y=99,first_x=x,first_y=y;bool second=false,small=false;
-    trace_overlay_begin();
+    graph_overlay_begin(0);
     for(;;) {
         trace_box_show(first_x,first_y,x,y,second);
         graph_labels(&a->doc,&a->model);graph_status(result);
-        ui_rect(0,179,384,19,C_WHITE);
-        ui_help(7,184,small ? "BOX TOO SMALL; move point 2":
+        graph_message(small ? "BOX TOO SMALL; move point 2":
             (second ? "Point 2  EXE: ZOOM   EXIT: cancel":"Point 1  EXE: SET   EXIT: cancel"),false);
         ui_softkeys("","","","","","");dupdate();
         key_event_t event=ui_getkey();int key=event.key;
@@ -391,13 +397,10 @@ UiGraphAction ui_graph(App *a,bool first)
     bool redraw=true,pending=false,eq_shown=false;
     int selected=-1;OdeStatus notice=ODE_OK;
     Document *d=&a->doc;GraphChange before=change_begin(d);
-    if(first)entry_view.valid=false;
     GraphResult result={.status=ODE_OK,.failed_family=-1};
     for(;;) {
         bool system=model_phase_supported(d),phase=system && d->view.phase;
         if(redraw) {
-            ui_rect(0,198,384,18,UI_BLUE);
-            ui_text(7,202,C_WHITE,"Drawing... EXIT cancels");dupdate();
             GraphResult next=graph_render(d,&a->model,first);first=false;redraw=false;
             if(pending && next.status!=ODE_OK && next.status!=ODE_HAS_INVALID && next.status!=ODE_EVENT_STOP) {
                 change_restore(d,&before);notice=next.status;
@@ -407,10 +410,7 @@ UiGraphAction ui_graph(App *a,bool first)
                 }
             } else {result=next;if(pending)a->dirty=true;}
             pending=false;phase=system && d->view.phase;
-            if(result.status==ODE_OK || result.status==ODE_HAS_INVALID || result.status==ODE_EVENT_STOP) {
-                if(!entry_view.valid)graph_entry_capture(&entry_view,d);
-                if(phase && !entry_view.phase_saved){entry_view.phase=d->phase_view;entry_view.phase_saved=true;}
-            }
+
         }
         if(menu==ZOOM)ui_softkeys("IN","OUT","AUTO","ORIG","BOX","");
         else if(menu==VIEW)ui_softkeys("TIME","PHASE","TABLE","","","");
@@ -431,9 +431,12 @@ UiGraphAction ui_graph(App *a,bool first)
         /* Also cover preflight returns and repaint after active Phase markers. */
         graph_status(result);
         if(notice!=ODE_OK) {
-            ui_rect(0,179,384,19,C_WHITE);ui_text(6,184,UI_BLUE,"Phase: %s",ode_status_text(notice));
+            graph_overlay_begin(0);
+            char text[80];snprintf(text,sizeof(text),"Phase: %s",ode_status_text(notice));graph_message(text,false);
         }
-        dupdate();int key=ui_getkey().key;notice=ODE_OK;
+        dupdate();int key=ui_getkey().key;
+        if(notice!=ODE_OK)graph_overlay_restore();
+        notice=ODE_OK;
         if(menu==VIEW) {
             if(key==KEY_EXIT){menu=BASE;continue;}
             if(key==KEY_F3)return UI_GRAPH_TABLE;
@@ -473,11 +476,9 @@ UiGraphAction ui_graph(App *a,bool first)
         if(menu==ZOOM && key==KEY_EXIT){menu=BASE;continue;}
         if(menu==BASE && key==KEY_EXIT)return UI_GRAPH_BACK;
         if(menu==BASE && key==KEY_F6) {
-            if(!entry_view.valid)continue;
-            graph_entry_restore(&entry_view,d);model_sync_solver_window(d);
-            eq_shown=false;selected=-1;a->dirty=true;
-            if(graph_redraw_cached(d,&a->model,entry_view.xmin,entry_view.xmax))result=trace_cache_result();
-            else redraw=true; /* Cache replaced/incompatible: use the normal safe renderer. */
+            ui_vwindow_reset(d);eq_shown=false;selected=-1;a->dirty=true;
+            if(graph_redraw_cached(d,&a->model,d->solver.xmin,d->solver.xmax))result=trace_cache_result();
+            else redraw=true;
             continue;
         }
         if(menu==BASE && key==KEY_F1){ui_trace(a,result);continue;}
@@ -490,17 +491,18 @@ UiGraphAction ui_graph(App *a,bool first)
                 if(changed)menu=BASE;
             }
             if(key==KEY_F4) {
-                if(phase)model_phase_window_defaults(v);else model_window_defaults(v);
+                ui_vwindow_reset(d);
                 changed=true;
             }
             if(key==KEY_F1 || key==KEY_F2)changed=graph_zoom(v,key==KEY_F1 ? .67:1.5,0,0);
             if(key==KEY_F3) {
                 OdeStatus s=graph_auto_window(d,&a->model);changed=s==ODE_OK;
                 if(!changed) {
-                    ui_rect(0,198,384,18,C_WHITE);
+                    graph_overlay_begin(0);
                     char hint[96];snprintf(hint,sizeof(hint),"AUTO: %s - EXE",s==ODE_BAD_INPUT ? "No samples in X range":ode_status_text(s));
-                    ui_help(7,202,hint,false);dupdate();
+                    graph_message(hint,false);dupdate();
                     while((key=ui_getkey().key)!=KEY_EXE && key!=KEY_EXIT) {}
+                    graph_overlay_restore();
                 }
             }
         } else {
@@ -510,8 +512,9 @@ UiGraphAction ui_graph(App *a,bool first)
             if(key==KEY_F5) {
                 if(phase){menu=ANALYSIS;continue;}
                 if(d->view.phase) {
-                    ui_rect(0,198,384,18,C_WHITE);ui_help(7,202,"G-Solve: turn Phase off (EXE)",false);dupdate();
+                    graph_overlay_begin(0);graph_message("G-Solve: turn Phase off (EXE)",false);dupdate();
                     while((key=ui_getkey().key)!=KEY_EXE && key!=KEY_EXIT) {}
+                    graph_overlay_restore();
                 } else gsolve_menu(a,&result);
             }
             if(key==KEY_OPTN) {

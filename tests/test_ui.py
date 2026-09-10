@@ -95,7 +95,7 @@ run('1 4 F6 F6 F3 A:ADD EXE',['Variable not allowed'])
 run('1 4 F6 F6 F3 NEG 7 EXE EXIT EXIT EXIT EXIT EXIT 2 F6 F6 F3',['View Window','-7'])
 
 graph='2 F6 F6 F6 '
-run(graph+'F5 F1 EXE RIGHT',['Select IC1 y','ROOT 2/4'])
+run(graph+'F5 F1 EXE RIGHT',['UP/DOWN: SELECT GRAPH,','ROOT 2/4'])
 run(graph+'F5 F2 EXE',['MAX 1/1','Y=1'])
 run(graph+'F5 F3 EXE RIGHT',['MIN 2/2'])
 run(graph+'F5 F4 EXE',['Y-ICPT 1/1','X=0','Y=1'])
@@ -111,7 +111,7 @@ assert all(" y'=" not in line for line in hidden.splitlines() if line.startswith
 run(graph+'F3 DOWN DOWN DOWN DOWN DOWN 2 0 EXIT UP 5 EXIT EXIT F5 F1 EXE',
     ['ROOT 1/4'],['ROOT: Not found'])
 run('4 2 F6 F6 F6 F6 OPTN 1 F2 F3',['TRACE'])
-for keys,expected in [(graph+'F1',"IC1 x=0 y=1"),(graph+'F5 F1','Select IC1 y')]:
+for keys,expected in [(graph+'F1',"IC1 x=0 y=1"),(graph+'F5 F1','UP/DOWN: SELECT GRAPH,')]:
     out,images=run(keys+' BLINK BLINK',expected=[expected],frames=True)
     assert images[-3]!=images[-2] and images[-3]==images[-1]
     run(keys+' DOWN BLINK',["y'"])
@@ -127,7 +127,7 @@ assert metrics(actual)[-1][0]>metrics(base)[-1][0] and plot(actual)!=plot(base)
 run(graph+'F2 F3',['TRACE'])
 run('2 F6 F6 F4 DOWN RIGHT LEFT',['ON','OFF','LEFT/RIGHT: ON/OFF toggle'])
 run('4 2 F6 F6 F6 F6 F4 F3 F2 F3 F5',
-    ['Preparing table...','Table','MID','STAT data saved'],['DIR','Table / IC1'])
+    ['Table','MID','STAT data saved'],['DIR','Table / IC1'])
 run(graph+'EXIT EXIT EXIT EXIT 5 1',['Recall','DIFF EQ / Linear 2nd'])
 run('EXIT EXIT 6 EXE EXE EXIT',['No session.','SCRIPT COMPLETE'])
 print('UI workflows: seven families, return/drafts, 9 states, modifiers, range, G-Solve/TRACE, menu counters, Table/STAT passed.')

@@ -104,7 +104,7 @@ static void field_line(double x0,double y0,double x1,double y1,int color)
         (int)lround(fmax(PLOT_LEFT,fmin(PLOT_RIGHT,x1))),
         (int)lround(fmax(PLOT_TOP,fmin(PLOT_BOTTOM,y1))),color);
 }
-static bool slope_field(Document *d,CompiledModel *m,bool cancel)
+static bool slope_field(Document *d,CompiledModel *m,UiBusy *busy)
 {
     if(!model_field_supported(d) || d->view.phase || d->solver.sf==0)return true;
     const ViewWindow *v=&d->view;int columns=d->solver.sf;
@@ -114,8 +114,8 @@ static bool slope_field(Document *d,CompiledModel *m,bool cancel)
     double length=fmin((PLOT_RIGHT-PLOT_LEFT)/(double)columns,(PLOT_BOTTOM-PLOT_TOP)/(double)rows)*.34;
     int color=graph_field_color(d->field_color);
     for(int col=0;col<columns;col++) {
-        if(cancel) {if(ui_cancel(NULL))return false;}
-        else ui_trace_cancel(NULL); /* retain EXIT/MENU during bounded atomic cache redraw */
+        if(busy) {if(ui_busy_cancel(busy))return false;}
+        else ui_defer_input(); /* retain EXIT/MENU during bounded atomic cache redraw */
         for(int row=0;row<rows;row++) {
             double x=v->xmin+(col+.5)/columns*rx,y=v->ymin+(row+.5)/rows*ry,slope,dx,dy;
             if(model_rhs(x,&y,&slope,m)!=ODE_OK || !graph_field_direction(v,slope,&dx,&dy))continue;
@@ -155,7 +155,7 @@ void graph_backdrop(Document *d,CompiledModel *m)
 {
     dclear(C_WHITE);axes(model_view_const(d),model_phase_supported(d) && d->view.phase);
     /* Bounded pixel/RHS pass after a successful transactional cache commit. */
-    slope_field(d,m,false);
+    slope_field(d,m,NULL);
     graph_phase_layers(d,m);
 }
 void graph_labels(const Document *d,const CompiledModel *m)
@@ -170,30 +170,35 @@ void graph_labels(const Document *d,const CompiledModel *m)
     ui_rect(UI_W-8-width,2,width+4,13,C_WHITE);
     ui_text(UI_W-6-width,4,UI_MUTED,"%s",text);
 }
+void graph_message(const char *text,GraphMessageStyle style)
+{
+    char visible[96];ui_short(visible,sizeof(visible),text,UI_W-100);
+    int width;dsize(visible,NULL,&width,NULL);
+    ui_rect(GRAPH_MESSAGE_X-2,GRAPH_MESSAGE_Y-2,width+4,dfont_default()->data_height+4,C_WHITE);
+    if(style==GRAPH_STATUS)ui_text(GRAPH_MESSAGE_X,GRAPH_MESSAGE_Y,UI_INK,"%s",visible);
+    else if(style==GRAPH_WARNING)ui_text(GRAPH_MESSAGE_X,GRAPH_MESSAGE_Y,C_RED,"%s",visible);
+    else ui_help(GRAPH_MESSAGE_X,GRAPH_MESSAGE_Y,visible,false);
+}
 void graph_status(GraphResult result)
 {
     if(result.status!=ODE_OK) {
         /* One top-left anchor; leave the right VIEW/EVT corner unobscured.
            Callers restore the plot before changing/removing a status. */
-        char text[96],visible[96];
+        char text[96];
         if(result.status==ODE_EVENT_STOP)snprintf(text,sizeof(text),"END: Event");
         else if(result.status==ODE_HAS_INVALID)
             snprintf(text,sizeof(text),"END: %s",ode_status_text(result.invalid));
         else if(result.failed_family>=0)
             snprintf(text,sizeof(text),"Partial: %s (IC %d)",ode_status_text(result.status),result.failed_family+1);
         else snprintf(text,sizeof(text),"Partial: %s",ode_status_text(result.status));
-        ui_short(visible,sizeof(visible),text,UI_W-100);
-        /* gint's line_height is9, but data_height is11 including descenders. */
-        int width,height=dfont_default()->data_height;dsize(visible,NULL,&width,NULL);
-        ui_rect(5,2,width+4,height+4,C_WHITE);
-        ui_text(7,4,result.status==ODE_EVENT_STOP ? UI_INK:C_RED,"%s",visible);
+        graph_message(text,result.status==ODE_EVENT_STOP ? GRAPH_STATUS:GRAPH_WARNING);
     }
 }
 static bool captured_point(double x,const double *y,uint32_t step,void *ctx)
 {
     return trace_capture_point(x,y,step,NULL) && curve_point(x,y,step,ctx);
 }
-GraphResult graph_render(Document *d,CompiledModel *m,bool first)
+static GraphResult render(Document *d,CompiledModel *m,bool first,UiBusy *busy)
 {
     model_work_begin(m);
     ModelWork plan=model_preflight(d,&d->solver);
@@ -201,7 +206,7 @@ GraphResult graph_render(Document *d,CompiledModel *m,bool first)
         solver_report_begin(d,m);solver_report_end(m,plan.status);
         return (GraphResult){.status=plan.status,.failed_family=plan.family};
     }
-    OdeStatus phase_status=graph_phase_preflight(d,m,ui_cancel,NULL);
+    OdeStatus phase_status=graph_phase_preflight(d,m,ui_busy_cancel,busy);
     if(phase_status!=ODE_OK) {
         solver_report_begin(d,m);solver_report_end(m,phase_status);
         return (GraphResult){.status=phase_status,.failed_family=-1};
@@ -214,19 +219,19 @@ GraphResult graph_render(Document *d,CompiledModel *m,bool first)
     }
     solver_report_begin(d,m);
     if(system)graph_phase_reset();
-    bool capture=(system || first) && trace_capture_begin(d);
+    bool capture=trace_capture_begin(d);
     dclear(C_WHITE);
     axes(model_view_const(d),system && d->view.phase);
     graph_phase_layers(d,m);
     GraphResult result={.status=ODE_OK,.failed_family=-1};
-    if(!slope_field(d,m,true)) result.status=ODE_CANCELLED;
+    if(!slope_field(d,m,busy)) result.status=ODE_CANCELLED;
     for(int i=0;i<d->nic && result.status!=ODE_CANCELLED;i++) {
         if(!system && !graph_family_enabled(d,i)) continue;
         for(int direction=-1;direction<=1;direction+=2) {
             Curve c={.d=d,.family=i,.variable=-1,.stride=first || d->adaptive.method==ODE_RK45 ? 1:d->solver.step,.color=-1};
             if(capture)trace_capture_branch_begin(d,i,direction<0 ? 0:1);
             ModelPathResult r=model_path_branch(d,m,i,direction,&d->solver,
-                capture ? captured_point:curve_point,&c,ui_cancel,NULL);
+                capture ? captured_point:curve_point,&c,ui_busy_cancel,busy);
             if(capture)trace_capture_branch_end(r);
             result.steps+=r.steps;
             if(r.invalid!=ODE_OK)result.invalid=r.invalid;
@@ -249,6 +254,11 @@ GraphResult graph_render(Document *d,CompiledModel *m,bool first)
     graph_status(result);
     ui_softkeys("TRACE","ZOOM","V-WIN",system ? "VIEW":"TABLE",system && d->view.phase ? "ANLYS":"G-SLV","INIT");
     return result;
+}
+GraphResult graph_render(Document *d,CompiledModel *m,bool first)
+{
+    UiBusy busy;ui_busy_begin(&busy,"Drawing...",UI_BUSY_DRAW,ui_cancel,NULL);
+    GraphResult result=render(d,m,first,&busy);ui_busy_end(&busy);return result;
 }
 void graph_event_markers(const Document *d)
 {

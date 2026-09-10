@@ -15,7 +15,8 @@ static union {
 _Static_assert(sizeof(TraceSamples)<=384*198/8+384*19*2,"TRACE staging exceeds overlay budget");
 #define mask scratch.overlay.bits
 #define footer scratch.overlay.rows
-static bool inverted;
+static bool inverted,mixed_highlight;
+static int overlay_top=179;
 static GraphPointPatch pointer;
 static uint16_t highlight_xor;
 static bool cache_ready;
@@ -55,27 +56,28 @@ bool trace_cache_matches(const Document *d)
 {return d && model_phase_supported(d) && cache_ready && cache_key==numerical_key(d);}
 void trace_cache_invalidate(void){cache_ready=false;plot_ready=false;}
 GraphResult trace_cache_result(void){return samples.result;}
-static void mask_pixel(int x,int y)
+static void mask_pixel(int x,int y,int color)
 {
     if(x<0 || x>=384 || y<0 || y>=198)return;
+    if(gint_vram[(UI_Y+y)*DWIDTH+UI_X+x]!=(uint16_t)color)return;
     unsigned p=(unsigned)(y*384+x);mask[p/8]|=(unsigned char)(1u<<(p%8));
 }
-static void mask_line(int a,int b,int c,int e)
+static void mask_line(int a,int b,int c,int e,int color)
 {
     int dx=abs(c-a),sx=a<c ? 1:-1,dy=-abs(e-b),sy=b<e ? 1:-1,error=dx+dy;
     for(;;) {
-        mask_pixel(a,b);if(a==c && b==e)break;
+        mask_pixel(a,b,color);if(a==c && b==e)break;
         int twice=2*error;if(twice>=dy){error+=dy;a+=sx;}if(twice<=dx){error+=dx;b+=sy;}
     }
 }
-static void mask_segment(const ViewWindow *v,double x0,double y0,double x1,double y1)
+static void mask_segment(const ViewWindow *v,double x0,double y0,double x1,double y1,int color)
 {
     int a,b,c,e;
     if(!graph_clip(v,&x0,&y0,&x1,&y1) || !graph_point(v,x0,y0,&a,&b)
         || !graph_point(v,x1,y1,&c,&e))return;
-    mask_line(a,b,c,e);
-    if(abs(c-a)>=abs(e-b)) {int offset=b<197 && e<197 ? 1:-1;mask_line(a,b+offset,c,e+offset);}
-    else {int offset=a<383 && c<383 ? 1:-1;mask_line(a+offset,b,c+offset,e);}
+    mask_line(a,b,c,e,color);
+    if(abs(c-a)>=abs(e-b)) {int offset=b<197 && e<197 ? 1:-1;mask_line(a,b+offset,c,e+offset,color);}
+    else {int offset=a<383 && c<383 ? 1:-1;mask_line(a+offset,b,c+offset,e,color);}
 }
 typedef struct {
     const Document *d;TraceSamples *out;TraceBranch *branch;
@@ -187,7 +189,7 @@ void trace_capture_end(bool success)
     graph_capture.active=false;graph_capture.branch_active=false;
 }
 static OdeStatus prepare_range(const Document *d,CompiledModel *m,const OdeSettings *range,
-    int family,int variable,TraceSamples *out)
+    int family,int variable,TraceSamples *out,OdeCancel cancel,void *context,bool display)
 {
     model_work_begin(m);
     ModelWork plan=model_preflight(d,range);if(plan.status!=ODE_OK)return plan.status;
@@ -205,35 +207,34 @@ static OdeStatus prepare_range(const Document *d,CompiledModel *m,const OdeSetti
         /* preflight bounded every executed path before any integer cast */
         unsigned stride=(unsigned)fmax(1,fmin(100000,ceil(steps/(capacity-1))));
         Capture c={.d=d,.out=out,.branch=b,.stride=stride,.capacity=capacity,.target=target};
-        ModelPathResult r=model_path_branch(d,m,f,side ? 1:-1,range,capture,&c,ui_trace_cancel,NULL);
+        ModelPathResult r=model_path_branch(d,m,f,side ? 1:-1,range,capture,&c,cancel,context);
         if(c.have)retain(&c,&c.previous);
         record_result(out,b,r,f);
-        if(r.status!=ODE_OK && r.status!=ODE_HAS_INVALID && r.status!=ODE_EVENT_STOP){m->event_sink=NULL;return r.status;}
+        if(r.status==ODE_CANCELLED || (!display && r.status!=ODE_OK && r.status!=ODE_HAS_INVALID && r.status!=ODE_EVENT_STOP)){m->event_sink=NULL;return r.status;}
     }
     out->valid=out->branch[family][0].count+out->branch[family][1].count>0;
-    solver_report_commit(d,m,range,out->result.status==ODE_HAS_INVALID ? out->result.invalid:out->result.status);
+    if(!display)solver_report_commit(d,m,range,out->result.status==ODE_HAS_INVALID ? out->result.invalid:out->result.status);
+    else m->event_sink=NULL;
     return ODE_OK;
 }
-static void selected_mask(const Document *d)
+static void selected_mask(const Document *d,int family,int selected_variable,bool append)
 {
-    memset(mask,0,sizeof(mask));
+    if(!append)memset(mask,0,sizeof(mask));
     const ViewWindow *view=model_view_const(d);
-    int variable=d->view.phase ? view->phase_y:samples.variable;
-    int base=graph_palette_color(model_color(d,samples.family,variable));
+    int variable=d->view.phase ? view->phase_y:selected_variable;
+    int base=graph_palette_color(model_color(d,family,variable));
     highlight_xor=(uint16_t)(base^graph_highlight_color(base,true));
     for(int side=0;side<2;side++) {
-        TraceBranch *b=&samples.branch[samples.family][side];
+        TraceBranch *b=&samples.branch[family][side];
         for(unsigned j=1;j<b->count;j++) {
             unsigned i=b->start+j;if(!samples.link[i])continue;
             TracePoint *p=&samples.point[i-1],*q=&samples.point[i];
             mask_segment(view,d->view.phase ? p->y[view->phase_x]:p->x,p->y[variable],
-                d->view.phase ? q->y[view->phase_x]:q->x,q->y[variable]);
+                d->view.phase ? q->y[view->phase_x]:q->x,q->y[variable],base);
         }
     }
-    /* A decimated cache can differ from the full initial graph. Highlight only
-       pixels of the selected base color, never XOR a synthetic line on white. */
-    for(unsigned p=0;p<384*198;p++)if(gint_vram[(UI_Y+p/384)*DWIDTH+UI_X+p%384]!=(uint16_t)base)
-        mask[p/8]&=(unsigned char)~(1u<<(p%8));
+    /* Only base-color pixels are masked at emission: cached approximations
+       never introduce a synthetic line on white or disturb other colors. */
 }
 
 bool trace_prepare(Document *d,CompiledModel *m,int family,int variable)
@@ -245,23 +246,45 @@ bool trace_prepare(Document *d,CompiledModel *m,int family,int variable)
     if(trace_cache_matches(d)) {
         trace_overlay_begin();return trace_select(d,family,variable);
     }
-    OdeStatus status=prepare_range(d,m,&d->solver,family,variable,&scratch.staging);
+    UiBusy busy;ui_busy_begin(&busy,"CALCULATING...",UI_BUSY_TRACE,ui_trace_cancel,NULL);
+    OdeStatus status=prepare_range(d,m,&d->solver,family,variable,&scratch.staging,ui_busy_cancel,&busy,false);
+    ui_busy_end(&busy);
     if(status==ODE_OK) {
         samples=scratch.staging;cache_ready=model_phase_supported(d);
         if(cache_ready)cache_key=numerical_key(d);
         plot_key=plot_identity(d);plot_ready=true;
     }
     trace_overlay_begin();
-    if(status==ODE_OK)selected_mask(d);else memset(mask,0,sizeof(mask));
+    if(status==ODE_OK)selected_mask(d,samples.family,samples.variable,false);else memset(mask,0,sizeof(mask));
     return status==ODE_OK && samples.valid;
 }
+OdeStatus graph_plot_prepare(Document *d,CompiledModel *m,OdeCancel cancel,void *context)
+{
+    if(trace_plot_matches(d,d->solver.xmin,d->solver.xmax))return ODE_OK;
+    OdeStatus status=prepare_range(d,m,&d->solver,0,0,&scratch.staging,cancel,context,true);
+    if(status==ODE_OK) {
+        samples=scratch.staging;plot_key=plot_identity(d);plot_ready=true;
+        /* Display prefixes are never promoted to a canonical SYS2 solve cache. */
+        cache_ready=false;
+    }
+    return status;
+}
+/* At least1420 pixels remain after TraceSamples in the existing scratch union.
+   This area is not used by staging; overlays are inactive during busy work. */
+uint16_t *graph_busy_pixels(unsigned *capacity,bool staging)
+{
+    if(!staging){*capacity=sizeof(footer)/sizeof(uint16_t);return footer;}
+    *capacity=(sizeof(scratch)-sizeof(TraceSamples))/sizeof(uint16_t);
+    return (uint16_t *)((unsigned char *)&scratch+sizeof(TraceSamples));
+}
+_Static_assert(sizeof(scratch)-sizeof(TraceSamples)>=2800,"Busy patch exceeds inactive staging tail");
 const OdeSettings *trace_extent(void){return &samples.extent;}
 bool trace_select(const Document *d,int family,int variable)
 {
     if(family<0 || family>=d->nic || variable<0 || variable>=d->dim)return false;
     samples.family=family;samples.variable=variable;
     samples.valid=samples.branch[family][0].count+samples.branch[family][1].count>0;
-    selected_mask(d);return samples.valid;
+    selected_mask(d,samples.family,samples.variable,false);return samples.valid;
 }
 bool trace_has_invalid(void)
 {return samples.branch[samples.family][0].invalid || samples.branch[samples.family][1].invalid;}
@@ -425,7 +448,7 @@ static OdeStatus follow_point(Document *d,CompiledModel *m,const TracePoint *poi
             OdeStatus status=graph_phase_preflight(d,m,ui_trace_cancel,NULL);
             if(status!=ODE_OK){*view=before;return status;}
         }
-        cached_render(d,m);trace_overlay_begin();selected_mask(d);
+        cached_render(d,m);trace_overlay_begin();selected_mask(d,samples.family,samples.variable,false);
     }
     return ODE_OK;
 }
@@ -476,19 +499,36 @@ OdeStatus trace_navigate(Document *d,CompiledModel *m,double target,bool jump,Tr
 
 static void invert_mask(void)
 {
-    for(unsigned p=0;p<384*198;p++)if(mask[p/8]&(1u<<(p%8)))
-        gint_vram[(UI_Y+p/384)*DWIDTH+UI_X+p%384]^=highlight_xor;
+    for(unsigned p=0;p<384*198;p++)if(mask[p/8]&(1u<<(p%8))) {
+        uint16_t *pixel=&gint_vram[(UI_Y+p/384)*DWIDTH+UI_X+p%384];
+        *pixel^=mixed_highlight ? (*pixel==C_BLACK || *pixel==C_BLUE ? C_BLUE:0xffff):highlight_xor;
+    }
 }
-void trace_overlay_begin(void)
+
+void graph_overlay_begin(int top)
 {
-    for(int y=0;y<19;y++)memcpy(footer+y*384,gint_vram+(UI_Y+179+y)*DWIDTH+UI_X,384*sizeof(uint16_t));
+    overlay_top=top;mixed_highlight=false;
+    for(int y=0;y<19;y++)memcpy(footer+y*384,gint_vram+(UI_Y+overlay_top+y)*DWIDTH+UI_X,384*sizeof(uint16_t));
     inverted=false;pointer.active=false;
 }
+void trace_overlay_begin(void){graph_overlay_begin(179);}
+void graph_overlay_restore(void){trace_overlay_restore();}
+void graph_overlay_point(int x,int y){graph_point_cross(x,y,&pointer);}
+void graph_overlay_curves(const Document *d,int family,int variable,int other_family,int other_variable,bool highlighted)
+{
+    if(!highlighted)return;
+    selected_mask(d,family,variable,false);
+    if(other_family>=0)selected_mask(d,other_family,other_variable,true);
+    mixed_highlight=true;invert_mask();inverted=true;
+}
+void graph_overlay_curve(const Document *d,int family,int variable,bool highlighted)
+{graph_overlay_curves(d,family,variable,-1,0,highlighted);}
+
 void trace_overlay_restore(void)
 {
     graph_point_restore(&pointer);
     if(inverted)invert_mask();
-    for(int y=0;y<19;y++)memcpy(gint_vram+(UI_Y+179+y)*DWIDTH+UI_X,footer+y*384,384*sizeof(uint16_t));
+    for(int y=0;y<19;y++)memcpy(gint_vram+(UI_Y+overlay_top+y)*DWIDTH+UI_X,footer+y*384,384*sizeof(uint16_t));
     inverted=false;pointer.active=false;
 }
 void trace_overlay_show(const Document *d,const TracePoint *point,int variable,bool highlight)
@@ -514,7 +554,7 @@ void trace_box_restore(void)
     if(box.shown)for(int y=box.top;y<=box.bottom;y++)for(int x=box.left;x<=box.right;x++)
         if(box_pixel(x,y))gint_vram[(UI_Y+y)*DWIDTH+UI_X+x]=scratch.box.colors[i++];
     box.shown=false;
-    for(int y=0;y<19;y++)memcpy(gint_vram+(UI_Y+179+y)*DWIDTH+UI_X,footer+y*384,384*sizeof(uint16_t));
+    for(int y=0;y<19;y++)memcpy(gint_vram+(UI_Y+overlay_top+y)*DWIDTH+UI_X,footer+y*384,384*sizeof(uint16_t));
 }
 void trace_box_show(int x1,int y1,int x2,int y2,bool rectangle)
 {

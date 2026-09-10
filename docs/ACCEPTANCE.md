@@ -1,3 +1,33 @@
+# Overlay/navigation validation — v0.12.0-beta.6
+
+- Baseline47/47 host/UBSan rerun passed; final **49/49 PASS,33.19 s**. All prior
+  groups retained. New graph_overlays and graph_overlay_ui cover actual transitions,
+  canonical report/pixel preservation, seven operation paths, two-stage ICPT,
+  one EXIT/HOLD, shared INIT, minimal Y-only marker visibility and busy lifecycle.
+- Native timer-key branch now filters held EXIT; native upload adapter verifies
+  the installed rectangular-update call. Fast/slow/spinner/cancel/cleanup tests
+  distinguish scratch cancellation from genuine main trajectory Partial: Cancelled.
+- Clean **28 C units**, strict SH compile/link with **zero warnings**, **13/13
+  G3A package checks**. text215952/data752/BSS72192 B, max application frame2664 B.
+  Development G3A245384 B. Exact public tag hash is recorded with Release assets.
+- Numerical/parser/RK4/RK45/Event/Phase-analysis/Table/storage/migration sources
+  are unchanged. General Graph pan/extension, fixed-X TRACE, tile menus, BOX,
+  Output and Equation/IC validation retain their regression coverage.
+- [Overlay architecture and limits](OVERLAY_AUDIT.md), [20 production frames](ui-review/overlay-overview.png)
+  and five additional3x previews reviewed; existing galleries refreshed. Host RTC/
+  cancel fixtures do not claim physical latency or device LCD transfer results.
+- Public safe snapshot, exact-candidate/tag tests/builds/package checks, unchanged
+  MIT/dependency notices, remote history/tag preservation, and downloaded asset
+  bytes/SHA256/GitHub digests are verified by the release workflow.
+
+**HARDWARE TEST REQUIRED / HARDWARE RETEST REQUIRED:** all34 new priority cases
+remain pending, especially partial LCD uploads, long RK45 cancellation, repeat,
+result visibility, factory INIT, MENU/Fugue, SAVE/RCL and stack/heap margin.
+
+Earlier milestone records below are historical.
+
+---
+
 # Native tiles / fixed TRACE acceptance — v0.12.0-beta.5
 
 Baseline development 83de313 / public 4deabae. [Full audit](TILES_TRACE_AUDIT.md).

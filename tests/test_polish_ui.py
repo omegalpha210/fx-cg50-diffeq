@@ -47,7 +47,7 @@ assert 'Comma: separator' in tail(run('1 1 F6'))
 assert all(x not in tail(run('1 1 F6')) for x in ['SHIFT','braces','UP/DOWN'])
 assert 'One solution: x0 plus all state values' in tail(run('2 F6'))
 assert 'UP/DOWN: page' in tail(run('2 F6 F6 F6 F4'))
-assert 'UP/DOWN ' in tail(run('2 F6 F6 F6 F5 F1'))
+assert 'UP/DOWN: SELECT GRAPH,' in tail(run('2 F6 F6 F6 F5 F1'))
 # A modal numeric function picker owns its help, then returns to logical EDIT.
 assert EDIT not in tail(run('2 F6 F6 F3 LEFT OPTN'))
 assert EDIT in tail(run('2 F6 F6 F3 LEFT OPTN EXIT'))

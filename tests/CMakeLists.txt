@@ -200,3 +200,12 @@ add_test(NAME menu_geometry COMMAND test_menu)
 add_test(NAME tiles_trace_ui COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/test_tiles_trace_ui.py $<TARGET_FILE:host_app>)
 set_tests_properties(tiles_trace_ui PROPERTIES TIMEOUT 60)
+
+add_executable(test_graph_overlays test_graph_overlays.c ../src/graph/trace.c
+  ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/common.c host/gint_host.c)
+target_include_directories(test_graph_overlays PRIVATE host)
+target_link_libraries(test_graph_overlays core m)
+add_test(NAME graph_overlays COMMAND test_graph_overlays)
+add_test(NAME graph_overlay_ui COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_graph_overlay_ui.py $<TARGET_FILE:host_app>)
+set_tests_properties(graph_overlay_ui PROPERTIES TIMEOUT 60)

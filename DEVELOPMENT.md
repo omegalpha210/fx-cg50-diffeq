@@ -1,7 +1,7 @@
 # Building and developing DIFFEQ
 
 The runtime/numerical/UI source and all existing tests match the validated local
-milestone `212f3a4`. This beta updates the existing public snapshot history; private
+milestone `befd016`. This beta updates the existing public snapshot history; private
 development branches and manuals are not imported. Public-only changes cover
 release metadata, documentation and the host-only README image helper.
 
@@ -73,7 +73,7 @@ python3 tools/capture_ui.py
 python3 tools/capture_readme.py
 ```
 
-The script configures `tests/`, builds and runs all 47 CTest groups with strict
+The script configures `tests/`, builds and runs all 49 CTest groups with strict
 warnings, assertions and UBSan by default. The drawing/key adapter executes the
 actual application sources, with deterministic counters and temporary test files.
 It is not a SuperH/OS emulator. Physical timing, Fugue behavior and stack/allocator
@@ -89,7 +89,7 @@ redistributed with the add-in. Normal builds/tests do not need it.
 
 `VERSION` is the public prerelease string. CMake's project version and numeric G3A
 metadata use its numeric base (`0.12.0`, `00.12.0000`); the container cannot express
-`-beta.5`. The Git tag and Release make the beta designation explicit.
+`-beta.6`. The Git tag and Release make the beta designation explicit.
 
 Release from a clean tagged commit: clean target build, host tests, package check,
 then calculate SHA256. Attach `DIFFEQ.g3a`, `SHA256SUMS.txt` `VALIDATION.md` and the assembled
@@ -101,11 +101,12 @@ Phase renderer screenshots: `python3 tools/capture_phase.py`. Bounded analysis b
 
 Event/Diagnostics screenshots: `python3 tools/capture_events.py`. Event benchmark: `build-host/test_events`. SAVE format v10; frozen v3–v9 readers retained. See [EVENTS](docs/EVENTS.md).
 
-The v0.12.0-beta.5 pass adds native Main/subtype tiles, fixed-horizontal TRACE
-with Y-only follow and entry-cursor INIT, and a common text-sized warning backplate.
-All 44 earlier test groups remain; three new groups cover menu geometry, connected
-TRACE bounds and real UI key/pixel behavior. Numerical/parser/storage sources are unchanged.
-`python3 tools/generate_menu_icons.py --check` verifies compact const motifs;
-`python3 tools/capture_tiles.py` generates 18 current frames, six 3x menu previews
-and the eight exact firmware-rendered icon PNGs. No new image heap or framebuffer.
-See [audit and conservative Phase limits](docs/TILES_TRACE_AUDIT.md).
+The v0.12.0-beta.6 pass unifies Graph messages, fixes G-Solve one-EXIT navigation,
+shares factory Graph/V-WIN/ORIG reset, follows hidden result markers in Y only and
+reuses delayed RTC busy feedback across TRACE/Table/Drawing/G-Solve. All47 earlier
+groups remain; graph_overlays and graph_overlay_ui add state/pixel/report and busy
+checks. Numerical/parser/storage sources are unchanged. Native busy uses the installed
+r61524 synchronous small-rectangle API; the host shim does not validate device DMA/LCD.
+`python3 tools/capture_overlays.py` generates20 current frames and five3x previews.
+The existing README gallery keeps its size; changed images are regenerated.
+See [inventory, ownership, root cause and limits](docs/OVERLAY_AUDIT.md).

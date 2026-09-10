@@ -10,9 +10,9 @@
 DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식의 수치해를
 컬러 그래프·기울기장·TRACE·G-Solve·표로 살펴보고, 2변수 시스템의 위상을 분석할 수 있습니다.
 
-**공개 베타 · v0.12.0-beta.5 · [MIT 라이선스](LICENSE)**
+**공개 베타 · v0.12.0-beta.6 · [MIT 라이선스](LICENSE)**
 
-**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.5)**
+**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.6)**
 · [전체 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [버그 신고](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -190,7 +190,7 @@ Parameters **F3 V-WIN**에서 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax
 
 ## 계산기에 설치하기
 
-1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.5)를 엽니다.
+1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.6)를 엽니다.
 2. **DIFFEQ.g3a**를 받습니다. 다운로드 확인용 `SHA256SUMS.txt`도 제공됩니다.
 3. fx-CG50을 USB로 연결하고 USB Flash 모드를 선택한 뒤 컴퓨터에서 계산기 드라이브를 엽니다.
 4. `DIFFEQ.g3a`를 드라이브 **최상위**에 복사합니다. `@MainMem` 폴더 안에 넣지 않습니다.
@@ -235,19 +235,29 @@ Main은 옅은 색 타일·청록/파랑 선택 테두리와 빨간 MENU 안내�
 AUTO/MAN·RK45 h0는 유지합니다. **TIME/PHASE**는 SYS2 VIEW가 있을 때만, **EVT**는 Event
 활성 시 ODE 유형과 관계없이 표시합니다.
 
-**Graph F6 INIT**는 현재 view의 graph-entry 창을 복구하고 TIME/PHASE 선택과 manual solver
+**Graph F6 INIT**는 **V-WIN F1 INIT와 같은 factory 창 초기화**를 사용하고 TIME/PHASE 선택과 manual solver
 설정을 유지합니다. 호환 캐시는 재사용하며 캐시/Event 기록의 범위가 부족하면 기존 안전한 redraw를
 사용합니다. **ZOOM F4 ORIG**는 factory 창입니다. **F2 ZOOM → F5 BOX**는 중앙에서 시작하며,
 방향키 4px 이동 → EXE Point1 고정 → Point2 이동 → EXE로 가로·세로 최소 6px 영역을 확정합니다.
 Pale stipple 아래 곡선이 보이고 어느 단계의 EXIT도 창을 바꾸지 않습니다. 두 view의 창은 독립입니다.
 
 TRACE/G-Solve/BOX는 9px 검정 cross와 흰 중심을 공유하며 기존 2px 곡선 blink는 유지합니다.
-G-Solve가 약 156ms 이상 지속되면 중립적인 CALCULATING...과 EXIT 취소 안내를 표시합니다.
+G-Solve 선택은 좌측 최상단에 **UP/DOWN: SELECT GRAPH, EXE: SELECT**를 표시하며 EXE만
+normal 파랑입니다. 활성 안내가 경고를 잠시 대체하고 종료 시 복구합니다.
+**선택·결과에서 EXIT 한 번 → G-Solve submenu, 다음 새 EXIT → Graph**입니다.
+HOLD는 계층을 건너뛰지 않고 scratch 계산 취소는 기존 그래프·trajectory 진단을 보존합니다.
+결과 패널은 좌측 하단에 고정합니다. marker가 가려지면 X·scale·Y span·수치 결과를 유지하며
+Y만 최소한 평행 이동합니다. 이미 보이는 점은 창을 움직이지 않고 결과 순회는 재계산하지 않습니다.
+
+TRACE/G-Solve는 **CALCULATING...**, Table은 **Preparing Table...**, Graph는 **Drawing...**에
+같은 중립색 `/ - \ |` spinner를 사용합니다. 약156ms 지연·최대8Hz이며 EXIT를 먼저 확인합니다.
+빠른 작업에는 표시하지 않고 종료·취소 시 지웁니다. 계산기에서는 작은 사각형만 갱신합니다.
+백분율이나 전체 x 영역에 대한 붉은 domain/singularity 음영은 추가하지 않습니다.
 Equation/IC F1 INIT는 해당 입력만 복구합니다. 미완성 draft는 NEXT에서 전체 검증하고 첫 오류를
 선택합니다. IC numeric 값은 전체 성공 후에만 반영하며 미완성 IC draft는 runtime-only입니다.
 빨간 domain/numerical END는 비치명 상태로 유지하고 유효 구간 TRACE/G-Solve를 계속 사용할 수 있습니다.
 Output은 OFF에서도 선택 색의 선을 표시합니다.
-[현재 타일·TRACE 변경과 제약](docs/TILES_TRACE_AUDIT.md), [UI 규칙](docs/UI_CONVENTIONS.md),
+[현재 overlay·navigation 변경과 제약](docs/OVERLAY_AUDIT.md), [UI 규칙](docs/UI_CONVENTIONS.md),
 [BOX·변경 화면 모음](docs/ui-review/interaction-overview.png).
 
 [Main·Subtype 6개 상태의 native/3× 캡처와 현재 TRACE·경고 화면](docs/ui-review/tiles-overview.png)

@@ -67,7 +67,7 @@ PREV는 magenta, NEXT는 cyan, V-WIN은 orange, SET은 bright green입니다.
 단순 OPEN/NEXT/GRAPH와 같은 EXE 안내는 표시하지 않습니다. EDIT commit, palette SELECT, G-Solve 곡선 SELECT에 남긴 EXE는 한 번만 그리는 normal-weight Blue이고, 나머지 도움말 색은 유지합니다. Main의 첫 MENU 토큰만 Red입니다.
 문자 위치는 실제 font metrics를 사용하며 EDIT의 기존 확정/이동 semantics는 같습니다.
 
-Graph 기본 F6 INIT는 현재 view의 graph-entry 창을 복구하며, EXIT가 Solver Parameters로 돌아갑니다.
+Graph 기본 F6 INIT는 V-WIN F1 INIT와 같은 factory 창을 복구하며, EXIT가 Solver Parameters로 돌아갑니다.
 TRACE는 별도 BACK 없이 EXIT로 닫습니다. ZOOM/G-Solve의 기존 bar를 유지하며, 하위 메뉴를 EXIT로 닫으면 Graph INIT가 복원됩니다.
 Main 하단은 `MENU: return to MAIN MENU`이며 MENU의 실제 계산기 Main Menu 복귀 동작은 동일합니다.
 EXIT 순서는 Graph → Parameters → IC → Equation → subtype/order → Main입니다.
@@ -263,14 +263,14 @@ Field 팔레트는 기존 선명한 solution 팔레트와 별개입니다. 설�
 - `+`/`−` 또는 ZOOM: 중앙 기준 확대/축소. TIME에서 Solver range를 직접 override하지 않은 상태에서는 새 X window에 맞춰 적분 구간도 갱신됩니다.
 - ZOOM은 현재 그래프 위에서 F1 IN / F2 OUT / F3 AUTO / **F4 ORIG / F5 BOX**를 표시합니다. 각 동작 후에도 ZOOM bar를 유지하며 **EXIT로만 닫습니다**. ZOOM 안에서도 방향키로 pan하며 메뉴가 유지됩니다. 메뉴를 열고 닫기만 하면 재적분·파일 I/O가 없습니다.
 - ORIG는 V-WIN INIT와 같은 기본 창으로 돌아갑니다. 식·IC·h는 유지하며 TIME의 Solver AUTO만 새 창을 따릅니다. 수동 Solver 범위는 유지됩니다.
-- AUTO는 현재 X 범위를 유지하고, Solver와 X 창의 교집합에 있는 ON 상태의 곡선의 유한한 값으로 Y 범위를 맞춥니다. 현재 Y 창 밖의 값도 사용하며 상수 곡선에도 여백을 줍니다. 유효한 점이 없거나 계산이 중단되면 기존 창을 보존하고 하단에 안내합니다. SYS 2D PHASE AUTO는 보관된 원래 trajectory의 y1/y2 전체 유한 범위에 여백을 더해 두 축을 맞춥니다. TIME AUTO는 현재 X 창을 유지합니다.
+- AUTO는 현재 X 범위를 유지하고, Solver와 X 창의 교집합에 있는 ON 상태의 곡선의 유한한 값으로 Y 범위를 맞춥니다. 현재 Y 창 밖의 값도 사용하며 상수 곡선에도 여백을 줍니다. 유효한 점이 없거나 계산이 중단되면 기존 창을 보존하고 좌측 최상단에 안내합니다. SYS 2D PHASE AUTO는 보관된 원래 trajectory의 y1/y2 전체 유한 범위에 여백을 더해 두 축을 맞춥니다. TIME AUTO는 현재 X 창을 유지합니다.
 - OPTN 물리 키: SYS 2D에서는 Graph Settings와 계산 상세입니다. 다른 2-state 이상 모드는 기존 phase projection/축 선택을 유지합니다.
 - TRACE는 진입 당시 **가로 창과 Xscale/Xdot을 고정**합니다. 일반 Graph의 X/Y pan과 구간 확장은 그대로 유지합니다.
   TIME에서는 고정 X 창과 선택한 해의 연결된 유효 수치 구간의 교집합만 탐색합니다. 수동 Solver 범위가 창보다 넓거나 좁아도 경계에서 멈추며, TRACE 때문에 캐시를 확장하지 않습니다.
   **F1 INIT / F2 NORMAL / F3 FAST / F4 FASTER / F5 LEFT / F6 RIGHT**입니다.
   INIT는 노랑/검정, NORMAL은 주황/검정, FAST는 Bright Green/검정, FASTER는 Cyan/검정입니다.
   NORMAL/FAST/FASTER는 **1×/2×/3× 진입 시 실제 Xdot** 이동 간격이며 키 반복 속도 변경이 아닙니다. 선택 속도 테두리는 유지합니다.
-  F1 INIT는 이번 TRACE의 최초 cursor와 curve로 복귀하고 현재 속도·solver·식·IC·Event·Output·Graph entry snapshot을 보존합니다. 직접 숫자 x= 입력은 제거했습니다. 특정 x의 수치 평가에는 G-Solve Y-CAL을 사용합니다.
+  F1 INIT는 이번 TRACE의 최초 cursor와 curve로 복귀하고 현재 속도·solver·식·IC·Event·Output을 보존합니다. 직접 숫자 x= 입력은 제거했습니다. 특정 x의 수치 평가에는 G-Solve Y-CAL을 사용합니다.
   F5/F6는 설정된 Solver Xrange min/max를 목표로 하되, 화면 밖 또는 Event/invalid 경계 너머이면 현재 연결된 유효 구간의 가장 가까운 경계에 멈춥니다. FASTER도 overshoot하지 않습니다.
   UP/DOWN은 curve를 바꾸며 가능한 경우 x를 유지합니다. 유효한 y가 상하 여백을 넘으면 **Y만 평행 이동**하여 커서를 다시 표시합니다. 기존 10% trigger / 30% landing margin을 사용하며 Y span/Yscale, X bounds/Xscale/Xdot, h/Step과 Solver 설정을 유지합니다.
   NaN/Inf·magnitude-invalid 값, 부동소수점 해상도 때문에 span이 유지되지 않는 큰 이동은 거부합니다.
@@ -278,9 +278,32 @@ Field 팔레트는 기존 선명한 solution 팔레트와 별개입니다. 설�
   SYS2 PHASE에서는 가로 y1 범위를 고정하고 세로 y2만 따라갑니다. 이동 순서는 적분 x이며 TIME 창의 Xdot을 사용합니다. 다음 보관 상태가 가로 범위를 벗어나면 멈추고 이후 재진입 구간으로 건너뛰지 않습니다. 아주 좁은 창에 보관 상태가 없으면 해당 창에서 TRACE unavailable을 표시하고 그래프를 유지합니다.
   TRACE 종료 후 일반 Graph/ZOOM/G-Solve-menu 방향키 pan은 기존 안전한 재계산과 AUTO 범위 갱신을 수행합니다. HOLD 중 EXIT/MENU 우선 처리와 2px 선택 곡선 blink, 9px point cross는 유지합니다.
 
-Graph numerical/domain 경고는 공통 **좌측 상단 (7,4)**에 normal-weight 빨간 글씨로 표시합니다. 뒤에는 실제 문자열 폭·높이와 작은 여백만큼 불투명한 흰 배경을 그립니다. 그래프 높이는 줄이지 않으며, 문구가 바뀌거나 없어지면 기존 redraw가 복구합니다. Event STOP은 정상적인 중립색 `END: Event`입니다. 우측 TIME/PHASE/EVT와 두 번째 줄 Phase legend/곡선 선택 안내를 분리합니다. 경고는 비치명 상태이며 유효 구간 TRACE/G-Solve는 계속 사용할 수 있습니다.
+Graph numerical/domain 경고는 공통 **좌측 상단 (7,4)**에 normal-weight 빨간 글씨로 표시합니다. 뒤에는 실제 문자열 폭·높이와 작은 여백만큼 불투명한 흰 배경을 그립니다. 그래프 높이는 줄이지 않으며, 문구가 바뀌거나 없어지면 기존 redraw가 복구합니다. Event STOP은 정상적인 중립색 `END: Event`입니다. 우측 TIME/PHASE/EVT와 두 번째 줄 Phase legend를 분리합니다. 곡선 선택 안내도 같은 좌측 최상단 채널을 쓰며 활성 동안 경고를 잠시 숨겼다가 종료 즉시 복구합니다. 경고는 비치명 상태이며 유효 구간 TRACE/G-Solve는 계속 사용할 수 있습니다.
 
-G-SLV 메뉴를 열거나 페이지를 바꿨다가 EXIT만 하면 그래프와 계산 횟수가 유지됩니다. G-SLV의 수치 범위는 현재 V-Window X 범위와 Solver 범위의 교집합입니다. Ymin/Ymax는 그리기와 pointer clipping에만 사용됩니다. ROOT, MAX/MIN, Y-ICPT(x=0), Y-CAL, X-CAL과 두 보이는 곡선의 교점 ICPT는 화면 밖 y도 계산하고 좌표를 하단에 표시합니다. G-Solve menu에서 방향키는 pan이고, operation을 고른 뒤 현재 candidate가 깜빡이며 UP/DOWN은 blink 대상을 옮깁니다. EXE는 곡선을 확정하고 LEFT/RIGHT는 여러 결과를 이동합니다. 보이는 곡선이 정확히 둘이면 ICPT가 자동 선택하며 더 많으면 Curve A와 B를 각각 고릅니다. 결과 없음과 오류는 dialog 없이 같은 graph 하단에 표시됩니다. 접하는 근, h 사이의 매우 빠른 진동, 특이점과 불완전 trajectory는 놓칠 수 있습니다.
+G-SLV 메뉴를 열거나 페이지를 바꿨다가 EXIT만 하면 그래프와 계산 횟수가 유지됩니다. G-SLV의 수치 범위는 현재 V-Window X 범위와 Solver 범위의 교집합입니다. Ymin/Ymax는 그리기와 pointer clipping에만 사용됩니다. ROOT, MAX/MIN, Y-ICPT(x=0), Y-CAL, X-CAL과 두 보이는 곡선의 교점 ICPT는 화면 밖 y도 계산하고 좌표를 하단에 표시합니다. G-Solve menu에서 방향키는 pan이고, operation을 고른 뒤 현재 candidate가 깜빡이며 UP/DOWN은 blink 대상을 옮깁니다. EXE는 곡선을 확정하고 LEFT/RIGHT는 여러 결과를 이동합니다. 보이는 곡선이 정확히 둘이면 ICPT가 자동 선택하며 더 많으면 두 graph를 순서대로 고릅니다. 결과 없음과 오류는 dialog 없이 같은 graph 하단에 표시됩니다. 접하는 근, h 사이의 매우 빠른 진동, 특이점과 불완전 trajectory는 놓칠 수 있습니다.
+
+G-Solve 선택 안내는 모든 연산에서 **UP/DOWN: SELECT GRAPH, EXE: SELECT**입니다.
+EXE만 파란 normal 글자로 한 번 표시합니다. 선택·결과에서 **EXIT 한 번 → G-Solve submenu**,
+그 다음 새 EXIT → Graph입니다. HOLD는 여러 계층을 통과하지 않습니다. 선택 취소나 scratch
+계산 취소는 원래 그래프·수치 진단을 보존하며 `Partial: Cancelled`를 만들지 않습니다.
+실제 main trajectory 계산을 취소한 경우의 Partial 상태는 유지합니다.
+
+결과 cross가 화면 위/아래 또는 고정 하단 패널에 가려지면 **Y만 필요한 만큼 평행 이동**합니다.
+이미 안전하게 보이면 창을 움직이지 않습니다. X 범위·scale, Y span·scale, solver 설정과
+수치 결과·선택 index는 그대로입니다. LEFT/RIGHT 결과 순회에서도 기존 결과와 보관된 표시
+표본을 사용하며 G-Solve를 다시 계산하지 않습니다. invalid 결과를 따라 창을 움직이지 않습니다.
+
+Graph **F6 INIT**, V-WIN **F1 INIT**, ZOOM **F4 ORIG**는 같은 factory 창 초기화를 공유합니다.
+현재 TIME/PHASE와 Grid/Label을 유지하고 식·IC·Method·h/h0·허용오차·Event·Output·색·저장을
+초기화하지 않습니다. TIME AUTO 범위만 기존 정책대로 창을 따르고 MAN 범위는 유지합니다.
+예전 Graph entry snapshot은 더 이상 사용하지 않습니다. **TRACE F1 INIT**는 별도 커서 복귀입니다.
+
+오래 걸리는 TRACE 준비는 하단 좌표 영역에 `CALCULATING... /`, Table 준비는
+`Preparing Table... /`, Graph 계산은 `Drawing... /`를 표시합니다. 기존 G-Solve도 같은
+`/ - \ |` spinner를 쓰며 약156ms 후 나타나 최대8Hz로 갱신합니다. 빠른 작업에는 표시하지
+않으며 EXIT polling을 먼저 수행합니다. native LCD는 작은 사각형만 전송하고 끝나면 지웁니다.
+전체 invalid x 영역을 붉게 칠하지 않습니다. 현재 per-curve 상태로 전체 영역의 수학적 부재를
+단정할 수 없으므로 빨간 경고와 invalid segment 생략을 유지합니다.
 
 ### SYS 2D Phase Portrait와 분석
 

@@ -1,4 +1,5 @@
 #include "ui.h"
+#include "trace.h"
 #include <gint/rtc.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -6,14 +7,16 @@
 #include <ctype.h>
 #ifdef FXCG50
 #include <gint/timer.h>
+#include <gint/drivers/r61524.h>
 #include <gint/gint.h>
 #include <gint/drivers/keydev.h>
 #endif
 /* Only a small queue of transformed input, never pixels or trajectories.
    Numerical cancellation polls must not discard keys during blink redraws. */
-#ifdef FXCG50
-static key_event_t pending[8];
+#define UI_PENDING_CAPACITY 8
+static key_event_t pending[UI_PENDING_CAPACITY];
 static unsigned pending_count;
+#ifdef FXCG50
 static keydev_transform_t trace_transform;
 static int trace_repeater(int key,int duration,int count)
 {(void)key;(void)duration;return count==0 ? 400000:125000;}
@@ -71,18 +74,18 @@ key_event_t ui_trace_key(UiBlink *blink)
 }
 static key_event_t take_key(void)
 {
-#ifdef FXCG50
     while(pending_count) {
         key_event_t event=pending[0];
         memmove(pending,pending+1,(--pending_count)*sizeof(*pending));
         if(event.key==KEY_MENU && !event.shift && !event.alpha) {
             /* MENU observed by the compute poll was deliberately not handled
                by getkey_opt. All other MENU keys use getkey's normal path. */
+#ifdef FXCG50
             gint_osmenu();dupdate();continue;
+#endif
         }
         return event;
     }
-#endif
     return getkey();
 }
 key_event_t ui_getkey(void)
@@ -303,28 +306,27 @@ int ui_choose(const char *title,const char *const *items,int count,int selected)
         if(digit>=1 && digit<=9 && digit<=count) return digit-1;
     }
 }
-bool ui_cancel(void *unused)
+static bool poll_input(bool cancel)
 {
-    (void)unused;
+    while(pending_count<UI_PENDING_CAPACITY) {
 #ifdef FXCG50
-    while(pending_count<8) {
         volatile int timeout=1;
         key_event_t event=getkey_opt(GETKEY_DEFAULT & ~GETKEY_MENU,&timeout);
-        if(event.type==KEYEV_NONE)break;
-        if(event.type==KEYEV_DOWN && (event.key==KEY_EXIT || event.key==KEY_ACON))return true;
-        pending[pending_count++]=event;
-        if(event.key==KEY_MENU && !event.shift && !event.alpha)return true;
-    }
-    /* Yield a partial computation before input saturation can hide a later
-       EXIT/MENU. The next UI boundary drains these retained keys. */
-    if(pending_count==8)return true;
 #else
-    key_event_t event;
-    while((event=pollevent()).type!=KEYEV_NONE)
-        if(event.type==KEYEV_DOWN && (event.key==KEY_EXIT || event.key==KEY_ACON)) return true;
+        key_event_t event=pollevent();
 #endif
-    return false;
+        if(event.type==KEYEV_NONE)break;
+        if(event.type==KEYEV_HOLD && event.key==KEY_EXIT)continue;
+        bool stop=event.type==KEYEV_DOWN && (event.key==KEY_EXIT || event.key==KEY_ACON);
+        if(cancel && stop)return true;
+        pending[pending_count++]=event;
+        if(cancel && event.key==KEY_MENU && !event.shift && !event.alpha)return true;
+    }
+    return cancel && pending_count==UI_PENDING_CAPACITY;
 }
+bool ui_cancel(void *unused)
+{(void)unused;return poll_input(true);}
+void ui_defer_input(void){(void)poll_input(false);}
 
 void ui_blink_start(UiBlink *blink)
 {
@@ -342,7 +344,8 @@ key_event_t ui_blink_key(UiBlink *blink)
     if(pending_count)return ui_getkey();
     if(blink->timer>=0) {
         blink->timeout=0;
-        event=getkey_opt(GETKEY_DEFAULT,&blink->timeout);
+        do {event=getkey_opt(GETKEY_DEFAULT,&blink->timeout);}
+        while(event.type==KEYEV_HOLD && event.key==KEY_EXIT);
     } else event=ui_getkey();
 #else
     event=ui_getkey();
@@ -359,27 +362,59 @@ void ui_blink_stop(UiBlink *blink)
     blink->timer=-1;blink->timeout=0;
 }
 
-void ui_busy_start(UiBusy *busy)
+static void busy_rect(const UiBusy *busy,int *top,int *width)
 {
-    *busy=(UiBusy){.start=rtc_ticks()};busy->last=busy->start;
+    char text[40];snprintf(text,sizeof(text),"%s -",busy->label);dsize(text,NULL,width,NULL);*width+=4;
+    *top=busy->area==UI_BUSY_DRAW ? 202:(busy->area==UI_BUSY_TABLE ? 28:184);
 }
+static void busy_upload(int left,int top,int width,int height)
+{
+#ifdef FXCG50
+    /* Installed driver waits for prior DMA, then synchronously transfers this
+       small rectangle by CPU. Safe to restore the source pixels on return. */
+    r61524_display_rect(gint_vram,UI_X+left,UI_X+left+width-1,UI_Y+top,UI_Y+top+height-1);
+#else
+    (void)left;(void)top;(void)width;(void)height;dupdate();
+#endif
+}
+void ui_busy_begin(UiBusy *busy,const char *label,UiBusyArea area,OdeCancel cancel,void *context)
+{
+    *busy=(UiBusy){.start=rtc_ticks(),.label=label,.area=area,.cancel=cancel,.context=context};
+    busy->last=busy->start;
+}
+void ui_busy_start(UiBusy *busy)
+{ui_busy_begin(busy,"CALCULATING...",UI_BUSY_RESULT,ui_cancel,NULL);}
 bool ui_busy_cancel(void *context)
 {
-    /* Never let visual feedback delay the existing EXIT/MENU polling. */
-    if(ui_cancel(NULL))return true;
-    UiBusy *busy=context;uint32_t now=rtc_ticks();
+    UiBusy *busy=context;
+    /* Poll before reading the clock or touching pixels. */
+    if(busy->cancel && busy->cancel(busy->context))return true;
+    uint32_t now=rtc_ticks();
     uint32_t elapsed=now>=busy->start ? now-busy->start:now+86400u*128u-busy->start;
     uint32_t delta=now>=busy->last ? now-busy->last:now+86400u*128u-busy->last;
     if(elapsed>=20 && (!busy->visible || delta>=16)) {
-        ui_rect(0,179,384,19,C_WHITE);
-        ui_text(7,184,UI_BLUE,"CALCULATING... %c   EXIT: cancel","|/-\\"[busy->frame++%4]);
-        ui_softkeys("","","","","","");
-        dupdate();busy->visible=true;busy->last=now;
+        char text[40];snprintf(text,sizeof(text),"%s %c",busy->label,"/-\\|"[busy->frame++%4]);
+        int width,top;busy_rect(busy,&top,&width);
+        int left=5,height=dfont_default()->data_height+1;
+        unsigned capacity;uint16_t *saved=graph_busy_pixels(&capacity,busy->area!=UI_BUSY_TABLE);
+        /* Borrow unused bytes after TRACE staging, never a new framebuffer.
+           Restore VRAM immediately after upload, so ongoing plot drawing and
+           scratch cancellation cannot leave a white patch in the source graph. */
+        if((unsigned)(width*height)<=capacity) {
+            for(int y=0;y<height;y++)memcpy(saved+y*width,
+                gint_vram+(UI_Y+top+y)*DWIDTH+UI_X+left,(unsigned)width*2);
+            ui_rect(left,top,width,height,C_WHITE);
+            ui_text(left+2,top,UI_BLUE,"%s",text);busy_upload(left,top,width,height);
+            for(int y=0;y<height;y++)memcpy(gint_vram+(UI_Y+top+y)*DWIDTH+UI_X+left,
+                saved+y*width,(unsigned)width*2);
+            busy->visible=true;busy->last=now;
+        }
     }
     return false;
 }
 void ui_busy_end(UiBusy *busy)
 {
-    if(busy->visible)ui_rect(0,179,384,19,C_WHITE);
+    if(busy->visible) {int top,width;busy_rect(busy,&top,&width);
+        busy_upload(5,top,width,dfont_default()->data_height+1);}
     busy->visible=false;
 }

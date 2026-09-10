@@ -29,11 +29,11 @@ int main(void)
         model_initial_defaults(&d);assert(!memcmp(&d,&expected,sizeof(d)));
     }
     model_defaults(&d,EQ_SYSTEM,2);d.solver_custom=1;d.phase_ready=1;
-    GraphEntryView entry;graph_entry_capture(&entry,&d);expected=d;
-    graph_zoom(&d.view,.5,1,1);graph_entry_restore(&entry,&d);assert(!memcmp(&d,&expected,sizeof(d)));
-    d.view.phase=1;expected=d;graph_zoom(&d.phase_view,.5,-1,-1);graph_entry_restore(&entry,&d);
+    expected=d;
+    graph_zoom(&d.view,.5,1,1);ui_vwindow_reset(&d);assert(!memcmp(&d,&expected,sizeof(d)));
+    d.view.phase=1;expected=d;graph_zoom(&d.phase_view,.5,-1,-1);ui_vwindow_reset(&d);
     assert(!memcmp(&d,&expected,sizeof(d)) && d.view.phase);
-    ViewWindow v=entry.time,a=v,b=v;
+    ViewWindow v=d.view,a=v,b=v;
     assert(graph_box_window(&a,100,150,300,40) && graph_box_window(&b,300,40,100,150));
     assert(!memcmp(&a,&b,sizeof(a)));
     assert(fabs(a.xmin-(v.xmin+(v.xmax-v.xmin)*100/383.0))<1e-12);
@@ -61,14 +61,14 @@ int main(void)
     model_defaults(&d,EQ_GENERAL,1);d.solver.sf=0;
     assert(model_compile(&d,&model).expression.status==EXPR_OK);
     graph_render(&d,&model,true);assert(trace_plot_matches(&d,-6,6));
-    GraphEntryView scalar;graph_entry_capture(&scalar,&d);graph_zoom(&d.view,.5,1,1);
-    graph_entry_restore(&scalar,&d);assert(graph_redraw_cached(&d,&model,-6,6));
+    graph_zoom(&d.view,.5,1,1);
+    ui_vwindow_reset(&d);assert(graph_redraw_cached(&d,&model,-6,6));
     strcpy(d.text[0],"x");assert(!trace_plot_matches(&d,-6,6));
     model_defaults(&d,EQ_GENERAL,1);d.solver.sf=0;d.event.enabled=1;strcpy(d.event.text,"x-2");
     assert(model_compile(&d,&model).expression.status==EXPR_OK);
-    graph_render(&d,&model,true);graph_entry_capture(&scalar,&d);
+    graph_render(&d,&model,true);
     d.solver.xmin=-1;d.solver.xmax=1;graph_render(&d,&model,false);
-    graph_entry_restore(&scalar,&d);model_sync_solver_window(&d);
+    ui_vwindow_reset(&d);model_sync_solver_window(&d);
     assert(!graph_redraw_cached(&d,&model,-6,6)); /* Event report coverage guard. */
     graph_render(&d,&model,false);assert(solver_report()->markers.count>0);
     UiBusy busy;host_tick_step(0);ui_busy_start(&busy);assert(!busy.visible);ui_busy_end(&busy);

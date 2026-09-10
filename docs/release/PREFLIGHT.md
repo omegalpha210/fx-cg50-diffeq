@@ -1,3 +1,20 @@
+# v0.12.0-beta.6 preflight
+
+Development befd016aafaaad1a8e3e53c8d331d31dc5b147b3, hardware-crash-fix; public parent57b9079 (beta.5).
+Gates:49 host/UBSan groups, clean28-unit strict SH compile/link, zero warnings,
+13 package checks; common Graph message geometry, all G-Solve operation EXIT paths,
+canonical report/exact pixel preservation, shared factory INIT, minimal Y-only
+result visibility, four busy lifecycles and native-key/partial-upload adapter.
+Numerical/parser/storage/Phase/Event algorithms unchanged;34 hardware cases pending.
+Audit source and public history for excluded material, compare development source,
+preserve MIT/notices, verify README links/GitHub rendering. Repeat exact-tag gates,
+publish prerelease, download four assets and verify bytes/SHA256/GitHub digests,
+old tags, remote main and exact source tree. Results: Release VALIDATION.md.
+
+Previous records below are historical.
+
+---
+
 # v0.12.0-beta.5 preflight
 
 Development 212f3a4c04174062ec50278aff24a2f7d0a38b22, hardware-crash-fix; public parent 4deabae (beta.4).

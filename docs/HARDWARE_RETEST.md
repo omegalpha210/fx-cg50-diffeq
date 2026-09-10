@@ -1,3 +1,47 @@
+# Overlay/navigation priority retest — v0.12.0-beta.6
+
+**HARDWARE TEST REQUIRED / HARDWARE RETEST REQUIRED — all34 cases pending.**
+Record OS/version, release checksum, keys, expected/observed behavior and timing.
+
+1. multi-graph MIN prompt at absolute top-left.
+2. MAX prompt at top-left.
+3. ROOT common SELECT GRAPH wording.
+4. ICPT two selections and common wording.
+5. EXE blue, normal weight, painted once.
+6. selection EXIT once returns submenu.
+7. no Partial: Cancelled after selection EXIT.
+8. result EXIT once returns submenu.
+9. held EXIT does not cross another layer.
+10. slow RK45 G-Solve scratch cancel preserves graph/report.
+11. Graph INIT after pan.
+12. Graph INIT after ZOOM.
+13. Graph INIT after BOX.
+14. Graph INIT equals V-WIN INIT factory values.
+15. manual Solver range and method/tolerances retained.
+16. MAX marker outside lower result box.
+17. MIN marker outside lower result box.
+18. ROOT marker outside lower result box.
+19. ICPT marker and result cycling visible.
+20. G-Solve Y-only follow keeps X/scales and Y span.
+21. slow RK45 TRACE delayed busy.
+22. TRACE spinner cycle and small native LCD upload.
+23. TRACE busy EXIT with no residue.
+24. Table index/page spinner and cancellation.
+25. Drawing spinner and genuine trajectory cancellation.
+26. no fast-operation flicker or stale patch.
+27. domain warning remains top-left.
+28. small white warning backing over dense curves.
+29. valid-domain fixed-X TRACE.
+30. valid-domain G-Solve results and queries.
+31. TIME/PHASE/EVT, legends and active overlay readability.
+32. MENU/Fugue during/after operations.
+33. native SAVE/RCL compatibility.
+34. LCD contrast, repeat, partial upload sequencing and stack/heap margin.
+
+Earlier milestone records below are historical.
+
+---
+
 # Tiles / fixed TRACE priority retest — v0.12.0-beta.5
 
 **HARDWARE TEST REQUIRED / HARDWARE RETEST REQUIRED — all 16 cases pending.**

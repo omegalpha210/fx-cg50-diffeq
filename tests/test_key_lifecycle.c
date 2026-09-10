@@ -1,5 +1,6 @@
 #include "ui.h"
 #include <gint/timer.h>
+#include <gint/rtc.h>
 #include <gint/drivers/keydev.h>
 #include <assert.h>
 #include <stdio.h>
@@ -33,6 +34,12 @@ int timer_configure(int timer,uint64_t delay,gint_call_t callback)
 }
 void timer_start(int timer) {assert(timer==3);starts++;}
 void timer_stop(int timer) {assert(timer==3 && timers==1);timers--;stops++;}
+static unsigned partial_uploads;
+void r61524_display_rect(uint16_t *vram,int xmin,int xmax,int ymin,int ymax)
+{
+    assert(vram==gint_vram && xmin==11 && xmax-xmin<120 && ymin==188 && ymax-ymin==11);
+    partial_uploads++;
+}
 int main(void)
 {
     events[0]=event(KEY_ADD);events[0].alpha=1;
@@ -61,6 +68,13 @@ int main(void)
         ui_blink_stop(&blink);assert(timers==0 && blink.timer==-1);
     }
     assert(starts==100 && stops==100);
+    /* Deferred drawing does not consume a fresh EXIT as trajectory cancel. */
+    length=3;next=0;events[0]=event(KEY_EXIT);events[0].type=KEYEV_HOLD;
+    events[1]=event(KEY_EXIT);events[2]=event(KEY_RIGHT);ui_defer_input();
+    assert(ui_getkey().key==KEY_EXIT && ui_getkey().key==KEY_RIGHT);
+    UiBlink selection;ui_blink_start(&selection);length=2;next=0;
+    events[0]=event(KEY_EXIT);events[0].type=KEYEV_HOLD;events[1]=event(KEY_EXIT);
+    assert(ui_blink_key(&selection).type==KEYEV_DOWN && next==2);ui_blink_stop(&selection);
     ui_trace_input(true);assert(transform.repeater(0,0,0)==400000);
     assert(transform.repeater(0,2000000,50)==125000);
     length=16;next=0;
@@ -81,6 +95,9 @@ int main(void)
     next=0;length=2;events[0]=event(KEY_F6);events[1]=event(KEY_EXIT);
     assert(ui_trace_cancel(NULL) && ui_trace_key(&trace_blink).key==KEY_EXIT);
     ui_trace_input(false);assert(transform.repeater==NULL);
+    length=next=0;host_tick_step(8);UiBusy busy;ui_busy_start(&busy);
+    for(int i=0;i<3;i++)assert(!ui_busy_cancel(&busy));
+    assert(busy.visible && partial_uploads==1);ui_busy_end(&busy);assert(partial_uploads==2);host_tick_step(0);
     puts("Target-branch key policy: retained events, one MENU, bounded saturation, 100 timer lifetimes passed.");
     return 0;
 }

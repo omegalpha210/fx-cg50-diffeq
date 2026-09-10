@@ -29,6 +29,9 @@ int host_open(const char *path,int flags,...)
 int host_close(int fd) {closes++;return close(fd);}
 void host_metrics_print(void)
 {
+    const unsigned char *r=(const unsigned char *)solver_report();uint32_t hash=2166136261u;
+    for(unsigned i=0;i<sizeof(SolverReport);i++){hash^=r[i];hash*=16777619u;}
+    printf("REPORT %08x\n",hash);
     printf("METRICS solves=%lu searches=%lu reads=%lu writes=%lu opens=%lu closes=%lu\n",
         solves,searches,reads,writes,opens,closes);
 }

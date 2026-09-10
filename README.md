@@ -10,9 +10,9 @@ Solve, graph, and explore ordinary differential equations on your calculator.
 DIFFEQ is a native **fx-CG50 add-in** with colorful solution curves, slope fields,
 TRACE, G-Solve, numerical tables, and phase analysis for two-variable systems.
 
-**Public Beta · v0.12.0-beta.5 · [MIT License](LICENSE)**
+**Public Beta · v0.12.0-beta.6 · [MIT License](LICENSE)**
 
-**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.5)**
+**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.6)**
 · [All releases](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [Report a bug](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -204,7 +204,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 ## Install on your calculator
 
-1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.5).
+1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.6).
 2. Download **DIFFEQ.g3a**. `SHA256SUMS.txt` is available to check your download.
 3. Connect the fx-CG50 by USB, select USB Flash mode, and open its storage drive.
 4. Copy `DIFFEQ.g3a` to the drive's **root directory**, outside `@MainMem`.
@@ -249,7 +249,7 @@ EXE OPEN/NEXT/GRAPH hints stay hidden; EDIT/palette/BOX/curve confirmation keeps
 normal-weight blue EXE. Solver AUTO/MAN and RK45 h0 are unchanged. **TIME/PHASE**
 appears only for switchable SYS2 VIEW; enabled **EVT** is independent of equation type.
 
-**Graph F6 INIT** restores the current view's graph-entry window, retaining
+**Graph F6 INIT** uses the same factory V-Window reset as **V-WIN F1 INIT**, retaining
 TIME/PHASE choice and manual solver preferences. Compatible cached samples are
 reused; replaced/incomplete cache or Event report uses the existing safe redraw.
 **ZOOM F4 ORIG** remains the factory window. **F2 ZOOM → F5 BOX** starts at the
@@ -258,13 +258,25 @@ commits a rectangle at least 6 pixels wide/high. A pale stipple preserves curves
 EXIT cancels either stage without changing the view. TIME/PHASE windows stay separate.
 
 TRACE, G-Solve and BOX share a local 9px black cross with white center; existing 2px
-curve blink stays. Long G-Solve shows neutral CALCULATING... after about 156ms,
-with EXIT cancellation and no percentage. Equation/IC F1 INIT resets only its
+curve blink stays. G-Solve selection uses **UP/DOWN: SELECT GRAPH, EXE: SELECT**
+at the graph's top-left, temporarily replacing any warning and restoring it on exit.
+EXE alone is blue and normal weight. **One EXIT from selection/results returns to
+G-Solve; another fresh EXIT returns Graph.** Held EXIT cannot skip layers. Scratch
+query cancellation preserves the original plot and trajectory diagnostics.
+Results keep their lower-left panel; a hidden marker causes only the minimum Y
+translation, retaining X/scales/Y span and the existing numerical result. A safely
+visible marker leaves the view unchanged; result cycling does not rerun G-Solve.
+
+TRACE/G-Solve show **CALCULATING...**, Table **Preparing Table...**, Graph **Drawing...**
+with the same neutral `/ - \ |` spinner after about156ms, at most8Hz. EXIT is polled
+first. Quick work does not flash busy; completion/cancellation clears the patch.
+The calculator uploads only a small rectangle for spinner changes. No percentage
+or broad red domain/singularity shading is added. Equation/IC F1 INIT resets only its
 own inputs. Incomplete drafts remain editable until NEXT validates all fields
 and focuses the first error. IC numeric values update only after complete validation;
 unfinished IC drafts are runtime-only. Red numerical/domain END remains nonfatal,
 with valid-side TRACE/G-Solve available. Output color-line previews persist when OFF.
-[Current tile/TRACE audit and limits](docs/TILES_TRACE_AUDIT.md),
+[Current overlay/navigation audit](docs/OVERLAY_AUDIT.md),
 [UI conventions](docs/UI_CONVENTIONS.md), [BOX and updated screens](docs/ui-review/interaction-overview.png).
 
 [Six native and 3× Main/subtype previews; current TRACE and warning screens](docs/ui-review/tiles-overview.png)

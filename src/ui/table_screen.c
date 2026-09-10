@@ -9,13 +9,13 @@
 void ui_table(App *a)
 {
     Document *d=&a->doc;TableIndex index;
-    ui_frame("Preparing table...","EXIT cancels");dupdate();
-    OdeStatus status=table_index_build(d,&a->model,&index,ui_cancel,NULL);
+    UiBusy busy;ui_busy_begin(&busy,"Preparing Table...",UI_BUSY_TABLE,ui_cancel,NULL);
+    OdeStatus status=table_index_build(d,&a->model,&index,ui_busy_cancel,&busy);ui_busy_end(&busy);
     if(status!=ODE_OK){if(status!=ODE_CANCELLED)ui_message("Table",ode_status_text(status));return;}
     int column=0;unsigned start=index.mid;
     for(;;) {
-        TablePage page;ui_frame("Calculating table...","EXIT cancels");dupdate();
-        table_read_page(d,&a->model,&index,start,&page,ui_cancel,NULL);
+        TablePage page;ui_busy_begin(&busy,"Preparing Table...",UI_BUSY_TABLE,ui_cancel,NULL);
+        table_read_page(d,&a->model,&index,start,&page,ui_busy_cancel,&busy);ui_busy_end(&busy);
         if(page.result.status==ODE_CANCELLED)return;
         ui_frame(index.solutions && d->nic>1 ? "Table / initial solutions":"Table",
             index.count>2 ? "Left/Right: columns   UP/DOWN: page":"UP/DOWN: page");

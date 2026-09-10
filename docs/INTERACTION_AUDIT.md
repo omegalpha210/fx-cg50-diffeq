@@ -1,4 +1,4 @@
-> Historical beta.4 audit. Main layout, TRACE navigation/keys and warning placement are superseded by [TILES_TRACE_AUDIT](TILES_TRACE_AUDIT.md). Other INIT/BOX/draft contracts remain.
+> Historical beta.4 audit. Main layout, TRACE navigation/keys and warning placement are superseded by [TILES_TRACE_AUDIT](TILES_TRACE_AUDIT.md). Graph INIT/overlay/G-Solve/busy rules are superseded by [OVERLAY_AUDIT](OVERLAY_AUDIT.md); other BOX/draft contracts remain.
 
 # Interaction audit — beta.4 baseline
 
