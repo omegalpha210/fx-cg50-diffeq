@@ -86,6 +86,7 @@ void model_field_appearance_defaults(Document *d)
 {d->field_style=FIELD_ARROW;d->field_color=0;}
 void model_sanitize_field(Document *d)
 {
+    if(d->solver.sf>ODE_SF_MAX)d->solver.sf=ODE_SF_MAX;
     if(d->field_style>FIELD_ARROW)d->field_style=FIELD_ARROW;
     if(d->field_color>=FIELD_COLORS)d->field_color=0;
 }
@@ -118,6 +119,12 @@ void model_output_color(Document *d,int variable,unsigned color)
     unsigned seed=0;while(seed<6 && order[seed]!=color)seed++;
     if(seed==6 || variable<0 || variable>=d->dim)return;
     for(int f=0;f<ODE_MAX_IC;f++)d->color[f][variable]=(uint8_t)order[(seed+(unsigned)f*d->dim)%6];
+}
+void model_curve_color(Document *d,int family,int variable,unsigned color)
+{
+    if(!d || family<0 || family>=d->nic || family>=ODE_MAX_IC
+        || variable<0 || variable>=d->dim || variable>=ODE_MAX_DIM || color>=6)return;
+    d->color[family][variable]=(uint8_t)color;
 }
 void model_sanitize_colors(Document *d)
 {

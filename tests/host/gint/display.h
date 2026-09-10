@@ -15,6 +15,9 @@ typedef uint16_t color_t;
 typedef struct {uint8_t line_height,data_height;} font_t;
 const font_t *dfont_default(void);
 extern uint16_t *gint_vram;
+struct dwindow {int left,top,right,bottom;};
+extern struct dwindow dwindow;
+struct dwindow dwindow_set(struct dwindow window);
 void dclear(color_t color);
 void drect(int x1,int y1,int x2,int y2,int color);
 void dline(int x1,int y1,int x2,int y2,int color);
@@ -26,4 +29,9 @@ void dsize(const char *text,const font_t *font,int *w,int *h);
 void dnsize(const char *text,int size,const font_t *font,int *w,int *h);
 void dsetvram(uint16_t *main,uint16_t *secondary);
 void dupdate(void);
+/* Native strip uploads accumulate on the LCD independently of VRAM. */
+void host_display_rect(uint16_t *vram,int xmin,int xmax,int ymin,int ymax);
+void host_display_frame(void);
+const uint16_t *host_display_pixels(void);
+unsigned host_display_uploads(void);
 #endif

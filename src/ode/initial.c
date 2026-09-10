@@ -53,7 +53,8 @@ void initial_values_apply(Document *d,const InitialValues *values)
         d->ic[i].x=d->ic[0].x;d->ic[i].y[0]=values->value[i];
     }
     d->nic=(int)values->count;
-    model_output_color(d,0,model_color(d,0,0));
+    /* Colors belong to stable IC positions. Shrinking hides their preferences;
+       growing restores them. Unused new-document slots already have defaults. */
 }
 const char *initial_values_error(IcListStatus status)
 {

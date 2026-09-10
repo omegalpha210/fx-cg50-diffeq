@@ -55,7 +55,7 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
 {
     static const char *const help[]={"Integration start","Integration end",
         "RK4 h > 0; smaller means more work","Output spacing only; h is unchanged",
-        "Slope-field columns (0-100); 0 = Off","Max RK4 steps per IC / direction",
+        "Slope-field columns (0-50); 0 = Off","Max RK4 steps per IC / direction",
         "LEFT/RIGHT: RK4 / RK45","RelTol: relative error target","AbsTol: absolute error floor"};
     int selected=state->selected;NumberEdit edit=state->edit;
     bool advanced=state->top!=0;
@@ -100,6 +100,9 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
             if(action==0)continue;
             double value;OdeSettings before=d->solver;OdeAdaptive old=d->adaptive;
             if(!number_value(&edit,&value))continue;
+            if(field==4 && (value<0 || value>ODE_SF_MAX || value!=floor(value))) {
+                ui_field_error("Invalid range: SF must be 0-50.");continue;
+            }
             if(field>=3 && field<=5 && (value<0 || value>100000 || value!=floor(value))) {
                 ui_field_error("Use an integer within the setting limit.");continue;
             }
@@ -366,30 +369,44 @@ static int choose_color(const char *title,const char *const names[6],int (*color
 void ui_output(Document *d)
 {
     int selected=0;bool modified=false;
+    bool families=model_field_supported(d) && d->nic>1;
+    int count=families ? d->nic+1:d->dim;
     for(;;) {
         ui_frame("Output selection",NULL);
         int page=selected/7;
-        for(int row=0;row<7 && page*7+row<d->dim;row++) {
-            int index=page*7+row;char label[20];model_variable_label(d,index,label,sizeof(label));
-            ui_field(row,label,d->enabled&(1u<<index) ? "ON":"OFF",index==selected);
+        for(int row=0;row<7 && page*7+row<count;row++) {
+            int index=page*7+row,variable=families ? 0:index;char label[20];
+            if(families && index)snprintf(label,sizeof(label),"IC%d y",index);
+            else if(families)snprintf(label,sizeof(label),"y (all ICs)");
+            else model_variable_label(d,variable,label,sizeof(label));
+            ui_field(row,label,families && index ? "":(d->enabled&(1u<<variable) ? "ON":"OFF"),index==selected);
+            if(families && !index)continue; /* One shared visibility row, no ambiguous curve preview. */
             /* A curve preview keeps its chosen color even when output is OFF. */
             ui_rect(326,30+row*22,34,15,C_WHITE);
-            ui_rect(329,36+row*22,28,2,graph_palette_color(model_color(d,0,index)));
+            ui_rect(329,36+row*22,28,2,graph_palette_color(model_color(d,families ? index-1:0,variable)));
         }
-        ui_form_hint(NULL,"LEFT/RIGHT: ON/OFF toggle, F3: COLOR");
-        ui_softkeys("INIT","","COLOR","","","DONE");dupdate();
+        ui_form_hint(NULL,families ? (selected ? "F3: COLOR":"LEFT/RIGHT: ON/OFF for all ICs"):
+            "LEFT/RIGHT: ON/OFF toggle, F3: COLOR");
+        ui_softkeys("INIT","",families && !selected ? "":"COLOR","","","DONE");dupdate();
         int key=ui_getkey().key;
-        if(key==KEY_EXE){key=ui_list_complete(key,modified,&selected,d->dim);modified=false;}
+        if(key==KEY_EXE){key=ui_list_complete(key,modified,&selected,count);modified=false;}
         if(key==KEY_EXIT || key==KEY_F6)return;
         if(key==KEY_UP || key==KEY_DOWN) {
-            ui_select_move(key,&selected,d->dim);
+            ui_select_move(key,&selected,count);
             modified=false;
         }
-        if(key==KEY_LEFT || key==KEY_RIGHT){d->enabled^=(uint16_t)(1u<<selected);modified=true;}
-        if(key==KEY_F3) {
-            unsigned old=model_color(d,0,selected);
+        if((key==KEY_LEFT || key==KEY_RIGHT) && (!families || !selected)) {
+            d->enabled^=(uint16_t)(1u<<(families ? 0:selected));modified=true;
+        }
+        if(key==KEY_F3 && (!families || selected)) {
+            int family=families ? selected-1:0,variable=families ? 0:selected;
+            unsigned old=model_color(d,family,variable);
             int color=choose_color("Curve color",curve_names,graph_palette_color,old);
-            if(color>=0 && (unsigned)color!=old){model_output_color(d,selected,(unsigned)color);modified=true;}
+            if(color>=0 && (unsigned)color!=old) {
+                if(model_field_supported(d))model_curve_color(d,family,variable,(unsigned)color);
+                else model_output_color(d,variable,(unsigned)color);
+                modified=true;
+            }
         }
         if(key==KEY_F1){model_output_defaults(d);selected=0;modified=false;}
     }

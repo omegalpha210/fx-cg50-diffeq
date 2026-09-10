@@ -7,7 +7,7 @@ OdeStatus ode_validate(const OdeSettings *s)
 {
     if(!s || !isfinite(s->xmin) || !isfinite(s->xmax) || s->xmin>=s->xmax
         || !isfinite(s->xmax-s->xmin) || s->max_steps<1 || s->max_steps>100000
-        || s->step<1 || s->step>10000 || s->sf<0 || s->sf>100)
+        || s->step<1 || s->step>10000 || s->sf<0 || s->sf>ODE_SF_MAX)
         return ODE_BAD_INPUT;
     if(!isfinite(s->h) || s->h<=0) return ODE_BAD_STEP;
     return ODE_OK;

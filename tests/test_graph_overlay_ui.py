@@ -84,7 +84,7 @@ for p in [base,small,'4 2 F6 F6 F6 F6 F4 F2 ']:
 assert 'CALCULATING...' not in run(base+'TICKS:0 F1')
 for suffix,label in [('F1','CALCULATING...'),('F4','Preparing Table...')]:
  out=run(base+'TICKS:8 '+suffix)
- phases=re.findall(re.escape(label)+r' ([/\\|\-])',out)
+ phases=re.findall(r'^TEXT \d+ \d+ '+re.escape(label)+r' ([/\\|\-])$',out,re.M)
  assert phases[:4]==['/','-','\\','|'],(suffix,phases)
  assert label not in tail(out).split('FRAME')[-1]
  assert 'IC1 x=' in tail(out) if suffix=='F1' else 'STAT' in tail(out)
@@ -100,9 +100,11 @@ for op in ['F1 EXE','F2 EXE','F3 EXE','F5']:
  assert 'CALCULATING...' in cancelled and bar(cancelled)==GS
  assert 'Partial: Cancelled' not in cancelled and last(cancelled,'PLOT')==last(prior,'PLOT')
  assert last(cancelled,'REPORT')==last(prior,'REPORT')
-# Genuine main-trajectory cancellation still reports Partial: Cancelled.
+# Dedicated Drawing cancellation discards temporary work and returns to the
+# preceding Parameters screen when no stable Graph exists yet.
 out=run('2 F6 F6 TICKS:8 CANCEL:12 F6')
-assert 'Drawing...' in out and 'Partial: Cancelled' in out
+assert 'Drawing...' in out and 'Partial: Cancelled' not in out
+assert bar(out)==['INIT','ADV','V-WIN','OUTPUT','SET','GRAPH']
 out=run('2 F6 F6 TICKS:8 F6');assert 'Drawing...' in out and bar(out)==BASE
 assert 'Drawing...' not in run('2 F6 F6 TICKS:0 F6')
 print('Graph overlay UI: all seven G-Solve routes, exact cancel restore/report, one EXIT, Y-only result visibility, shared INIT and delayed/cancel-safe busy PASS.')

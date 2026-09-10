@@ -1,3 +1,19 @@
+# Beta.7 audit update
+
+[Full audit](FULL_AUDIT.md) records the mode/solver/IC/domain/consumer matrix.
+Dedicated Table/Drawing LCD screens reuse staging-tail strips and existing report/
+display transactions; no new framebuffer or trajectory buffer. UI cancellation
+keeps canonical results and Last calculation. Table reuses its existing page for
+column-only movement. Existing per-IC color storage is exposed without a format
+change; SF validation/migration/rendering share the50 maximum. G-Solve's narrow
+Event-terminal fix evaluates same-family components from one accepted vector and
+uses local Event precision at accepted STOP endpoints; numerical solver cores stay.
+See BUSY_SCREEN_AUDIT, MULTI_IC_COLOR_AUDIT and the four detailed audit reports.
+
+Earlier architecture records follow.
+
+---
+
 # Current overlay ownership — beta.6
 
 Graph message styling lives in graph_message; transient top/footer patches and
@@ -111,7 +127,7 @@ Flow: edit strings/settings → validate complete document → compile expressio
 - Compiled expression: fixed opcode/argument arrays plus literal pool; index-based variables. Explicit maximum instruction count, parser nesting and evaluation stack bounds.
 - Initial condition: independent coordinate plus up to 9 state values. Up to 9 sets; empty set count is valid only for first-order slope-field-only mode.
 - Graph config: finite ordered x/y windows, positive tick scales, derived/editable Xdot coupling, optional grid/axis labels, output mask for each family, phase component choices. Factory grid/labels are on.
-- Solver config: ordered finite range, positive finite h, positive integer Step, SF 0-100, bounded maximum step count and magnitude guard. Before an explicit range override, X bounds follow `ceil(view.xmin)`/`floor(view.xmax)`.
+- Solver config: ordered finite range, positive finite h, positive integer Step, SF 0-50, bounded maximum step count and magnitude guard. Before an explicit range override, X bounds follow `ceil(view.xmin)`/`floor(view.xmax)`. Legacy/current session loads normalize saved SF above 50 before validation; the field renderer independently caps density at 50.
 
 ## RAM and performance policy
 

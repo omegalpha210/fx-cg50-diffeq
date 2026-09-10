@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.12.0-beta.7 — Preparation screens and full audit
+
+- Dedicated cancellable Table/Drawing screens; SF 0–50 with legacy normalization.
+- Independent colors for up to ten first-order ICs using the existing save matrix.
+- G-Solve Event endpoint, Table dx, Recall ownership and partial redraw corrections.
+- Systematic mode/solver/consumer/UI/persistence coverage; 57 host/UBSan groups.
+- [Complete evidence, review choices and limits](docs/FULL_AUDIT.md).
+
 ## v0.9.0-beta.2 — Graph exploration and visual documentation
 
 - Ordinary SELECT EXE now runs NEXT/GRAPH/DONE from any row. EDIT EXE commits and

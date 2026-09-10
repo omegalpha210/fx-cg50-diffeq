@@ -175,7 +175,7 @@ void trace_capture_branch_end(ModelPathResult result)
     Capture *c=&graph_capture.capture;
     if(c->have)retain(c,&c->previous);
     record_result(&scratch.staging,c->branch,result,graph_capture.family);
-    if(result.status!=ODE_OK && result.status!=ODE_HAS_INVALID && result.status!=ODE_EVENT_STOP)graph_capture.failed=true;
+    if(result.status==ODE_CANCELLED)graph_capture.failed=true;
     graph_capture.finished++;graph_capture.branch_active=false;
 }
 void trace_capture_end(bool success)
@@ -183,7 +183,11 @@ void trace_capture_end(bool success)
     if(graph_capture.active && success && !graph_capture.failed && !graph_capture.branch_active &&
         graph_capture.finished==2*(unsigned)graph_capture.capture.d->nic) {
         scratch.staging.valid=scratch.staging.branch[0][0].count+scratch.staging.branch[0][1].count>0;
-        samples=scratch.staging;cache_key=graph_capture.key;cache_ready=true;
+        samples=scratch.staging;cache_key=graph_capture.key;
+        /* A completed nonfatal prefix can restore its displayed graph after
+           cancelled redraw. It is not a complete canonical SYS2 trajectory. */
+        cache_ready=samples.result.status==ODE_OK || samples.result.status==ODE_HAS_INVALID
+            || samples.result.status==ODE_EVENT_STOP;
         plot_key=plot_identity(graph_capture.capture.d);plot_ready=true;
     }
     graph_capture.active=false;graph_capture.branch_active=false;

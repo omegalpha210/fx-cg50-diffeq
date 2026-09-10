@@ -314,19 +314,33 @@ static void gsolve_run(App *a,int operation,GraphResult canonical)
     GsolveResults result=gsolve_search(&a->doc,&a->model,curve,mode,target,ui_busy_cancel,&busy);
     ui_busy_end(&busy);show_results(a,curve,NULL,name,result,canonical);
 }
-static void gsolve_menu(App *a,GraphResult *last)
+static bool restore_plot(App *a,GraphResult last)
+{
+    Document *d=&a->doc;
+    if(!graph_redraw_cached(d,&a->model,d->solver.xmin,d->solver.xmax)) {
+        if(d->enabled || d->view.phase)return false;
+        graph_backdrop(d,&a->model);graph_labels(d,&a->model);
+    }
+    graph_status(last);return true;
+}
+static bool gsolve_menu(App *a,GraphResult *last)
 {
     int page=0;
     for(;;) {
         if(page==0)ui_softkeys("ROOT","MAX","MIN","Y-ICPT","ICPT",">");
         else ui_softkeys("Y-CAL","X-CAL","","","","<");
         dupdate();int key=ui_getkey().key,operation=-1;
-        if(key==KEY_EXIT)return;
+        if(key==KEY_EXIT)return true;
         if(key==KEY_F6){page=1-page;continue;}
         ViewWindow before=a->doc.view;OdeSettings solver=a->doc.solver;
         bool panned=pan_key(&a->doc.view,key);
-        if(panned && accept_window(&a->doc,before,solver))
-            {a->dirty=true;*last=graph_render(&a->doc,&a->model,false);}
+        if(panned && accept_window(&a->doc,before,solver)) {
+            GraphResult next=graph_render(&a->doc,&a->model,false);
+            if(next.status==ODE_CANCELLED) {
+                a->doc.view=before;a->doc.solver=solver;
+                if(!restore_plot(a,*last))return false;
+            } else {a->dirty=true;*last=next;}
+        }
         if(page==0 && key>=KEY_F1 && key<=KEY_F5)operation=key-KEY_F1;
         if(page==1 && (key==KEY_F1 || key==KEY_F2))operation=key==KEY_F1 ? 5:6;
         if(operation>=0) {
@@ -394,21 +408,39 @@ static bool zoom_box(App *a,GraphResult result)
 UiGraphAction ui_graph(App *a,bool first)
 {
     enum {BASE,ZOOM,VIEW,ANALYSIS} menu=BASE;
-    bool redraw=true,pending=false,eq_shown=false;
+    bool redraw=true,pending=false,eq_shown=false,stable=false,recall_pending=first,notice_phase=false;
     int selected=-1;OdeStatus notice=ODE_OK;
     Document *d=&a->doc;GraphChange before=change_begin(d);
     GraphResult result={.status=ODE_OK,.failed_family=-1};
     for(;;) {
         bool system=model_phase_supported(d),phase=system && d->view.phase;
         if(redraw) {
-            GraphResult next=graph_render(d,&a->model,first);first=false;redraw=false;
-            if(pending && next.status!=ODE_OK && next.status!=ODE_HAS_INVALID && next.status!=ODE_EVENT_STOP) {
-                change_restore(d,&before);notice=next.status;
+            GraphResult next;
+            if(!stable && !first && graph_redraw_cached(d,&a->model,d->solver.xmin,d->solver.xmax))
+                next=trace_cache_result();
+            else next=graph_render(d,&a->model,first);
+            first=false;redraw=false;
+            bool completed=next.status==ODE_OK || next.status==ODE_HAS_INVALID
+                || next.status==ODE_EVENT_STOP || next.steps;
+            if(next.status==ODE_CANCELLED) {
+                if(pending)change_restore(d,&before);
+                if(!stable || !restore_plot(a,result))return UI_GRAPH_BACK;
+                pending=false;phase=system && d->view.phase;
+            }
+            else if(pending && !completed) {
+                notice_phase=phase;change_restore(d,&before);notice=next.status;
                 if(system && !phase && trace_cache_matches(d)) {
                     graph_backdrop(d,&a->model);trace_cache_render(d);graph_event_markers(d);graph_phase_markers(d,-1);
                     graph_labels(d,&a->model);
                 }
-            } else {result=next;if(pending)a->dirty=true;}
+            } else {
+                /* A completed numerical-limit prefix already committed its
+                   raster, display cache and report. Keep its geometry too. */
+                result=next;stable=true;if(pending)a->dirty=true;
+                if(recall_pending && completed) {
+                    a->recall=*d;a->has_recall=true;a->dirty=true;recall_pending=false;
+                }
+            }
             pending=false;phase=system && d->view.phase;
 
         }
@@ -432,7 +464,7 @@ UiGraphAction ui_graph(App *a,bool first)
         graph_status(result);
         if(notice!=ODE_OK) {
             graph_overlay_begin(0);
-            char text[80];snprintf(text,sizeof(text),"Phase: %s",ode_status_text(notice));graph_message(text,false);
+            char text[80];snprintf(text,sizeof(text),"%s: %s",notice_phase ? "Phase":"Graph",ode_status_text(notice));graph_message(text,false);
         }
         dupdate();int key=ui_getkey().key;
         if(notice!=ODE_OK)graph_overlay_restore();
@@ -464,7 +496,7 @@ UiGraphAction ui_graph(App *a,bool first)
                 }
                 OdeStatus s=graph_phase_search(d,&a->model,ui_cancel,NULL);
                 if(s==ODE_OK){eq_shown=true;selected=graph_phase_results()->count ? 0:-1;redraw=true;}
-                else notice=s;
+                else {notice=s;notice_phase=true;}
             }
             if(key==KEY_F4){equilibrium_info(selected);redraw=true;}
             const PhaseResults *r=graph_phase_results();
@@ -476,9 +508,11 @@ UiGraphAction ui_graph(App *a,bool first)
         if(menu==ZOOM && key==KEY_EXIT){menu=BASE;continue;}
         if(menu==BASE && key==KEY_EXIT)return UI_GRAPH_BACK;
         if(menu==BASE && key==KEY_F6) {
-            ui_vwindow_reset(d);eq_shown=false;selected=-1;a->dirty=true;
-            if(graph_redraw_cached(d,&a->model,d->solver.xmin,d->solver.xmax))result=trace_cache_result();
-            else redraw=true;
+            before=change_begin(d);
+            ui_vwindow_reset(d);eq_shown=false;selected=-1;
+            if(graph_redraw_cached(d,&a->model,d->solver.xmin,d->solver.xmax))
+                {result=trace_cache_result();a->dirty=true;}
+            else {pending=true;redraw=true;}
             continue;
         }
         if(menu==BASE && key==KEY_F1){ui_trace(a,result);continue;}
@@ -515,7 +549,7 @@ UiGraphAction ui_graph(App *a,bool first)
                     graph_overlay_begin(0);graph_message("G-Solve: turn Phase off (EXE)",false);dupdate();
                     while((key=ui_getkey().key)!=KEY_EXE && key!=KEY_EXIT) {}
                     graph_overlay_restore();
-                } else gsolve_menu(a,&result);
+                } else if(!gsolve_menu(a,&result))return UI_GRAPH_BACK;
             }
             if(key==KEY_OPTN) {
                 if(graph_more(a,result))return UI_GRAPH_SETTINGS;

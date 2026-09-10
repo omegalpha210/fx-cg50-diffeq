@@ -9,6 +9,13 @@
 #include "font_data.h"
 static uint16_t pixels[DWIDTH*DHEIGHT];
 uint16_t *gint_vram=pixels;
+/* Test-only LCD state: synchronous native uploads survive restoring the
+   temporary source strip in VRAM. No second framebuffer enters firmware. */
+static uint16_t lcd[DWIDTH*DHEIGHT];
+static unsigned uploads;
+struct dwindow dwindow={0,0,DWIDTH,DHEIGHT};
+const uint16_t *host_display_pixels(void){return lcd;}
+unsigned host_display_uploads(void){return uploads;}
 static unsigned frame,clears;
 static unsigned text_glyphs;
 unsigned host_text_glyphs(void){return text_glyphs;}
@@ -18,9 +25,24 @@ const font_t *dfont_default(void)
 {static const font_t font={9,11};return &font;}
 void host_metrics_print(void);
 void dsetvram(uint16_t *main,uint16_t *secondary) {(void)main;(void)secondary;}
+struct dwindow dwindow_set(struct dwindow window)
+{
+    struct dwindow previous=dwindow;
+    if(window.left<0)window.left=0;if(window.top<0)window.top=0;
+    if(window.right>DWIDTH)window.right=DWIDTH;
+    if(window.bottom>DHEIGHT)window.bottom=DHEIGHT;
+    if(window.right<window.left)window.right=window.left;
+    if(window.bottom<window.top)window.bottom=window.top;
+    dwindow=window;return previous;
+}
 void dpixel(int x,int y,int color)
-{if(x>=0 && x<DWIDTH && y>=0 && y<DHEIGHT && color>=0) pixels[y*DWIDTH+x]=(uint16_t)color;}
-void dclear(color_t color) {clears++;for(int i=0;i<DWIDTH*DHEIGHT;i++) pixels[i]=color;}
+{
+    if(x>=0 && x<DWIDTH && y>=0 && y<DHEIGHT && x>=dwindow.left && x<dwindow.right
+        && y>=dwindow.top && y<dwindow.bottom && color>=0)
+        gint_vram[y*DWIDTH+x]=(uint16_t)color;
+}
+void dclear(color_t color)
+{clears++;drect(dwindow.left,dwindow.top,dwindow.right-1,dwindow.bottom-1,color);}
 void drect(int x1,int y1,int x2,int y2,int color)
 {
     if(x1<0)x1=0;if(y1<0)y1=0;if(x2>=DWIDTH)x2=DWIDTH-1;if(y2>=DHEIGHT)y2=DHEIGHT-1;
@@ -52,8 +74,12 @@ void dtext_opt(int x,int y,int color,int background,int halign,int valign,const 
     int width,height;dnsize(text,size,NULL,&width,&height);
     if(halign==DTEXT_RIGHT)x-=width-1;if(halign==DTEXT_CENTER)x-=width/2;
     if(valign==DTEXT_BOTTOM)y-=height-1;if(valign==DTEXT_MIDDLE)y-=height/2;
-    printf("TEXT %d %d %.*s\n",x,y,size<0 ? (int)strlen(text):size,text);
-    if(x==14 && y==9)snprintf(title,sizeof(title),"%.*s",size<0 ? (int)strlen(text):size,text);
+    /* A strip renderer may submit the same text for each clipped strip.
+       Log the anchor once, while all intersecting strips still paint glyphs. */
+    if(y>=dwindow.top && y<dwindow.bottom && x<dwindow.right && x+width>dwindow.left) {
+        printf("TEXT %d %d %.*s\n",x,y,size<0 ? (int)strlen(text):size,text);
+        if(x==14 && y==9)snprintf(title,sizeof(title),"%.*s",size<0 ? (int)strlen(text):size,text);
+    }
     for(int i=0;text[i] && (size<0 || i<size);i++) {
         unsigned ch=(unsigned char)text[i];if(ch<32 || ch>126)continue;
         int index=(int)ch-32;text_glyphs++;
@@ -63,13 +89,22 @@ void dtext_opt(int x,int y,int color,int background,int halign,int valign,const 
         x+=font_width[index]+1;
     }
 }
-void dupdate(void)
+void host_display_rect(uint16_t *vram,int xmin,int xmax,int ymin,int ymax)
+{
+    if(xmin<0)xmin=0;if(ymin<0)ymin=0;
+    if(xmax>=DWIDTH)xmax=DWIDTH-1;if(ymax>=DHEIGHT)ymax=DHEIGHT-1;
+    if(xmin>xmax || ymin>ymax)return;
+    uploads++;
+    for(int y=ymin;y<=ymax;y++)memcpy(lcd+y*DWIDTH+xmin,vram+y*DWIDTH+xmin,
+        (unsigned)(xmax-xmin+1)*sizeof(uint16_t));
+}
+void host_display_frame(void)
 {
     host_metrics_print();
     /* Hash only the plot, excluding the softkey strip. */
     uint32_t hash=2166136261u;
     for(int y=4;y<202;y++)for(int x=6;x<390;x++) {
-        hash^=pixels[y*DWIDTH+x];hash*=16777619u;
+        hash^=lcd[y*DWIDTH+x];hash*=16777619u;
     }
     printf("PLOT %08x\n",hash);
     const char *out=getenv("DIFFEQ_HOST_OUT");
@@ -78,7 +113,7 @@ void dupdate(void)
         FILE *f=fopen(path,"wb");if(!f){perror(path);exit(2);}
         fprintf(f,"P6\n%d %d\n255\n",DWIDTH,DHEIGHT);
         for(int i=0;i<DWIDTH*DHEIGHT;i++) {
-            unsigned c=pixels[i];unsigned char rgb[]={ (unsigned char)(((c>>11)&31)*255/31),
+            unsigned c=lcd[i];unsigned char rgb[]={ (unsigned char)(((c>>11)&31)*255/31),
                 (unsigned char)(((c>>5)&63)*255/63),(unsigned char)((c&31)*255/31)};
             fwrite(rgb,1,3,f);
         }
@@ -90,6 +125,8 @@ void dupdate(void)
     if(!limit)limit=500;
     if(frame>limit) {fputs("Excess UI frames\n",stderr);exit(2);}
 }
+void dupdate(void)
+{host_display_rect(gint_vram,0,DWIDTH-1,0,DHEIGHT-1);host_display_frame();}
 #ifndef DIFFEQ_TEST_NATIVE_KEYS
 static unsigned poll_remaining;
 void host_cancel_after(unsigned polls){poll_remaining=polls;}

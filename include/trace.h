@@ -18,7 +18,8 @@ typedef struct {
 } TraceSamples;
 /* Capture the initial full-resolution graph stream without integrating twice.
    Begin only after preflight; side is 0 (backward) or 1 (forward). A failed or
-   cancelled transaction leaves the committed cache untouched. */
+   cancelled transaction leaves the committed cache untouched. Completed nonfatal
+   prefixes can be display caches without becoming canonical SYS2 trajectories. */
 bool trace_capture_begin(const Document *d);
 bool trace_capture_branch_begin(const Document *d,int family,int side);
 bool trace_capture_point(double x,const double *y,uint32_t step,void *unused);

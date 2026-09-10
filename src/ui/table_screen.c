@@ -3,6 +3,7 @@
 #include "storage.h"
 #include "ui.h"
 #include <stdio.h>
+#include <limits.h>
 #ifndef DIFFEQ_STORAGE_DIR
 #define DIFFEQ_STORAGE_DIR "/"
 #endif
@@ -12,11 +13,14 @@ void ui_table(App *a)
     UiBusy busy;ui_busy_begin(&busy,"Preparing Table...",UI_BUSY_TABLE,ui_cancel,NULL);
     OdeStatus status=table_index_build(d,&a->model,&index,ui_busy_cancel,&busy);ui_busy_end(&busy);
     if(status!=ODE_OK){if(status!=ODE_CANCELLED)ui_message("Table",ode_status_text(status));return;}
-    int column=0;unsigned start=index.mid;
+    int column=0;unsigned start=index.mid,prepared=UINT_MAX;TablePage page;
     for(;;) {
-        TablePage page;ui_busy_begin(&busy,"Preparing Table...",UI_BUSY_TABLE,ui_cancel,NULL);
-        table_read_page(d,&a->model,&index,start,&page,ui_busy_cancel,&busy);ui_busy_end(&busy);
-        if(page.result.status==ODE_CANCELLED)return;
+        if(prepared!=start) {
+            ui_busy_begin(&busy,"Preparing Table...",UI_BUSY_TABLE,ui_cancel,NULL);
+            table_read_page(d,&a->model,&index,start,&page,ui_busy_cancel,&busy);ui_busy_end(&busy);
+            if(page.result.status==ODE_CANCELLED)return;
+            prepared=start;
+        }
         ui_frame(index.solutions && d->nic>1 ? "Table / initial solutions":"Table",
             index.count>2 ? "Left/Right: columns   UP/DOWN: page":"UP/DOWN: page");
         for(int j=0;j<3 && (j==0 || column+j-1<index.count);j++) {
@@ -36,9 +40,14 @@ void ui_table(App *a)
             || (start==table_bottom(&index) && ode_invalid_region(index.high)))
             ui_text(8,184,C_RED,"END: Numerical limit");
         else if(page.result.status!=ODE_OK)ui_text(8,184,C_RED,"Partial: %s",ode_status_text(page.result.status));
-        else ui_text(8,184,UI_MUTED,"Rows %lu-%lu / %lu | Step %d%s",(unsigned long)(start+1),
-            (unsigned long)(start+page.count),(unsigned long)index.total,d->solver.step,
-            !start || start==table_bottom(&index) ? " | END":"");
+        else {
+            char spacing[24];
+            if(d->adaptive.method==ODE_RK45)snprintf(spacing,sizeof(spacing),"dx %.6g",index.spacing);
+            else snprintf(spacing,sizeof(spacing),"Step %d",d->solver.step);
+            ui_text(8,184,UI_MUTED,"Rows %lu-%lu / %lu | %s%s",(unsigned long)(start+1),
+                (unsigned long)(start+page.count),(unsigned long)index.total,spacing,
+                !start || start==table_bottom(&index) ? " | END":"");
+        }
         ui_softkeys("TOP","BTM","MID","","STAT","GRAPH");dupdate();
         int key=ui_getkey().key;
         if(key==KEY_EXIT || key==KEY_F6)return;

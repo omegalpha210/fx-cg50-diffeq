@@ -1,3 +1,15 @@
+# Beta.7 completed audit milestone
+
+Four explicit fixes (Table/Drawing preparation, SF50 and independent IC colors)
+plus the bounded full capability audit are implemented. Evidence and remaining
+review decisions are in [FULL_AUDIT](FULL_AUDIT.md). No stiff solver, multiple Event
+feature, new per-IC visibility schema or broad domain shading was introduced.
+Physical validation remains pending; do not mark RC-ready from host tests alone.
+
+Earlier plans follow.
+
+---
+
 # Current milestone — v0.12.0-beta.6
 
 Overlay/G-Solve navigation, shared factory Graph INIT, result marker Y visibility
@@ -17,7 +29,7 @@ Reference analysis was completed after the verified minimal G3A milestone and wa
 - [ORIGINAL] N-th → SYS conversion with corresponding IC conversion.
 - [ORIGINAL] Classical RK4, h, range, Step sampling; first graph draws every accepted fixed step, later redraw uses Step.
 - [ORIGINAL] Multiple IC solution family; per-variable/per-family graph selection and numeric output.
-- [ORIGINAL] SF 0-100 in first-order modes; field-only view with no IC and SF>0.
+- [ORIGINAL] SF 0-50 in first-order modes (native density cap); field-only view with no IC and SF>0.
 - [ORIGINAL] V-Window ranges/scales/defaults, editable Xdot with Xmax coupling, axes and tick marks.
 - [ORIGINAL] Recall previous equation; overflow/nonfinite calculations can stop before full range.
 - [ORIGINAL] Access to numeric solution values as in List/STAT. OS List binary compatibility is not asserted.

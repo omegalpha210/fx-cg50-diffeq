@@ -10,9 +10,9 @@ Solve, graph, and explore ordinary differential equations on your calculator.
 DIFFEQ is a native **fx-CG50 add-in** with colorful solution curves, slope fields,
 TRACE, G-Solve, numerical tables, and phase analysis for two-variable systems.
 
-**Public Beta · v0.12.0-beta.6 · [MIT License](LICENSE)**
+**Public Beta · v0.12.0-beta.7 · [MIT License](LICENSE)**
 
-**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.6)**
+**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.7)**
 · [All releases](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [Report a bug](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -88,9 +88,9 @@ Stability labels describe the **local linearization**: a Center / Neutral
 candidate is not a nonlinear or global stability result. Searches can miss roots;
 inconclusive or unavailable classifications are retained honestly.
 
-Both projections reuse a bounded **258-point trajectory cache**. Reprojection,
-pan and zoom do not rerun the trajectory solver; closely spaced features can exceed the retained
-resolution. Phase TRACE uses this cache and stays within its calculated time
+Both projections reuse a bounded **258-point trajectory cache**. Compatible cached
+reprojection and PHASE pan/zoom avoid reintegration; TIME AUTO range changes can
+rerun the solver. Closely spaced features can exceed the retained resolution. Phase TRACE uses this cache and stays within its calculated time
 range. See [numerical methods and bounds](docs/PHASE_NUMERICS.md).
 **HARDWARE TEST REQUIRED:** these new Phase views and interactions are host-tested.
 
@@ -145,7 +145,7 @@ one step; root accuracy remains limited by the numerical solution.
 - **Classical RK4 or adaptive Dormand–Prince RK45**, integrated in both directions from the initial condition.
   First-order `y0` accepts up to **10 values** at a common `x0`; higher-order and
   system input uses one complete initial-state vector.
-- **Slope fields** for the four scalar first-order modes: SF density 0–100,
+- **Slope fields** for the four scalar first-order modes: SF density 0–50,
   Segment/Arrow styles and six pale colors. Default: Arrow / Pale Blue.
 - **2D SYS Phase:** normalized vector fields, numerical nullclines, up to 16
   equilibrium candidates, and local linear stability with Jacobian/eigenvalue details.
@@ -204,7 +204,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 ## Install on your calculator
 
-1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.6).
+1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.7).
 2. Download **DIFFEQ.g3a**. `SHA256SUMS.txt` is available to check your download.
 3. Connect the fx-CG50 by USB, select USB Flash mode, and open its storage drive.
 4. Copy `DIFFEQ.g3a` to the drive's **root directory**, outside `@MainMem`.
@@ -225,7 +225,7 @@ Older add-ins may reject new saves; adaptations are explained in the
 | Selected ordinary field | UP/DOWN selects cyclically; LEFT/RIGHT starts editing; EXE runs NEXT/GRAPH/DONE/OPEN |
 | Editing | EXE commits and selects the next field; the last field stays. EXIT commits and stays |
 | Equation | F1 INIT; F2 FUNC/F3 VAR only in EDIT (VAR in supported modes). EXIT closes the token bar first |
-| OUTPUT | LEFT/RIGHT toggles ON/OFF; F1 INIT, F3 COLOR, F6 DONE. EXE follows the output rows |
+| OUTPUT | LEFT/RIGHT toggles visibility rows (IC color rows ignore it); F1 INIT, F3 COLOR, F6 DONE. EXE follows the output rows |
 | Parameters | F1 INIT; F2 ADV → EVENT/INFO; Method: LEFT/RIGHT toggles RK4/RK45; F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
 | Graph (except 2D SYS) | Arrows pan; F1 TRACE, F2 ZOOM, F3 V-WIN, F4 TABLE, F5 G-SLV, F6 yellow/black INIT; EXIT returns Parameters |
 | 2D SYS Graph | F4 VIEW → F1 TIME / F2 PHASE / F3 TABLE; Phase uses F5 ANLYS; F6 INIT retains selected view |
@@ -267,16 +267,33 @@ Results keep their lower-left panel; a hidden marker causes only the minimum Y
 translation, retaining X/scales/Y span and the existing numerical result. A safely
 visible marker leaves the view unchanged; result cycling does not rerun G-Solve.
 
-TRACE/G-Solve show **CALCULATING...**, Table **Preparing Table...**, Graph **Drawing...**
-with the same neutral `/ - \ |` spinner after about156ms, at most8Hz. EXIT is polled
-first. Quick work does not flash busy; completion/cancellation clears the patch.
-The calculator uploads only a small rectangle for spinner changes. No percentage
-or broad red domain/singularity shading is added. Equation/IC F1 INIT resets only its
+Long Table/Drawing preparation uses a dedicated white screen with a blue
+**Preparing Table...** or **Drawing...** header, `/ - \ |` spinner and **EXIT cancels**
+row; the softkey strip is hidden. Visibility is delayed about 156 ms, at most 8 Hz;
+only the header updates after the initial canvas. Fast/cached work does not flash.
+Cancellation discards temporary work and restores the stable Graph, or Parameters
+when the initial drawing has no stable graph. TRACE/G-Solve retain their lower-panel
+**CALCULATING...** feedback. Cancelled Drawing does not replace Last calculation.
+No percentage or broad red domain/singularity shading is added.
+
+**Output: independent first-order IC colors.** With multiple ICs, select IC1 y
+through IC10 y and use F3 COLOR. The separate **y (all ICs)** row controls shared
+visibility; the IC rows edit colors only. INIT restores the established palette.
+Colors persist in SAVE/RCL and by slot when the IC list shrinks and expands.
+Single-IC Output keeps its existing y row. SF remains 12 by default, accepts 0–50,
+rejects larger input and clamps old saved values above 50 without a format change.
+
+Beta.7 also fixes G-Solve results at valid Event STOP endpoints and makes RK45
+Table show its actual dx. The systematic audit covers all equation modes and
+orders 1–9, both solvers, 1/2/5/10 ICs, consumers, state transitions and storage.
+[Full audit and review decisions](docs/FULL_AUDIT.md) ·
+[16 production review frames](docs/ui-review/audit-overview.png).
+ Equation/IC F1 INIT resets only its
 own inputs. Incomplete drafts remain editable until NEXT validates all fields
 and focuses the first error. IC numeric values update only after complete validation;
 unfinished IC drafts are runtime-only. Red numerical/domain END remains nonfatal,
 with valid-side TRACE/G-Solve available. Output color-line previews persist when OFF.
-[Current overlay/navigation audit](docs/OVERLAY_AUDIT.md),
+[Current full audit](docs/FULL_AUDIT.md),
 [UI conventions](docs/UI_CONVENTIONS.md), [BOX and updated screens](docs/ui-review/interaction-overview.png).
 
 [Six native and 3× Main/subtype previews; current TRACE and warning screens](docs/ui-review/tiles-overview.png)

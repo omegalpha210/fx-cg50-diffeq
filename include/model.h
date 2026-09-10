@@ -22,7 +22,7 @@ typedef struct {
     int solver_custom;
     ViewWindow view;
     uint16_t enabled; /* One dependent-output mask, shared by Graph/Table/CSV. */
-    uint8_t color[ODE_MAX_IC][ODE_MAX_DIM];
+    uint8_t color[ODE_MAX_IC][ODE_MAX_DIM]; /* Persistent curve-instance colors, including inactive IC slots. */
     uint8_t field_style,field_color;
     ViewWindow phase_view;
     uint8_t phase_field,phase_nullclines,phase_ready;
@@ -53,6 +53,7 @@ unsigned model_color(const Document *d,int family,int variable);
 void model_color_defaults(Document *d);
 void model_output_defaults(Document *d);
 void model_output_color(Document *d,int variable,unsigned color);
+void model_curve_color(Document *d,int family,int variable,unsigned color);
 void model_sanitize_colors(Document *d);
 void model_window_defaults(ViewWindow *v);
 void model_phase_window_defaults(ViewWindow *v);

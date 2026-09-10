@@ -389,7 +389,7 @@ static ScreenTransition screen_calculate(App *a,AppUi *ui)
         }
         return back_screen();
     }
-    a->recall=a->doc;a->has_recall=true;a->dirty=true;ui->graph_first=true;
+    ui->graph_first=true; /* Last calculation is committed only after Drawing succeeds. */
     return replace_screen(APP_SCREEN_GRAPH);
 }
 

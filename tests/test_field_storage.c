@@ -144,12 +144,13 @@ int main(void)
     for(unsigned version=3;version<=5;version++) {
         write_old(paths[0],version);
         assert(storage_load(&b,directory) && b.has_recall && b.doc.enabled==257);
-        assert(b.doc.solver.sf==0 && b.recall.solver.sf==100 && b.migration_warnings==STORAGE_LEGACY);
+        assert(b.doc.solver.sf==0 && b.recall.solver.sf==50 && b.migration_warnings==STORAGE_LEGACY);
         assert(!strcmp(b.doc.text[8],"(3)*y1+(2)+(1)+1e-3"));
         assert(model_compile(&b.doc,&b.model).expression.status==EXPR_OK);
         assert(b.doc.field_style==(version==5 ? FIELD_SEGMENT:FIELD_ARROW));
         assert(b.doc.field_color==(version==5 ? 4:0));
         assert(model_color(&b.doc,0,8)==(version==3 ? model_default_color(0,8,9):1));
+        for(int j=0;j<ODE_MAX_DIM;j++)assert(model_color(&b.doc,9,j)==model_default_color(9,j,9));
         assert_default_phase(&b.doc);assert_default_phase(&b.recall);
     }
     /* A saved session before the first successful graph has no recall document. */
@@ -185,10 +186,14 @@ int main(void)
     a.doc.view.ymin=-7;a.doc.view.ymax=11;a.doc.field_style=FIELD_SEGMENT;a.doc.field_color=5;
     six.magic=0x44455131;six.version=6;six.size=sizeof(six);six.generation=20;six.has_recall=1;
     from_six(&six.current,&a.doc);a.doc.ic[8].y[0]=88;from_six(&six.recall,&a.doc);
+    six.current.solver.sf=100;six.recall.solver.sf=51;
     write_bytes(paths[0],&six,sizeof(six),offsetof(V6Record,checksum));
     assert(storage_load(&b,directory) && b.doc.nic==9 && b.recall.nic==9 && !b.migration_warnings);
     assert(b.doc.ic[8].y[0]==8 && b.recall.ic[8].y[0]==88 && b.doc.ic[9].y[0]==0);
     assert(b.doc.color[8][0]==2 && b.doc.solver_custom && b.doc.solver.xmin==-2 && b.doc.solver.xmax==3);
+    for(int i=0;i<9;i++)assert(model_color(&b.doc,i,0)==(unsigned)(i%6));
+    assert(model_color(&b.doc,9,0)==model_default_color(9,0,1));
+    assert(b.doc.solver.sf==50 && b.recall.solver.sf==50);
     assert(b.doc.view.ymin==-7 && b.doc.view.ymax==11 && b.doc.field_color==5 && b.doc.field_style==FIELD_SEGMENT);
     assert_default_phase(&b.doc);assert_default_phase(&b.recall);
     assert(model_compile(&b.doc,&b.model).expression.status==EXPR_OK);
@@ -222,6 +227,9 @@ int main(void)
     assert_default_phase(&b.recall);
     assert(!memcmp(&b.recall.solver,&a.recall.solver,sizeof(a.recall.solver)) && b.recall.solver_custom);
     assert(b.doc.phase_field==1 && b.doc.phase_nullclines==0 && b.doc.phase_ready==0);
+    seven.current.solver.sf=100;seven.recall.solver.sf=51;
+    write_bytes(paths[0],&seven,sizeof(seven),offsetof(V7Record,checksum));
+    assert(storage_load(&b,directory) && b.doc.solver.sf==50 && b.recall.solver.sf==50);
 
     /* Current v9 round-trips independent windows and phase preferences. */
     model_defaults(&a.doc,EQ_SYSTEM,2);a.doc.view.phase=1;
@@ -236,8 +244,10 @@ int main(void)
     eight.magic=0x44455131;eight.version=8;eight.size=sizeof(eight);eight.generation=30;eight.has_recall=1;
     _Static_assert(sizeof(V8Document)==offsetof(Document,adaptive),"v8 fixture ABI");
     memcpy(&eight.current,&a.doc,sizeof(V8Document));memcpy(&eight.recall,&a.recall,sizeof(V8Document));
+    eight.current.solver.sf=100;eight.recall.solver.sf=51;
     write_bytes(paths[0],&eight,sizeof(eight),offsetof(V8Record,checksum));
     assert(storage_load(&b,directory));
+    assert(b.doc.solver.sf==50 && b.recall.solver.sf==50);
     assert(b.doc.adaptive.method==ODE_RK4 && b.recall.adaptive.method==ODE_RK4);
     assert(b.doc.adaptive.reltol==1e-6 && b.doc.adaptive.abstol==1e-9);
     assert(same_window(&b.doc.phase_view,&a.doc.phase_view) && b.doc.phase_nullclines==1);
@@ -246,8 +256,10 @@ int main(void)
     _Static_assert(sizeof(V9Document)==offsetof(Document,event),"v9 fixture ABI");
     nine.magic=0x44455131;nine.version=9;nine.size=sizeof(nine);nine.generation=31;nine.has_recall=1;
     memcpy(&nine.current,&a.doc,sizeof(V9Document));memcpy(&nine.recall,&a.recall,sizeof(V9Document));
+    nine.current.prefix.solver.sf=100;nine.recall.prefix.solver.sf=51;
     write_bytes(paths[0],&nine,sizeof(nine),offsetof(V9Record,checksum));assert(storage_load(&b,directory));
     assert(!b.doc.event.enabled && !b.recall.event.enabled && !b.doc.event.text[0]);
+    assert(b.doc.solver.sf==50 && b.recall.solver.sf==50);
     assert(b.doc.adaptive.method==ODE_RK45 && b.doc.adaptive.reltol==2e-7 && b.recall.adaptive.reltol==5e-5);
     a.doc.event.enabled=1;strcpy(a.doc.event.text,"y1-y2");a.doc.event.direction=EVENT_RISING;a.doc.event.action=EVENT_STOP;
     strcpy(a.recall.event.text,"y1");a.recall.event.direction=EVENT_FALLING;a.recall.event.action=EVENT_MARK;
@@ -271,14 +283,24 @@ int main(void)
     b.doc=a.doc;b.doc.event.direction=3;assert(!storage_save(&b,directory));
     b.doc=a.doc;b.doc.event.enabled=2;assert(!storage_save(&b,directory));
     b.doc=a.doc;b.doc.event.action=2;assert(!storage_save(&b,directory));
+    const int densities[]={0,1,12,50};
+    for(unsigned i=0;i<sizeof(densities)/sizeof(densities[0]);i++) {
+        b=a;b.doc.solver.sf=densities[i];b.recall.solver.sf=densities[i];
+        assert(storage_save(&b,directory) && storage_load(&b,directory));
+        assert(b.doc.solver.sf==densities[i] && b.recall.solver.sf==densities[i]);
+    }
+    b=a;b.doc.solver.sf=51;assert(!storage_save(&b,directory));
+    b=a;b.recall.solver.sf=51;assert(!storage_save(&b,directory));
 
     /* Current invalid phase bytes are rejected; current field appearance sanitizes. */
     seven.generation=100;write_bytes(paths[0],&seven,sizeof(seven),offsetof(V7Record,checksum));
     memset(&record,0,sizeof(record));record.magic=0x44455131;record.version=10;
     record.size=sizeof(record);record.generation=101;record.has_recall=1;
     record.current=a.doc;record.recall=a.recall;record.current.field_style=255;record.current.field_color=255;
+    record.current.solver.sf=100;record.recall.solver.sf=51;
     write_bytes(paths[1],&record,sizeof(record),offsetof(CurrentRecord,checksum));
     assert(storage_load(&b,directory) && b.doc.field_style==FIELD_ARROW && b.doc.field_color==0);
+    assert(b.doc.solver.sf==50 && b.recall.solver.sf==50);
     record.generation=102;record.current.phase_nullclines=2;
     write_bytes(paths[1],&record,sizeof(record),offsetof(CurrentRecord,checksum));
     assert(storage_load(&b,directory) && b.doc.nic==10 && b.doc.phase_view.xmin==-8);

@@ -87,10 +87,13 @@ assert 'TEXT 144 145 24\n' in tail(run(changed+'EXIT'))
 assert 'TEXT 144 145 12\n' in tail(run(changed+'EXIT F1'))
 assert all(s in tail(run(changed+'EXIT F1 F5')) for s in ['Segment','Pale Red'])
 assert all(s in tail(run(changed+'EXIT F4 F1 EXIT F5')) for s in ['Segment','Pale Red'])
-for invalid in ['NEG 1','1 0 1','1 DOT 5']:
+for invalid in ['NEG 1','5 1','1 0 0','1 0 1','1 DOT 5']:
     assert 'EDIT' in tail(run(sf+invalid+' EXE'))
-for value in ['0','1','1 0 0']:
+for value in ['0','1','1 2','5 0']:
     assert 'Invalid ' not in run(sf+value+' EXE F5')
+assert 'Slope-field columns (0-50); 0 = Off' in tail(run(sf))
+assert 'TEXT 144 145 50\n' in tail(run(sf+'5 0 EXE'))
+assert 'Invalid range: SF must be 0-50.' in tail(run(sf+'5 1 EXE'))
 with tempfile.TemporaryDirectory() as directory:
     run(changed+'EXIT EXIT EXIT EXIT EXIT 6 EXE EXE',directory)
     restored=run('5 2 F6 F6 F6 F5',directory)

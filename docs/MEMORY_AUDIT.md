@@ -1,3 +1,44 @@
+# Full audit and explicit fixes memory — v0.12.0-beta.7
+
+| SH measurement (B) | beta.6 | beta.7 | Delta |
+|---|---:|---:|---:|
+| text | 215952 | 219056 | +3104 |
+| data | 752 | 768 | +16 |
+| BSS | 72192 | 72192 | 0 |
+| largest application frame | 2664 (app_run) | 2664 (app_run) | 0 |
+| G3A | 245384 | 248504 | +3120 |
+
+The 16 initialized bytes are the installed gint `dwindow` clipping structure,
+used by the dedicated Table/Drawing screen's strip renderer. There is no new
+production heap allocation, framebuffer, trajectory copy or large BSS object.
+The existing `Document.color[10][9]` matrix already stores all per-IC preferences;
+independent Output controls and retained colors need no new document/save bytes.
+SAVE remains v10. SF normalization does not change storage layout.
+
+Dedicated preparation screens borrow the existing TRACE scratch tail (2852 B
+on SH) for three 396-pixel rows, or 2376 B. Each synchronous upload is followed
+by byte-for-byte source restoration. The first delayed canvas uses 75 bounded
+strips; later frames update only the 21-row header in seven strips. G-Solve and
+TRACE retain the existing small lower-left patch. The host-only LCD shadow and
+test snapshots are not linked into firmware.
+
+Drawing report/Event staging and display-prefix rollback reuse existing storage.
+G-Solve's Event endpoint check adds a small local state vector to its current
+search; no search heap or persistent result cache is introduced. Table reuses
+its existing local page when only the column or an unchanged row position moves.
+
+Measured single application frames: `app_run`2664, `phase_equilibria`2144,
+`model_convert_system`1944, `ui_initial_conditions`1860, `ui_table`1796,
+`ui_graph`1616 and G-Solve `search`1052 B. These are individual compiler `.su`
+frames, not cumulative runtime high-water. Existing IC draft heap policy is
+unchanged. **HARDWARE TEST REQUIRED:** nested stack/library/interrupt/OS use,
+heap margin, LCD transfer timing and MENU/Fugue behavior.
+
+Earlier milestone measurements below are historical; beta.7 supersedes the
+beta.6 Table/Drawing patch layout and cancellation policy.
+
+---
+
 # Overlay/navigation memory — v0.12.0-beta.6
 
 | SH measurement (B) | beta.5 | beta.6 | Delta |

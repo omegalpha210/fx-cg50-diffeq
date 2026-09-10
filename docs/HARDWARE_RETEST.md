@@ -1,3 +1,44 @@
+# Full audit and explicit fixes retest — v0.12.0-beta.7
+
+**HARDWARE TEST REQUIRED / HARDWARE RETEST REQUIRED — all 27 cases pending.**
+Record OS/version, exact release checksum, keys, observed behavior and timing.
+Host LCD frames do not establish physical device success.
+
+1. Slow Table preparation: native blue header and white EXIT cancels row.
+2. Table spinner cycles / - backslash | at restrained cadence.
+3. Table EXIT discards preparation and returns stable Graph.
+4. No F1-F6 strip during Table preparation.
+5. Slow Drawing uses the same dedicated preparation canvas.
+6. Drawing spinner and final clean Graph transition.
+7. Drawing EXIT rolls back geometry/report; initial cancel returns Parameters.
+8. No F1-F6 strip during Drawing preparation.
+9. SF50 accepted with default12 retained by INIT.
+10. SF51 rejected inline with draft retained.
+11. Legacy saved SF51/100 loads as50 without save-version rejection.
+12. Five ICs expose five color-editable rows and one shared visibility row.
+13. F3 changes only the selected IC; no misleading per-IC ON/OFF.
+14. Output INIT restores the established default palette.
+15. Ten IC rows scroll/wrap with IC10 visible above help.
+16. Multi-IC Graph uses all configured colors.
+17. TRACE/G-Solve highlights and restores the configured family color.
+18. SAVE/cold RCL retains active and inactive IC colors.
+19. A-K representative full workflows, including N-th9/SYS9 and Phase.
+20. MENU/Fugue roundtrip during ordinary UI and slow work.
+21. RK45 Table dx matches actual display spacing; RK4 retains Step.
+22. Cancelled new Drawing leaves Last calculation unchanged; first cancel creates none.
+23. Event STOP terminal ROOT/X-CAL/ICPT in both directions and both solvers.
+24. No G-Solve result beyond a secondary STOP or for large-offset/wide-window near misses.
+25. Existing G-Solve empty numeric EDIT EXIT/validation behavior matches documented review item.
+26. Partial-prefix rollback, screen cleanup, physical repeat, actual stack/heap margin and no fast-operation flicker.
+27. With RK45 Max steps=10, a completed partial pan keeps its new window, report
+    and display cache together. With RK4 Max steps=10 and V-Window X=-1.5..1.5,
+    rejected Graph INIT keeps the old window/report/cache and shows Graph, not
+    Phase, in the inline notice. User cancellation still restores the prior view.
+
+Earlier checklists remain historical evidence; current beta.7 contracts take priority.
+
+---
+
 # Overlay/navigation priority retest — v0.12.0-beta.6
 
 **HARDWARE TEST REQUIRED / HARDWARE RETEST REQUIRED — all34 cases pending.**

@@ -1,4 +1,5 @@
 #include "gsolve.h"
+#include <float.h>
 #include <math.h>
 #include <string.h>
 
@@ -15,6 +16,10 @@ typedef struct {
     double previous_x,previous_value,other_x,other_y[ODE_MAX_DIM];
     OdeStatus failure,other_failure;
     int other_failure_direction;
+    GsolvePoint terminal_point;
+    double terminal_value,terminal_tolerance;
+    double terminal_y[ODE_MAX_DIM];
+    bool terminal_ready;
 } Search;
 
 int gsolve_curve_count(const Document *d)
@@ -66,11 +71,15 @@ static OdeStatus metric_at(Search *s,double x,double *value,GsolvePoint *point)
     double metric=first.y[s->curve.variable]-s->target;
     double y=first.y[s->curve.variable];
     if(s->intersection) {
-        OdeResult second;status=curve_at(s->d,s->m,s->other,x,&second,
-            &s->result->steps,s->cancel,s->cancel_ctx);
-        if(status!=ODE_OK)return status;
-        metric=first.y[s->curve.variable]-second.y[s->other.variable];
-        y=(first.y[s->curve.variable]+second.y[s->other.variable])*.5;
+        double other=first.y[s->other.variable];
+        if(s->other.family!=s->curve.family) {
+            OdeResult second;status=curve_at(s->d,s->m,s->other,x,&second,
+                &s->result->steps,s->cancel,s->cancel_ctx);
+            if(status!=ODE_OK)return status;
+            other=second.y[s->other.variable];
+        }
+        metric=first.y[s->curve.variable]-other;
+        y=(first.y[s->curve.variable]+other)*.5;
     } else if(s->mode==GSOLVE_MAXIMUM || s->mode==GSOLVE_MINIMUM) {
         double derivative[ODE_MAX_DIM];status=model_rhs(first.x,first.y,derivative,s->m);
         if(status!=ODE_OK)return status;
@@ -143,19 +152,21 @@ static OdeStatus other_step(Search *s,double x)
     else result=model_integrate(s->d,s->m,s->other_x,s->other_y,x,
         &s->d->solver,NULL,NULL,s->cancel,s->cancel_ctx);
     s->result->steps+=result.steps;
-    if(result.status==ODE_OK) {
+    bool terminal=result.status==ODE_EVENT_STOP && result.x==x;
+    if(result.status==ODE_OK || terminal) {
         s->other_ready=true;s->other_x=result.x;
         memcpy(s->other_y,result.y,(unsigned)s->d->dim*sizeof(double));
     }
     if(ode_invalid_region(result.status) || result.status==ODE_EVENT_STOP) {
-        s->other_failure=result.status;s->other_failure_direction=x>=result.x ? 1:-1;
+        s->other_failure=result.status;s->other_failure_direction=terminal ?
+            (x>=s->d->ic[s->other.family].x ? 1:-1):(x>=result.x ? 1:-1);
         s->other_x=result.x;s->other_ready=false;
     }
-    return result.status;
+    return terminal ? ODE_OK:result.status;
 }
 static bool scan_failure(Search *s,OdeStatus status)
 {
-    s->have_previous=false;s->in_zero_run=false;
+    s->have_previous=false;s->in_zero_run=false;s->terminal_ready=false;
     if(status==ODE_EVENT_STOP){s->failure=ODE_OK;return true;}
     if(ode_invalid_region(status)) {s->result->has_invalid=true;s->failure=ODE_OK;return true;}
     s->failure=status;return false;
@@ -164,14 +175,17 @@ static bool scan_failure(Search *s,OdeStatus status)
 static bool scan_point(double x,const double *y,uint32_t step,void *ctx)
 {
     (void)step;Search *s=ctx;
-    if(!y){s->have_previous=false;s->in_zero_run=false;s->other_ready=false;
+    if(!y){s->have_previous=false;s->in_zero_run=false;s->other_ready=false;s->terminal_ready=false;
         s->other_failure=ODE_OK;return true;}
     if(x<s->xmin || x>s->xmax)return true;
     double primary=y[s->curve.variable],value=primary-s->target,result_y=primary;
     if(s->intersection) {
-        OdeStatus status=other_step(s,x);
-        if(status!=ODE_OK)return scan_failure(s,status);
-        double secondary=s->other_y[s->other.variable];
+        double secondary=y[s->other.variable];
+        if(s->other.family!=s->curve.family) {
+            OdeStatus status=other_step(s,x);
+            if(status!=ODE_OK)return scan_failure(s,status);
+            secondary=s->other_y[s->other.variable];
+        }
         value=primary-secondary;result_y=(primary+secondary)*.5;
     } else if(s->mode==GSOLVE_MAXIMUM || s->mode==GSOLVE_MINIMUM) {
         double derivative[ODE_MAX_DIM];OdeStatus status=model_rhs(x,y,derivative,s->m);
@@ -179,6 +193,18 @@ static bool scan_point(double x,const double *y,uint32_t step,void *ctx)
         value=derivative[s->curve.variable];
     }
     if(!isfinite(value) || !isfinite(result_y))return scan_failure(s,ODE_NONFINITE);
+    /* A refined STOP endpoint can retain a tiny residual without a following
+       sign change. Bound its x uncertainty by the Event refiner's local
+       floating-point scale, never the whole viewport or absolute y offset. */
+    double prior_tolerance=s->terminal_ready && x==s->terminal_point.x
+        && value==s->terminal_value ? s->terminal_tolerance:0;
+    s->terminal_tolerance=prior_tolerance;
+    if(s->terminal_ready && s->have_previous && x!=s->previous_x && value!=s->previous_value) {
+        double scale=fmax(fmax(fabs(x),fabs(s->previous_x)),fmax(fabs(x-s->previous_x),DBL_MIN));
+        s->terminal_tolerance=fmin(s->x_tolerance*4,64*DBL_EPSILON*scale);
+    }
+    s->terminal_point=(GsolvePoint){x,result_y};s->terminal_value=value;s->terminal_ready=true;
+    memcpy(s->terminal_y,y,(unsigned)s->d->dim*sizeof(double));
     if(value==0 && !s->in_zero_run) {
         if(s->intersection || (s->mode!=GSOLVE_MAXIMUM && s->mode!=GSOLVE_MINIMUM))
             add_result(s,(GsolvePoint){x,result_y});
@@ -203,11 +229,38 @@ static bool scan_point(double x,const double *y,uint32_t step,void *ctx)
         forward ? value:s->previous_value)) {
         GsolvePoint point;
         if(!refine(s,forward ? s->previous_x:x,forward ? x:s->previous_x,
-            forward ? s->previous_value:value,&point))return scan_failure(s,s->failure);
+            forward ? s->previous_value:value,&point)) {
+            if(s->failure==ODE_EVENT_STOP) {
+                /* The accepted stream endpoint remains trusted even when a
+                   separate numerical query lands just beyond its STOP. */
+                s->have_previous=false;s->in_zero_run=false;s->failure=ODE_OK;return true;
+            }
+            return scan_failure(s,s->failure);
+        }
         add_result(s,point);
     }
     if(value!=0){s->have_previous=true;s->previous_x=x;s->previous_value=value;}
     return true;
+}
+
+static void terminal_result(Search *s)
+{
+    if(!s->terminal_ready || s->terminal_tolerance<=0 ||
+        (!s->intersection && s->mode!=GSOLVE_ROOT && s->mode!=GSOLVE_XCAL))return;
+    double derivative[ODE_MAX_DIM],slope;
+    if(model_rhs(s->terminal_point.x,s->terminal_y,derivative,s->m)!=ODE_OK)return;
+    slope=derivative[s->curve.variable];
+    if(s->intersection) {
+        if(s->curve.family==s->other.family)slope-=derivative[s->other.variable];
+        else {
+            if(s->other_x!=s->terminal_point.x ||
+                model_rhs(s->other_x,s->other_y,derivative,s->m)!=ODE_OK)return;
+            slope-=derivative[s->other.variable];
+        }
+    }
+    double tolerance=fabs(slope)*s->terminal_tolerance;
+    if(tolerance>0 && isfinite(tolerance) && fabs(s->terminal_value)<=tolerance)
+        add_result(s,s->terminal_point);
 }
 
 static GsolveResults search(const Document *d,CompiledModel *m,GsolveCurve curve,
@@ -226,9 +279,11 @@ static GsolveResults search(const Document *d,CompiledModel *m,GsolveCurve curve
     OdeSettings range=d->solver;range.xmin=xmin;range.xmax=xmax;
     result.status=ODE_OK;
     for(int direction=-1;direction<=1;direction+=2) {
+        s.terminal_ready=false;
         ModelPathResult scan=model_path_branch(d,m,curve.family,direction,&range,
             scan_point,&s,cancel,cancel_ctx);
         result.steps+=scan.steps;
+        if(scan.status==ODE_EVENT_STOP)terminal_result(&s);
         if(scan.status==ODE_HAS_INVALID)result.has_invalid=true;
         else if(scan.status!=ODE_OK && scan.status!=ODE_SAMPLE_STOP && scan.status!=ODE_EVENT_STOP)result.status=scan.status;
         if(s.failure!=ODE_OK)result.status=s.failure;

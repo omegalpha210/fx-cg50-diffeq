@@ -1,4 +1,4 @@
-# DIFF EQ 사용 설명서 — v0.12.0-beta.4
+# DIFF EQ 사용 설명서 — v0.12.0-beta.7
 
 기본 RK4와 TRACE·G-Solve·10개 초기값·SYS 2D Phase 기능을 보존하면서
 Main/subtype native 타일, 고정 X/Y-only TRACE 및 공통 top-left 경고를 제공합니다. 기존 INIT/BOX/draft와 3단계 workflow는 유지합니다.
@@ -18,6 +18,8 @@ Main/subtype native 타일, 고정 X/Y-only TRACE 및 공통 top-left 경고를 
 | Event (EDIT) | VAR (필요 시) | FUNC | — | — | — | DONE |
 | Solver Info | — | — | — | — | — | — |
 | Output 종속변수 | INIT | — | COLOR | — | — | DONE |
+| Output 여러 IC 공통 ON/OFF | INIT | — | — | — | — | DONE |
+| Output IC별 색 | INIT | — | COLOR | — | — | DONE |
 | Graph Settings: Grid/Label | INIT | — | — | — | — | DONE |
 | Graph Settings: Style | INIT | — | — | — | — | DONE |
 | Graph Settings: Color | INIT | — | COLOR | — | — | DONE |
@@ -175,7 +177,7 @@ IC set을 뜻하지 않습니다. 고차/SYS의 새 UI는 한 벡터만 받으�
 
 **Solver Parameters**의 x min/max는 적분 구간입니다. 처음에는 `ceil(V-Window Xmin)`과
 `floor(V-Window Xmax)`이며 사용자가 V-Window/Graph pan/zoom을 조작하면 따라갑니다. TRACE runtime 추적은 이 자동 범위도 변경하지 않습니다. 직접 편집한 범위는 user override로
-유지됩니다. 범위 전체의 기존 상태를 두 행의 **AUTO/MAN**으로 표시합니다. 직접 확정하면 값이 같아도 MAN이며, INIT는 AUTO를 복구합니다. 편집 중인 행의 상태 표시는 잠시 숨깁니다. **SF(0~100, 기본값 12)는 scalar 1차 네 모드에서만 Parameters에 표시합니다.**
+유지됩니다. 범위 전체의 기존 상태를 두 행의 **AUTO/MAN**으로 표시합니다. 직접 확정하면 값이 같아도 MAN이며, INIT는 AUTO를 복구합니다. 편집 중인 행의 상태 표시는 잠시 숨깁니다. **SF(0~50, 기본값 12)는 scalar 1차 네 모드에서만 Parameters에 표시합니다.**
 Method는 세 번째 행이며 LEFT/RIGHT로 RK4/RK45를 전환합니다. 계산은 GRAPH/EXE에서 시작합니다.
 RK4는 h → Step → (1차 SF) → Max steps, RK45는 h0 → RelTol → AbsTol → (1차 SF) → Max steps입니다.
 2nd/N-th/SYS는 차수·변수 개수 1을 포함하여 SF 행이 없습니다. RK45의 숨겨진 Step은 사용하지 않습니다.
@@ -188,10 +190,14 @@ RK4에서는 Step=1, RK45에서는 RelTol=1e-6/AbsTol=1e-9로 복구하며 다�
 보존합니다. Solver 수정은 V-Window를 역으로 변경하지 않습니다.
 Xdot은 `(Xmax-Xmin)/378`이며 Xdot 편집은 Xmax를 변경합니다.
 
-**OUTPUT에는 종속변수만 표시합니다.** 1차는 y, 2차는 y/y', N-th는 각 도함수, SYS는 y1~ym입니다.
-x 행과 CSV X control은 없습니다. **LEFT/RIGHT는 선택 변수의 ON/OFF**, UP/DOWN은 행 이동입니다.
-하단 안내는 `LEFT/RIGHT: ON/OFF toggle, F3: COLOR` 한 줄이며 추가 설명 줄은 없습니다.
-7행 페이지와 겹치지 않고 F3 COLOR·F1 INIT·DONE과 기존 EXE 동작을 유지합니다.
+**OUTPUT은 종속변수의 표시 여부와 곡선 색을 설정합니다.** 단일 IC인 1차는 y,
+2차는 y/y', N-th는 각 도함수, SYS는 y1~ym입니다. 이 행들은 기존처럼 LEFT/RIGHT로
+ON/OFF, F3 COLOR로 색을 설정합니다. x 행과 CSV X control은 없습니다.
+**1차 IC가 여러 개이면** `y (all ICs)` 행이 모든 IC의 ON/OFF를 함께 설정하며
+이 행에는 COLOR가 없습니다. 그 아래 `IC1 y`~`IC10 y`는 각 곡선의 **색만** 설정합니다.
+색 행은 ON/OFF 값을 표시하지 않고 LEFT/RIGHT로 표시 여부를 바꾸지 않습니다.
+UP/DOWN은 행 이동이며 첫 행·마지막 행에서 순환합니다. 기존 7행 페이지를 사용하므로
+IC10도 도움말에 가리지 않고 접근할 수 있습니다. F3 COLOR·F1 INIT·DONE과 기존 EXE 동작을 유지합니다.
 한 ON/OFF 값이 모든 IC에 공통으로 적용됩니다. ON은 Graph·TRACE·G-Solve·Table·CSV/STAT에 포함,
 OFF는 이 사용자 출력들에서 숨김입니다. 숨겨진 y' 같은 내부 state도 선택한 solver에서 계속 계산합니다.
 SYS 2D Phase는 Output ON/OFF와 무관하게 두 state를 사용합니다. 다른 모드의 기존 phase projection은 두 축 state가 모두 ON일 때 표시합니다. 원래 독립 G/L 선택이 제공하던 차이와
@@ -201,8 +207,12 @@ SYS 2D Phase는 Output ON/OFF와 무관하게 두 state를 사용합니다. 다�
 색은 선택 행에서 **F3 COLOR**로만 엽니다. 방향키로 고르고 EXE 적용, EXIT 취소입니다.
 지원 색상은 Blue, Red, Magenta, Black, Cyan, Bright Green(0x37e6)이며 기존 palette를 유지합니다.
 기본 순서는 Magenta → Cyan → Bright Green → Red → Blue → Black이고 7번째부터 반복합니다.
-1차의 여러 IC는 이 순서로 자동 순환합니다. OUTPUT의 y 색은 첫 해의 색과 순환 시작점을 정하므로
-모든 해를 같은 색으로 만들지 않습니다. 고차/SYS는 각 state의 선택 색을 사용합니다.
+1차의 여러 IC는 처음에 이 순서로 배정되며 이후 각 행의 F3는 그 IC의 색만 바꿉니다.
+IC 수를 줄여도 숨겨진 위치의 색을 보존하며 다시 늘리면 복원합니다. 아직 바꾼 적 없는
+위치는 기본 색을 사용합니다. 초기값만 수정하거나 IC INIT를 눌러도 Output 색은 유지합니다.
+OUTPUT INIT는 모든 IC 색을 기본 순서로 되돌립니다. SAVE/RCL은 숨겨진 위치를 포함한
+색을 보존하며 기존 v3~v10 세션을 읽습니다. 고차/SYS는 기존 각 state 색 설정을 유지합니다.
+소비자별 상태와 호환성은 [multiple-IC color audit](MULTI_IC_COLOR_AUDIT.md)에 있습니다.
 OUTPUT EXE는 다음 행으로 이동하며 마지막 행은 수정했으면 한 번 확정/머묾, 다음 EXE가 DONE입니다.
 수정하지 않은 마지막 행은 곧바로 DONE입니다. F1 INIT는 모든 종속변수 ON과 기본 solution 색,
 첫 선택 행을 복구하며 SF/field 외형은 유지합니다.
@@ -218,8 +228,8 @@ TIME 창이 변하면 자동 Xrange가 따라갑니다. 수동 Xrange/h/toleranc
 
 ## 기울기장 — 밀도는 Parameters, 외형은 Graph Settings
 
-**SF=0은 OFF, 1~100은 화면 열 수**입니다. 세로 행 수는 화면 비율에 맞추며 SF12는 12×7,
-SF100은 100×52점입니다. SF는 h/Step/적분 구간/IC/TRACE 이동 간격을 바꾸지 않습니다.
+**SF=0은 OFF, 1~50은 화면 열 수**입니다. 세로 행 수는 화면 비율에 맞추며 SF12는 12×7,
+SF50은 50×26점입니다. 50을 넘는 입력은 필드에 오류를 표시하며, 이전 session에 저장된 50 초과 값은 load 시 50으로 제한합니다. 저장 형식은 유지합니다. SF는 h/Step/적분 구간/IC/TRACE 이동 간격을 바꾸지 않습니다.
 
 Graph Settings는 Grid / Axis Label와 간격을 둔 Slope Field heading 아래 Style / Color만 둡니다.
 Grid/Axis Label은 LEFT/RIGHT로 토글하고 F1 INIT로 초기화합니다. EXE의 완료 동작은 동일합니다.
@@ -286,7 +296,7 @@ G-Solve 선택 안내는 모든 연산에서 **UP/DOWN: SELECT GRAPH, EXE: SELEC
 EXE만 파란 normal 글자로 한 번 표시합니다. 선택·결과에서 **EXIT 한 번 → G-Solve submenu**,
 그 다음 새 EXIT → Graph입니다. HOLD는 여러 계층을 통과하지 않습니다. 선택 취소나 scratch
 계산 취소는 원래 그래프·수치 진단을 보존하며 `Partial: Cancelled`를 만들지 않습니다.
-실제 main trajectory 계산을 취소한 경우의 Partial 상태는 유지합니다.
+Drawing 취소는 새 결과를 확정하지 않습니다. 최초 계산은 Parameters로 돌아가고, 재계산은 이전 창·수치 보고서와 보관된 그래프를 복원합니다.
 
 결과 cross가 화면 위/아래 또는 고정 하단 패널에 가려지면 **Y만 필요한 만큼 평행 이동**합니다.
 이미 안전하게 보이면 창을 움직이지 않습니다. X 범위·scale, Y span·scale, solver 설정과
@@ -298,10 +308,13 @@ Graph **F6 INIT**, V-WIN **F1 INIT**, ZOOM **F4 ORIG**는 같은 factory 창 초
 초기화하지 않습니다. TIME AUTO 범위만 기존 정책대로 창을 따르고 MAN 범위는 유지합니다.
 예전 Graph entry snapshot은 더 이상 사용하지 않습니다. **TRACE F1 INIT**는 별도 커서 복귀입니다.
 
-오래 걸리는 TRACE 준비는 하단 좌표 영역에 `CALCULATING... /`, Table 준비는
-`Preparing Table... /`, Graph 계산은 `Drawing... /`를 표시합니다. 기존 G-Solve도 같은
-`/ - \ |` spinner를 쓰며 약156ms 후 나타나 최대8Hz로 갱신합니다. 빠른 작업에는 표시하지
-않으며 EXIT polling을 먼저 수행합니다. native LCD는 작은 사각형만 전송하고 끝나면 지웁니다.
+오래 걸리는 Table/Graph 준비는 별도 흰 화면으로 전환합니다. 파란 제목 행에
+`Preparing Table... /` 또는 `Drawing... /`, 바로 아래에 `EXIT cancels`를 표시하며
+F1~F6 strip은 숨깁니다. 약156ms 후 나타나고 `/ - \ |` spinner만 최대8Hz로 갱신합니다.
+EXIT를 먼저 확인하고, 취소하면 임시 계산을 버린 뒤 이전 안정 상태로 돌아갑니다.
+Table의 같은 페이지에서 열만 이동하거나 동일 TOP/BTM/MID를 누르면 재계산·대기 화면이 없습니다.
+TRACE와 G-Solve는 기존 하단 `CALCULATING... /`를 유지합니다. 빠른 작업은 대기 화면을 생략합니다.
+Graph 취소 복원은 기존 제한된 표시 표본을 사용하므로 원래 고밀도 그림과 일부 픽셀 차이는 가능합니다.
 전체 invalid x 영역을 붉게 칠하지 않습니다. 현재 per-curve 상태로 전체 영역의 수학적 부재를
 단정할 수 없으므로 빨간 경고와 invalid segment 생략을 유지합니다.
 
@@ -356,7 +369,7 @@ Phase TRACE는 x, y1, y2를 표시하며 NORMAL/FAST/FASTER, LEFT/RIGHT, F5/F6 e
 `|value| > 1e100`은 application guard, NaN/Inf와 수학 domain 오류는 별도 원인입니다.
 guard는 유지하며 실패한 점을 그리거나 빈 구간 양쪽을 선으로 연결하지 않습니다.
 Graph의 `END: Magnitude > 1e100` 등은 계산된 유효한 구간을 폐기하지 않습니다.
-명시적 사용자 중단은 별도의 `Partial: Cancelled`입니다.
+명시적 Drawing 중단은 임시 계산을 버리고 이전 화면·결과를 복원합니다. 취소된 Partial 그림을 확정하지 않습니다.
 
 TRACE는 고정한 화면 안의 연결된 유효 점에서 이동하고 경계에서 멈춥니다.
 다른 유효 구간이 있어도 현재 component의 gap을 넘어 이동하지 않습니다. X-CAL/ROOT/MAX/MIN/ICPT는
@@ -516,10 +529,12 @@ NEXT/PREV/EXIT에서는 RAM만 유지하며 자동으로 session 파일을 쓰�
 
 Main **5 RCL** 또는 RCL 선택 후 EXE/F6 OPEN에서 **Last calculation (RAM)** 또는 **Load saved session**을 선택합니다.
 Main의 RECALL 텍스트 타일은 이 두 기능의 선택 화면을 엽니다.
-Last calculation은 기존 의미를 유지해 마지막 GRAPH 계산의 식·IC·Output을 복원하고
+Last calculation은 마지막으로 표시가 확정된 GRAPH 계산의 식·IC·Output을 복원하고
 현재 app-wide Solver/V-Window와 Field Density/Style/Color는 유지합니다. Load saved session은 확인 후 저장된
-current/recall과 설정을 모두 복원합니다. 진짜 새 실행은 defaults이며, 기존 파일은 삭제하지
+current/recall과 설정을 모두 복원합니다. 취소된 Drawing은 Last calculation을 교체하지 않습니다. 진짜 새 실행은 defaults이며, 기존 파일은 삭제하지
 않습니다. MENU 왕복으로 같은 실행이 재개될 때는 이 초기화를 다시 하지 않습니다.
+Drawing 중 취소한 시도는 Last calculation을 바꾸지 않습니다. 처음 계산을 취소했다면
+이전 계산 없음 상태를 유지하고, 이후 완성된 Graph나 유효한 부분 결과가 표시되면 Recall을 갱신합니다.
 
 SAVE는 먼저 `Save current session?` 확인창을 엽니다. **F5 NO / EXIT**는 Main으로 돌아가며
 파일 I/O가 없습니다. **F6 YES / EXE**만 기존 SAVE backend를 한 번 실행합니다. 확인창을 연 키의

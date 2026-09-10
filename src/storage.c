@@ -327,6 +327,7 @@ static bool read_document(int fd,Document *d,uint32_t version,bool present,uint3
         V6_FIELD(ic);V6_FIELD(solver);V6_FIELD(solver_custom);V6_FIELD(view);
         V6_FIELD(enabled);V6_FIELD(color);V6_FIELD(field_style);V6_FIELD(field_color);
 #undef V6_FIELD
+        for(int j=0;j<ODE_MAX_DIM;j++)d->color[9][j]=(uint8_t)model_default_color(9,j,d->dim);
         if(!skip_hashed(fd,document_size(version)-position,hash))return false;
         if(present && (d->nic<0 || d->nic>9))return false;
         migrate_phase_state(d,present);
@@ -340,6 +341,7 @@ static bool read_document(int fd,Document *d,uint32_t version,bool present,uint3
     if(!legacy_field(fd,graph,sizeof(graph),offsetof(LegacyDocument,graph_mask),&position,hash)
         || !legacy_field(fd,list,sizeof(list),offsetof(LegacyDocument,list_mask),&position,hash))return false;
     if(version>=4){FIELD(color);}else model_color_defaults(d);
+    if(version>=4)for(int j=0;j<ODE_MAX_DIM;j++)d->color[9][j]=(uint8_t)model_default_color(9,j,d->dim);
     if(version>=5){FIELD(field_style);FIELD(field_color);}else model_field_appearance_defaults(d);
 #undef FIELD
     if(!skip_hashed(fd,document_size(version)-position,hash))return false;

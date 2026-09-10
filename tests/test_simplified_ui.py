@@ -66,9 +66,9 @@ for key in ['F1','F2','F3','UP','DOWN']:
     assert headers(run(table+key))==['x','y4','y5']
 assert 'Left/Right: columns' in tail(run(table))
 assert 'Left/Right: columns' not in tail(run(manual))
-# A first-order OUTPUT is still one dependent row despite ten ICs.
+# One shared visibility row controls all ICs; the remaining rows edit only colors.
 out=run(many+'F6 F4')
-assert re.findall(r'TEXT 20 \d+ ([^\n]+)',tail(out))==['y']
+assert re.findall(r'TEXT 20 \d+ ([^\n]+)',tail(out))==['y (all ICs)']+[f'IC{i} y' for i in range(1,7)]
 out=run(many+'F6 F4 RIGHT EXIT F6 F1')
 assert 'IC1 x=' not in out and plot(out)==plot(run(many+'F6 F4 RIGHT EXIT F6'))
 # Higher modes have one complete state vector, never ADD/DROP or IC switching.

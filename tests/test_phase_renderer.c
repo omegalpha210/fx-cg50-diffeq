@@ -45,6 +45,19 @@ int main(void)
     assert(!memcmp(&time,&d.view,sizeof(time)) && !memcmp(&solver,&d.solver,sizeof(solver)));
     assert(host_rhs_calls()==rhs);
     assert(graph_auto_window(&d,&m)==ODE_OK && host_rhs_calls()==rhs);
+    /* A dry render preflight cannot replace the last committed numerical
+       report/cache or graph pixels; its caller owns the returned error. */
+    SolverReport committed=*solver_report();unsigned stable=hash();
+    OdeSettings accepted_solver=d.solver;d.solver.max_steps=1;
+    GraphResult denied=graph_render(&d,&m,false);
+    assert(denied.status==ODE_STEP_LIMIT && denied.steps==0);
+    assert(hash()==stable && !memcmp(&committed,solver_report(),sizeof(committed)));
+    d.solver=accepted_solver;assert(trace_cache_matches(&d));
+    ViewWindow accepted_phase=d.phase_view;d.phase_view.xmax=d.phase_view.xmin;
+    denied=graph_render(&d,&m,false);
+    assert(denied.status==ODE_BAD_INPUT && denied.steps==0);
+    assert(hash()==stable && !memcmp(&committed,solver_report(),sizeof(committed)));
+    d.phase_view=accepted_phase;assert(trace_cache_matches(&d));
     strcpy(d.text[0],"x+y2");assert(model_compile(&d,&m).values==ODE_OK);
     assert(!phase_autonomous(&m));assert(graph_phase_preflight(&d,&m,NULL,NULL)==ODE_OK);
     assert(graph_phase_search(&d,&m,NULL,NULL)==ODE_BAD_INPUT);

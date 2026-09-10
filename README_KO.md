@@ -10,9 +10,9 @@
 DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식의 수치해를
 컬러 그래프·기울기장·TRACE·G-Solve·표로 살펴보고, 2변수 시스템의 위상을 분석할 수 있습니다.
 
-**공개 베타 · v0.12.0-beta.6 · [MIT 라이선스](LICENSE)**
+**공개 베타 · v0.12.0-beta.7 · [MIT 라이선스](LICENSE)**
 
-**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.6)**
+**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.7)**
 · [전체 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [버그 신고](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -83,8 +83,9 @@ N1(빨강)은 `f1=0`, N2(파랑)는 `f2=0`입니다. **F4 VIEW → F1 TIME**으�
 결과입니다. Center / Neutral candidate는 비선형·전역 안정성을 확정하지 않습니다.
 검색에서 점을 놓칠 수 있고, 불확실하거나 미분을 구할 수 없는 경우 Inconclusive/Unavailable로 표시합니다.
 
-두 그래프는 **최대 258점의 궤적 캐시**를 공유합니다. 투영 전환·이동·확대는 trajectory solver를 다시
-계산하지 않으므로 촘촘한 특징은 보관된 표본 해상도를 넘어설 수 있습니다. Phase TRACE는
+두 그래프는 **최대 258점의 궤적 캐시**를 공유합니다. 호환되는 캐시 투영과 PHASE 이동·확대는
+재적분을 피하지만 TIME AUTO 범위 변경은 solver를 다시 실행할 수 있습니다.
+촘촘한 특징은 보관된 표본 해상도를 넘어설 수 있습니다. Phase TRACE는
 이 캐시를 사용하고 계산된 시간 구간 안에서 이동합니다. [수치 방법과 한도](docs/PHASE_NUMERICS.md)를 참고하세요.
 **HARDWARE TEST REQUIRED:** 새 RK45 계산/취소 및 stack high-water, 새 Phase 화면과 조작은 호스트에서 시험했으며 실제 기기 검증이 필요합니다.
 
@@ -134,7 +135,7 @@ Parameters **F1 INIT**는 Method·Event·V-Window를 유지하며 solver 설정�
   연립 미분방정식. 차수와 시스템 크기는 **1~9**이며 N차→시스템 변환과 두 상태의 위상 궤적을 지원합니다.
 - 초기조건에서 양방향으로 적분하는 **고전적 RK4 또는 적응형 Dormand–Prince RK45**. 1차는 공통 x0에서 **최대 10개 y0**를
   입력할 수 있습니다. 고차·시스템 UI는 모든 상태 초기값을 갖춘 하나의 벡터를 입력합니다.
-- **1차 기울기장:** SF 0~100, Segment/Arrow와 옅은 색 6종. 기본은 Arrow / Pale Blue입니다.
+- **1차 기울기장:** SF 0~50, Segment/Arrow와 옅은 색 6종. 기본은 Arrow / Pale Blue입니다.
 - **2D SYS Phase:** 정규화 벡터장, 수치 nullcline, 최대 16개 평형점 후보,
   Jacobian·고윳값과 국소 선형 안정성 분류를 제공합니다.
 - **V-Window·이동·확대**, 해 색상 6종과 종속변수별 공통 ON/OFF.
@@ -190,7 +191,7 @@ Parameters **F3 V-WIN**에서 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax
 
 ## 계산기에 설치하기
 
-1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.6)를 엽니다.
+1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.7)를 엽니다.
 2. **DIFFEQ.g3a**를 받습니다. 다운로드 확인용 `SHA256SUMS.txt`도 제공됩니다.
 3. fx-CG50을 USB로 연결하고 USB Flash 모드를 선택한 뒤 컴퓨터에서 계산기 드라이브를 엽니다.
 4. `DIFFEQ.g3a`를 드라이브 **최상위**에 복사합니다. `@MainMem` 폴더 안에 넣지 않습니다.
@@ -210,7 +211,7 @@ Parameters **F3 V-WIN**에서 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax
 | 일반 필드 선택 | UP/DOWN 순환 선택, LEFT/RIGHT로 편집 시작, EXE로 NEXT/GRAPH/DONE/OPEN |
 | 편집 중 | EXE는 확정 후 다음 필드 선택, 마지막 행은 머묾. EXIT는 확정 후 같은 행 선택 |
 | Equation | F1 INIT, EDIT에서 F2 FUNC/F3 VAR(지원 모드만). EXIT는 열린 token bar부터 닫음 |
-| OUTPUT | LEFT/RIGHT ON/OFF, F1 INIT, F3 COLOR, F6 DONE. EXE는 출력 행 순서로 이동 |
+| OUTPUT | LEFT/RIGHT는 visibility 행의 ON/OFF (IC 색상 행에서는 무동작), F1 INIT, F3 COLOR, F6 DONE. EXE는 출력 행 순서로 이동 |
 | Parameters | F1 INIT; F2 ADV → EVENT/INFO; Method: LEFT/RIGHT로 RK4/RK45 전환; F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
 | Graph (2D SYS 제외) | 방향키 이동, F1 TRACE, F2 ZOOM, F3 V-WIN, F4 TABLE, F5 G-SLV, F6 노랑/검정 INIT; EXIT로 Parameters 복귀 |
 | 2D SYS Graph | F4 VIEW → F1 TIME / F2 PHASE / F3 TABLE, Phase에서는 F5 ANLYS; F6 INIT는 선택 view 유지 |
@@ -249,15 +250,29 @@ HOLD는 계층을 건너뛰지 않고 scratch 계산 취소는 기존 그래프�
 결과 패널은 좌측 하단에 고정합니다. marker가 가려지면 X·scale·Y span·수치 결과를 유지하며
 Y만 최소한 평행 이동합니다. 이미 보이는 점은 창을 움직이지 않고 결과 순회는 재계산하지 않습니다.
 
-TRACE/G-Solve는 **CALCULATING...**, Table은 **Preparing Table...**, Graph는 **Drawing...**에
-같은 중립색 `/ - \ |` spinner를 사용합니다. 약156ms 지연·최대8Hz이며 EXIT를 먼저 확인합니다.
-빠른 작업에는 표시하지 않고 종료·취소 시 지웁니다. 계산기에서는 작은 사각형만 갱신합니다.
-백분율이나 전체 x 영역에 대한 붉은 domain/singularity 음영은 추가하지 않습니다.
+오래 걸리는 Table/Drawing 준비에는 파란 **Preparing Table...** 또는 **Drawing...**
+header, `/ - \ |` spinner, **EXIT cancels** 행과 흰 본문을 사용하며 F-key strip을 숨깁니다.
+약 156 ms 지연·최대 8 Hz로 표시하고 첫 canvas 이후에는 header만 갱신합니다.
+빠른 작업·같은 Table 페이지에는 불필요한 화면을 띄우지 않습니다. EXIT는 임시 작업을
+버리고 안정된 Graph로 돌아가며 최초 Drawing 취소는 Parameters로 돌아갑니다.
+TRACE/G-Solve는 기존 하단 **CALCULATING...** 표시를 유지합니다.
+취소한 Drawing은 Last calculation을 덮어쓰지 않습니다.
+
+**복수 IC의 개별 색상:** Output의 IC1 y~IC10 y에서 F3 COLOR로 해당 곡선만 바꿉니다.
+별도 **y (all ICs)** 행은 공통 ON/OFF이며 IC 행은 색상만 편집합니다.
+INIT는 기존 palette로 복원하고 SAVE/RCL 및 IC 수 감소·재확장에서도 slot별 색을 보존합니다.
+단일 IC는 기존 y 행을 사용합니다. SF는 기본 12, 범위 0~50이며 초과 입력을 거부하고
+과거 저장값은 최대 50으로 정규화합니다. 저장 format은 바뀌지 않습니다.
+
+유효한 Event STOP 끝점의 G-Solve 결과 누락과 RK45 Table의 dx 안내도 수정했습니다.
+모든 방정식 mode·1~9차/변수·두 solver·1/2/5/10 IC와 소비자·상태·저장을 감사했습니다.
+[전체 감사·검토 보류 사항](docs/FULL_AUDIT.md) ·
+[실제 renderer 16개 화면](docs/ui-review/audit-overview.png).
 Equation/IC F1 INIT는 해당 입력만 복구합니다. 미완성 draft는 NEXT에서 전체 검증하고 첫 오류를
 선택합니다. IC numeric 값은 전체 성공 후에만 반영하며 미완성 IC draft는 runtime-only입니다.
 빨간 domain/numerical END는 비치명 상태로 유지하고 유효 구간 TRACE/G-Solve를 계속 사용할 수 있습니다.
 Output은 OFF에서도 선택 색의 선을 표시합니다.
-[현재 overlay·navigation 변경과 제약](docs/OVERLAY_AUDIT.md), [UI 규칙](docs/UI_CONVENTIONS.md),
+[현재 전수 감사와 제약](docs/FULL_AUDIT.md), [UI 규칙](docs/UI_CONVENTIONS.md),
 [BOX·변경 화면 모음](docs/ui-review/interaction-overview.png).
 
 [Main·Subtype 6개 상태의 native/3× 캡처와 현재 TRACE·경고 화면](docs/ui-review/tiles-overview.png)

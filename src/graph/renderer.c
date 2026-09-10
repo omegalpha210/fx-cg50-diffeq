@@ -106,8 +106,9 @@ static void field_line(double x0,double y0,double x1,double y1,int color)
 }
 static bool slope_field(Document *d,CompiledModel *m,UiBusy *busy)
 {
-    if(!model_field_supported(d) || d->view.phase || d->solver.sf==0)return true;
-    const ViewWindow *v=&d->view;int columns=d->solver.sf;
+    if(!model_field_supported(d) || d->view.phase || d->solver.sf<=0)return true;
+    const ViewWindow *v=&d->view;
+    int columns=d->solver.sf>ODE_SF_MAX ? ODE_SF_MAX:d->solver.sf;
     int rows=(int)ceil(columns*(double)(PLOT_BOTTOM-PLOT_TOP)/(PLOT_RIGHT-PLOT_LEFT));
     if(rows<1)rows=1;
     double rx=v->xmax-v->xmin,ry=v->ymax-v->ymin;
@@ -203,12 +204,12 @@ static GraphResult render(Document *d,CompiledModel *m,bool first,UiBusy *busy)
     model_work_begin(m);
     ModelWork plan=model_preflight(d,&d->solver);
     if(plan.status!=ODE_OK) {
-        solver_report_begin(d,m);solver_report_end(m,plan.status);
+        /* No trajectory or pixels were committed. The UI owns this failed
+           request; preserve the previous canonical graph/report for rollback. */
         return (GraphResult){.status=plan.status,.failed_family=plan.family};
     }
     OdeStatus phase_status=graph_phase_preflight(d,m,ui_busy_cancel,busy);
     if(phase_status!=ODE_OK) {
-        solver_report_begin(d,m);solver_report_end(m,phase_status);
         return (GraphResult){.status=phase_status,.failed_family=-1};
     }
     bool system=model_phase_supported(d);
@@ -217,8 +218,7 @@ static GraphResult render(Document *d,CompiledModel *m,bool first,UiBusy *busy)
         graph_labels(d,m);
         GraphResult cached=trace_cache_result();graph_status(cached);return cached;
     }
-    solver_report_begin(d,m);
-    if(system)graph_phase_reset();
+    solver_report_stage(m);
     bool capture=trace_capture_begin(d);
     dclear(C_WHITE);
     axes(model_view_const(d),system && d->view.phase);
@@ -242,8 +242,10 @@ static GraphResult render(Document *d,CompiledModel *m,bool first,UiBusy *busy)
             if(r.status==ODE_CANCELLED) {result.status=r.status;break;}
         }
     }
-    if(capture)trace_capture_end(result.status==ODE_OK || result.status==ODE_HAS_INVALID || result.status==ODE_EVENT_STOP);
-    solver_report_end(m,result.status==ODE_HAS_INVALID ? result.invalid:result.status);
+    if(capture)trace_capture_end(result.status!=ODE_CANCELLED);
+    if(result.status==ODE_CANCELLED){m->event_sink=NULL;return result;}
+    solver_report_commit(d,m,&d->solver,result.status==ODE_HAS_INVALID ? result.invalid:result.status);
+    if(system)graph_phase_reset();
     /* Paint order: grid/axes -> fields/nullclines -> trajectories -> Event
        squares -> EQPT diamonds -> legends/status. UI interaction highlights
        and pointers follow; active result text and softkeys are painted last.

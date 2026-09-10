@@ -1,3 +1,56 @@
+# Full audit and explicit fixes validation — v0.12.0-beta.7
+
+- The four explicit fixes first passed **53/53 host/UBSan groups**, followed by
+  systematic auditing. Final development validation is **57/57 PASS, 32.21 s**;
+  all previous numerical/parser/UI/storage/cancellation groups remain enabled.
+- Clean **28 C units**, strict SH compile/link, **zero warnings**, and **13/13
+  G3A package checks** passed. text219056/data768/BSS72192 B; largest single
+  application frame2664 B; development G3A248504 B. No new production heap or
+  framebuffer, no BSS growth, and no toolchain reinstallation.
+- Table and Drawing use the requested blue-header preparation canvas, white
+  `EXIT cancels` row and hidden F-key strip. The existing delayed four-phase
+  spinner has cancel priority; subsequent updates transfer only header strips.
+  Cancellation discards temporary work and preserves stable result/report;
+  initial Drawing cancellation returns Parameters. Same-page Table navigation
+  reuses its page without solver work or flashing preparation feedback.
+- SF is0..50 with default12. UI rejects51; legacy saved values above50 clamp on
+  load without rejecting the existing format. Renderer bounds are defensive.
+- First-order IC1/2/5/10 expose the actual independent curve colors. Shared
+  visibility stays explicit; F3, INIT, count shrink/grow, Graph/TRACE/G-Solve and
+  cold SAVE/RCL retain their existing state semantics. The pre-existing 90-byte
+  color matrix and v10 save layout are reused.
+- The systematic audit covers all seven ODE mode classes, RK4/RK45, dimensions
+  1/9, IC1/2/5/10, both directions, invalid domains, Event MARK/STOP, Phase and
+  the A–K representative UI workflows. The findings and exact evidence are in
+  [FULL_AUDIT](FULL_AUDIT.md), [mathematics](AUDIT_MATH.md),
+  [consumers](AUDIT_CONSUMERS.md), [UI](AUDIT_UI.md) and
+  [persistence](AUDIT_PERSISTENCE.md). This is an equivalence-class audit, not a
+  claim of exhaustive combinations or proof of every mathematical input.
+- Objective corrections include valid Event terminal G-Solve results with
+  strict false-positive/domain guards, RK45 Table spacing feedback, and retaining
+  Last calculation across cancelled new Drawing. Completed partial redraws now keep
+  geometry/report/cache together; dry preflight rejection preserves the old
+  transaction and labels TIME errors as Graph. Review-required choices and
+  intentional limits are documented separately from fixed defects.
+- [Current renderer review](ui-review/audit-overview.png) includes slow Table /
+  Drawing, SF50/51, one/five/ten IC Output, configured curve colors and maximum
+  rows. Host LCD shadow captures show intended transfer contents; they do not
+  establish physical calculator timing or display quality.
+- Public publication must repeat host/UBSan, clean SH and package checks from
+  the exact safe candidate/tag, then compare downloaded binary/notice assets
+  by bytes, SHA256 and GitHub digest. Those public identifiers and checksums
+  belong to the release's `VALIDATION.md` and `SHA256SUMS.txt`.
+
+**HARDWARE TEST REQUIRED / HARDWARE RETEST REQUIRED:** all 27 current priority
+cases in [HARDWARE_RETEST](HARDWARE_RETEST.md) remain pending, including physical
+EXIT/HOLD, partial LCD transfer, RTC, MENU/Fugue, Event terminal operations,
+SAVE/RCL, slow cancellation and cumulative stack/heap margin.
+
+Earlier milestone records below are historical. In particular, beta.6's genuine
+Drawing `Partial: Cancelled` policy is superseded by beta.7 transaction rollback.
+
+---
+
 # Overlay/navigation validation — v0.12.0-beta.6
 
 - Baseline47/47 host/UBSan rerun passed; final **49/49 PASS,33.19 s**. All prior

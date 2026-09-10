@@ -1,3 +1,28 @@
+# Current UI conventions — v0.12.0-beta.7
+
+[Full audit](FULL_AUDIT.md), [busy-screen ownership](BUSY_SCREEN_AUDIT.md) and
+[IC color consumers](MULTI_IC_COLOR_AUDIT.md) supplement retained beta.6 rules.
+
+- Table/Drawing long preparation uses the native blue title row, white
+  `EXIT cancels` row, neutral body and no visible F-key strip. Shared156ms delay
+  and <=8Hz spinner; one canvas transfer, then header strips only. TRACE/G-Solve
+  keep their lower-left busy panels. Fast/cached same-page actions do not flash.
+- Drawing cancellation rolls back report/display/window state; initial cancel
+  returns Parameters. It never publishes a cancelled partial construction or
+  replaces Last calculation. Finished nonfatal prefixes remain valid results.
+- SF is0..50, default12; input51 is an inline range error. All old save readers
+  clamp larger SF to50; renderer has an independent defensive bound.
+- Multiple first-order ICs expose shared y visibility separately from IC1 y..IC10 y
+  color-only rows. F3 changes only the selected curve. INIT restores the existing
+  palette; inactive indexed preferences persist through shrink/grow and SAVE/RCL.
+- RK45 Table reports its actual display dx; the RK4 Step label is RK4-only.
+- Existing Graph top-left instruction/warning, lower data panels, semantic colors,
+  one-EXIT selection/results, fixed-X TRACE, factory Graph INIT and BOX remain.
+
+Earlier milestone rules below are historical where superseded here.
+
+---
+
 # Current UI conventions — v0.12.0-beta.6
 
 [Overlay inventory and implementation](OVERLAY_AUDIT.md) defines the current rules.
@@ -137,7 +162,7 @@ scrolling, graph/TRACE/G-Solve motion and the2D palette retain their own policie
 | Solver INFO | Solver Info | — / — / — / — / — / — | Read-only scroll, EXIT; requested initial RK45 step should also read h0 |
 | V-WIN SELECT | View Window / Phase View Window | INIT / — / — / — / — / DONE |7 rows, Xdot relation help; call/return only Parameters/Graph |
 | V-WIN EDIT | Same | — / FUNC / — / CLEAR / DEL / OK | Numeric expressions/caret, shared commit hint; keep invalid field visible |
-| Output | Output selection | INIT / — / COLOR / — / — / DONE | ON/OFF and persistent colors; EXE follows rows; replace box with curve line preview |
+| Output | Output selection | INIT / — / COLOR / — / — / DONE | Shared dependent ON/OFF; multiple first-order ICs have color-only IC rows and a separate all-IC visibility row with F3 blank; EXE follows rows; curve line preview |
 | Graph Settings Grid/Label | Graph settings | INIT / — / — / — / — / DONE | LEFT/RIGHT toggles |
 | Graph Settings Style | Same | — / — / — / — / — / DONE | Arrows only, exact style hint; INIT on other rows |
 | Graph Settings Color | Same | INIT / — / COLOR / — / — / DONE | RIGHT/F3 palette; six-color swatch |
@@ -213,7 +238,14 @@ TIME window, MAN preserves a direct commit (even an unchanged value). Both rows
 show that state except the actively edited row; INIT restores AUTO. RK45 uses h0
 in Parameters and solver details/INFO; RK4 h and stored values are unchanged.
 Output preview is a 28×2-pixel line on a small white backplate; OFF retains the same
-color. The chooser and persisted palette/index policy are unchanged.
+color. Multiple first-order ICs show separate IC1 y through IC10 y color-only
+rows; their F3 changes exactly that stored curve color. A separate
+`y (all ICs)` row retains shared dependent visibility, has F3 blank and no
+ambiguous preview. Color rows never display independent ON/OFF. Seven-row SELECT
+paging/wrap reaches all ten ICs above the help. Single IC keeps the ordinary y row.
+Shrinking/growing an IC list retains indexed color preferences; unused slots have
+the original palette defaults. Output INIT resets all colors; IC INIT preserves
+them. See [multiple-IC color audit](MULTI_IC_COLOR_AUDIT.md).
 
 Graph draw order is background/grid/axes, field/nullclines, solution curves,
 Event squares, equilibrium diamonds, compact view/legend/status backplates, then

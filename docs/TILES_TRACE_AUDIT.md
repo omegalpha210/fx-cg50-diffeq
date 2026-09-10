@@ -1,3 +1,6 @@
+> Historical milestone record. Beta.7 busy/cancel, SF and Output rules are in
+> [FULL_AUDIT](FULL_AUDIT.md) and [UI_CONVENTIONS](UI_CONVENTIONS.md).
+
 > Beta.5 record: Graph INIT, G-Solve overlays and busy rendering are superseded by [OVERLAY_AUDIT](OVERLAY_AUDIT.md). Tile and fixed-TRACE contracts remain.
 
 # Native tiles and fixed-horizontal TRACE — beta.5

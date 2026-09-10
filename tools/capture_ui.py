@@ -48,7 +48,7 @@ cases += [
     ('field-arrow-zero','Arrow / zero slope points right','1 4 0 EXE F6 F6 F5 '+arrow+'EXE EXIT F6'),
     ('field-arrow-up','Arrow / positive slope','1 4 1 EXE F6 F6 F5 '+arrow+'RIGHT EXE EXIT F6'),
     ('field-arrow-down','Arrow / negative slope','1 4 NEG 1 EXE F6 F6 F5 '+arrow+'RIGHT RIGHT EXE EXIT F6'),
-    ('field-arrow-max','SF100 / arrows remain visible','1 4 F6 F6 DOWN DOWN DOWN DOWN DOWN 1 0 0 EXE F5 '+arrow+'DOWN RIGHT EXE EXIT F6'),
+    ('field-arrow-max','SF50 / arrows remain visible','1 4 F6 F6 DOWN DOWN DOWN DOWN DOWN 5 0 EXE F5 '+arrow+'DOWN RIGHT EXE EXIT F6'),
     ('output-first','Output / y only, no x row','1 4 F6 F6 F4'),
     ('output-enabled','Output / shared ON-OFF','2 F6 F6 F4 DOWN RIGHT')]
 cases += [

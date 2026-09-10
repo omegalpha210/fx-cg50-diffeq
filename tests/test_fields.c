@@ -42,7 +42,7 @@ int main(void)
     printf("Recall saved session target-font width=%d / 226 pixels\n",width);
     const char *hints[]={UI_EDIT_HINT,UI_LIMIT_HINT,"LEFT/RIGHT: ON/OFF toggle","Comma: separator",
         "Integration start","Integration end","RK4 h > 0; smaller means more work",
-        "Output spacing only; h is unchanged","Slope-field columns (0-100); 0 = Off",
+        "Output spacing only; h is unchanged","Slope-field columns (0-50); 0 = Off",
         "Max RK4 steps per IC / direction","Xdot edits Xmax; Xmin/Xmax recalculate Xdot",
         "Enter an integer from 1 to 9","EXE: NEXT   LEFT/RIGHT: edit","EXE: open",
         "MENU: return to MAIN MENU",

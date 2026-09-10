@@ -1,3 +1,6 @@
+> Historical milestone record. Beta.7 busy/cancel, SF and Output rules are in
+> [FULL_AUDIT](FULL_AUDIT.md) and [UI_CONVENTIONS](UI_CONVENTIONS.md).
+
 > Historical beta.4 audit. Main layout, TRACE navigation/keys and warning placement are superseded by [TILES_TRACE_AUDIT](TILES_TRACE_AUDIT.md). Graph INIT/overlay/G-Solve/busy rules are superseded by [OVERLAY_AUDIT](OVERLAY_AUDIT.md); other BOX/draft contracts remain.
 
 # Interaction audit — beta.4 baseline

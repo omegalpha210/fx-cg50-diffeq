@@ -1,3 +1,6 @@
+> Historical milestone record. Beta.7 busy/cancel, SF and Output rules are in
+> [FULL_AUDIT](FULL_AUDIT.md) and [UI_CONVENTIONS](UI_CONVENTIONS.md).
+
 # Graph overlay and operation navigation — v0.12.0-beta.6
 
 Baseline: development212f3a4 / public57b9079, v0.12.0-beta.5. The actual baseline

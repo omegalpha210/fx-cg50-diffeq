@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <string.h>
 static Document d;static CompiledModel m;
+static SolverReport stable_report;
 void host_cancel_after(unsigned polls);
 unsigned long host_rhs_calls(void);
 static void compile(void){ModelError e=model_compile(&d,&m);assert(e.values==ODE_OK && e.expression.status==EXPR_OK);}
@@ -59,10 +60,10 @@ int main(void)
         assert(graph.status!=ODE_OK && graph.status!=ODE_EVENT_STOP && solver_report()->hits==1);
         assert(solver_report()->status!=ODE_EVENT_STOP); /* A later family's STOP cannot hide an earlier limit. */
         model_defaults(&d,EQ_GENERAL,1);d.adaptive.method=method;d.solver.sf=0;compile();
-        unsigned long rhs_before=host_rhs_calls();host_cancel_after(30);
+        stable_report=*solver_report();unsigned long rhs_before=host_rhs_calls();host_cancel_after(30);
         assert(graph_render(&d,&m,true).status==ODE_CANCELLED);
-        assert(solver_report()->status==ODE_CANCELLED && solver_report()->work.rhs==host_rhs_calls()-rhs_before);
-        assert(solver_report()->work.rhs>0 && solver_report()->hits==0);
+        assert(host_rhs_calls()>rhs_before && m.event_sink==NULL);
+        assert(!memcmp(solver_report(),&stable_report,sizeof(stable_report)));
     }
     model_defaults(&d,EQ_SYSTEM,2);d.adaptive.method=ODE_RK45;d.event.enabled=1;strcpy(d.event.text,"y1");compile();
     assert(graph_render(&d,&m,true).status==ODE_OK && trace_prepare(&d,&m,0,0));

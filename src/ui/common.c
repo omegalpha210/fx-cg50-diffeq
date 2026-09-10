@@ -5,9 +5,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <gint/drivers/r61524.h>
 #ifdef FXCG50
 #include <gint/timer.h>
-#include <gint/drivers/r61524.h>
 #include <gint/gint.h>
 #include <gint/drivers/keydev.h>
 #endif
@@ -369,12 +369,36 @@ static void busy_rect(const UiBusy *busy,int *top,int *width)
 }
 static void busy_upload(int left,int top,int width,int height)
 {
-#ifdef FXCG50
     /* Installed driver waits for prior DMA, then synchronously transfers this
        small rectangle by CPU. Safe to restore the source pixels on return. */
     r61524_display_rect(gint_vram,UI_X+left,UI_X+left+width-1,UI_Y+top,UI_Y+top+height-1);
-#else
-    (void)left;(void)top;(void)width;(void)height;dupdate();
+}
+static bool busy_screen(const UiBusy *busy)
+{return busy->area==UI_BUSY_TABLE || busy->area==UI_BUSY_DRAW;}
+static void busy_screen_paint(UiBusy *busy,const char *text)
+{
+    unsigned capacity;uint16_t *saved=graph_busy_pixels(&capacity,true);
+    int rows=(int)(capacity/DWIDTH);if(rows<1)return;
+    /* The LCD owns this temporary screen; VRAM still owns the stable graph or
+       in-progress construction. Transfer bounded strips synchronously and put
+       every source pixel back. Only the first delayed frame clears the canvas. */
+    int start=busy->visible ? UI_Y:0,end=busy->visible ? UI_Y+21:DHEIGHT;
+    struct dwindow old=dwindow;
+    for(int top=start;top<end;top+=rows) {
+        int height=end-top<rows ? end-top:rows;
+        memcpy(saved,gint_vram+top*DWIDTH,(unsigned)(DWIDTH*height)*2);
+        dwindow_set((struct dwindow){0,top,DWIDTH,top+height});
+        drect(0,top,DWIDTH-1,top+height-1,C_WHITE);
+        ui_rect(0,0,UI_W,21,UI_BLUE);
+        if(top<UI_Y+16 && top+height>UI_Y+5)ui_text(8,5,C_WHITE,"%s",text);
+        if(!busy->visible && top<UI_Y+37 && top+height>UI_Y+26)
+            ui_text(8,26,UI_MUTED,"EXIT cancels");
+        r61524_display_rect(gint_vram,0,DWIDTH-1,top,top+height-1);
+        memcpy(gint_vram+top*DWIDTH,saved,(unsigned)(DWIDTH*height)*2);
+    }
+    dwindow_set(old);
+#ifndef FXCG50
+    host_display_frame();
 #endif
 }
 void ui_busy_begin(UiBusy *busy,const char *label,UiBusyArea area,OdeCancel cancel,void *context)
@@ -394,6 +418,9 @@ bool ui_busy_cancel(void *context)
     uint32_t delta=now>=busy->last ? now-busy->last:now+86400u*128u-busy->last;
     if(elapsed>=20 && (!busy->visible || delta>=16)) {
         char text[40];snprintf(text,sizeof(text),"%s %c",busy->label,"/-\\|"[busy->frame++%4]);
+        if(busy_screen(busy)) {
+            busy_screen_paint(busy,text);busy->visible=true;busy->last=now;return false;
+        }
         int width,top;busy_rect(busy,&top,&width);
         int left=5,height=dfont_default()->data_height+1;
         unsigned capacity;uint16_t *saved=graph_busy_pixels(&capacity,busy->area!=UI_BUSY_TABLE);
@@ -407,6 +434,9 @@ bool ui_busy_cancel(void *context)
             ui_text(left+2,top,UI_BLUE,"%s",text);busy_upload(left,top,width,height);
             for(int y=0;y<height;y++)memcpy(gint_vram+(UI_Y+top+y)*DWIDTH+UI_X+left,
                 saved+y*width,(unsigned)width*2);
+#ifndef FXCG50
+            host_display_frame();
+#endif
             busy->visible=true;busy->last=now;
         }
     }
@@ -414,7 +444,13 @@ bool ui_busy_cancel(void *context)
 }
 void ui_busy_end(UiBusy *busy)
 {
-    if(busy->visible) {int top,width;busy_rect(busy,&top,&width);
-        busy_upload(5,top,width,dfont_default()->data_height+1);}
+    if(busy->visible && !busy_screen(busy)) {int top,width;busy_rect(busy,&top,&width);
+        busy_upload(5,top,width,dfont_default()->data_height+1);
+#ifndef FXCG50
+        host_display_frame();
+#endif
+    }
+    /* Full preparation screens are replaced by their owner after commit or
+       rollback. Never upload a cancelled in-progress Graph framebuffer here. */
     busy->visible=false;
 }

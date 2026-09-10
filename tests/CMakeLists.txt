@@ -174,6 +174,18 @@ add_executable(test_ui_controls test_ui_controls.c ../src/ui/forms.c ../src/ui/e
 target_include_directories(test_ui_controls PRIVATE host)
 target_link_libraries(test_ui_controls core m)
 add_test(NAME ui_controls COMMAND test_ui_controls)
+add_executable(test_output_instances test_output_instances.c ../src/ui/forms.c ../src/ui/editor.c
+  ../src/ui/solver.c ../src/ui/common.c ../src/graph/renderer.c ../src/graph/trace.c
+  ../src/graph/phase.c host/gint_host.c)
+target_include_directories(test_output_instances PRIVATE host)
+target_link_libraries(test_output_instances core m)
+add_test(NAME output_instances COMMAND test_output_instances)
+add_test(NAME output_instances_ui COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_output_instances_ui.py $<TARGET_FILE:host_app>)
+set_tests_properties(output_instances output_instances_ui PROPERTIES TIMEOUT 60)
+add_test(NAME full_workflow_ui COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_full_workflow_ui.py $<TARGET_FILE:host_app>)
+set_tests_properties(full_workflow_ui PROPERTIES TIMEOUT 60)
 add_test(NAME workflow_polish_ui COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_workflow_polish.py $<TARGET_FILE:host_app>)
 set_tests_properties(ui_controls workflow_polish_ui PROPERTIES TIMEOUT 60)
 add_test(NAME ui_consistency COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test_consistency.py $<TARGET_FILE:host_app>)
@@ -209,3 +221,27 @@ add_test(NAME graph_overlays COMMAND test_graph_overlays)
 add_test(NAME graph_overlay_ui COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/test_graph_overlay_ui.py $<TARGET_FILE:host_app>)
 set_tests_properties(graph_overlay_ui PROPERTIES TIMEOUT 60)
+
+add_executable(test_busy_screen test_busy_screen.c ../src/ui/common.c host/gint_host.c)
+target_include_directories(test_busy_screen PRIVATE host)
+target_link_libraries(test_busy_screen core m)
+add_test(NAME busy_screen_canvas COMMAND test_busy_screen)
+add_test(NAME busy_screen_ui COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_busy_screen_ui.py $<TARGET_FILE:host_app>)
+set_tests_properties(busy_screen_ui PROPERTIES TIMEOUT 60)
+
+# Mathematical equivalence classes across every supported mode/dimension.
+add_executable(test_full_math test_full_math.c)
+target_link_libraries(test_full_math core m)
+add_test(NAME full_math_matrix COMMAND test_full_math)
+set_tests_properties(full_math_matrix PROPERTIES TIMEOUT 30)
+
+add_executable(test_full_persistence test_full_persistence.c)
+target_link_libraries(test_full_persistence core m)
+add_test(NAME full_persistence_matrix COMMAND test_full_persistence)
+
+add_executable(test_full_consumers test_full_consumers.c ../src/graph/trace.c
+  ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/common.c host/gint_host.c)
+target_include_directories(test_full_consumers PRIVATE host)
+target_link_libraries(test_full_consumers core m)
+add_test(NAME full_consumers COMMAND test_full_consumers)

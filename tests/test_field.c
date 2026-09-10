@@ -3,6 +3,7 @@
 #include "ui.h"
 #include <assert.h>
 #include <float.h>
+#include <limits.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -17,6 +18,12 @@ static unsigned color_count(unsigned color) {
 int main(void)
 {
     model_defaults(&d,EQ_GENERAL,1);d.view.grid=d.view.labels=0;d.nic=0;
+    assert(d.solver.sf==12);
+    for(int sf=0;sf<=50;sf++) {
+        d.solver.sf=sf;assert(ode_validate(&d.solver)==ODE_OK);
+    }
+    d.solver.sf=51;assert(ode_validate(&d.solver)==ODE_BAD_INPUT);
+    d.solver.sf=-1;assert(ode_validate(&d.solver)==ODE_BAD_INPUT);
     const char *expressions[]={"0","1","-1","x-y"};
     for(int k=0;k<4;k++) {
         strcpy(d.text[0],expressions[k]);d.solver.sf=1;
@@ -55,8 +62,18 @@ int main(void)
         d.field_color=(uint8_t)c;graph_render(&d,&m,false);assert(color_count((unsigned)graph_field_color(c))>0);
         assert(graph_field_color(c)!=0xffff && graph_field_color(c)!=0x37e6);
     }
-    d.solver.sf=100;rhs=host_rhs_calls();graph_render(&d,&m,false);
-    assert(host_rhs_calls()-rhs==5200 && color_count((unsigned)graph_field_color(d.field_color))>0);
+    /* Final renderer guard is independent of validated entry/storage paths. */
+    const int density[]={0,1,12,50,51,100,INT_MAX,-1,INT_MIN};
+    const unsigned expected[]={0,1,84,1300,1300,1300,1300,0,0};
+    unsigned maximum=0;
+    for(unsigned i=0;i<sizeof(density)/sizeof(density[0]);i++) {
+        d.solver.sf=density[i];rhs=host_rhs_calls();graph_backdrop(&d,&m);
+        assert(host_rhs_calls()-rhs==expected[i] && d.solver.sf==density[i]);
+        if(density[i]==50)maximum=hash();
+        if(density[i]>50)assert(hash()==maximum);
+    }
+    d.solver.sf=50;graph_backdrop(&d,&m);
+    assert(color_count((unsigned)graph_field_color(d.field_color))>0);
     for(int yy=0;yy<DHEIGHT;yy++)for(int xx=0;xx<DWIDTH;xx++)if(xx<UI_X || xx>UI_X+383 || yy<UI_Y || yy>UI_Y+197)
         assert(gint_vram[yy*DWIDTH+xx]!=(unsigned)graph_field_color(d.field_color));
     d.solver.sf=0;rhs=host_rhs_calls();graph_render(&d,&m,false);assert(host_rhs_calls()==rhs);
@@ -71,5 +88,5 @@ int main(void)
         assert(!model_field_supported(&d) && model_compile(&d,&m).expression.status==EXPR_OK);
         rhs=host_rhs_calls();graph_render(&d,&m,false);assert(host_rhs_calls()==rhs);
     }
-    puts("Slope field: streaming/direction/zero/anisotropy/extreme finite/0..100/single-pass/palette/domain/cancel/overlay/unsupported modes passed.");
+    puts("Slope field: streaming/direction/zero/anisotropy/extreme finite/0..50/defensive clamp/single-pass/palette/domain/cancel/overlay/unsupported modes passed.");
 }
