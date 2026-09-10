@@ -12,7 +12,8 @@
 #define C_NONE -1
 #define C_RGB(r,g,b) (((r)<<11)|((g)<<6)|(b))
 typedef uint16_t color_t;
-typedef struct {int unused;} font_t;
+typedef struct {uint8_t line_height,data_height;} font_t;
+const font_t *dfont_default(void);
 extern uint16_t *gint_vram;
 void dclear(color_t color);
 void drect(int x1,int y1,int x2,int y2,int color);

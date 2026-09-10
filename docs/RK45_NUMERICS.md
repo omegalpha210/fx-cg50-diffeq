@@ -124,13 +124,16 @@ the grid exceeds this; hidden Step has no effect.
 
 G-Solve uses target landing in refinement and Y-CAL/Y-ICPT queries. Scan density
 and bracketing still limit discovery: roots/extrema/intersections can be missed.
-TIME TRACE explicit F1 x= also lands at the requested valid coordinate. Arrow
-movement remains 1/2/3×Xdot and uses the existing **258-point total display cache**.
-Its linear interpolation (including Phase x=) is display-only, **not a claim of
-RK45 tolerance accuracy between retained points**. It never crosses known gaps.
-TIME extension remains one cancellable transaction, preserves configured solver
-settings, and discards temporary results on failure. Phase does not extend time.
-There is no dense-output polynomial and no enlarged full-trajectory storage.
+Since beta.5, TRACE F1 is cursor/curve INIT; direct x= input is removed. Movement
+remains 1/2/3× entry Xdot and uses the existing **258-point total display cache**.
+Linear interpolation is display-only, **not a claim of RK45 tolerance accuracy
+between retained points**. Navigation stays in the entry horizontal viewport's
+connected valid component, cannot cross known gaps, and cannot extend time or pan X.
+Y-only follow retains the window span and solver settings. PHASE uses horizontal
+state bounds separately from integration time and stops before offscreen retained
+states. Ordinary Graph pan keeps its existing safe range expansion.
+There is no dense-output polynomial or enlarged trajectory storage.
+See [current TRACE policy](TILES_TRACE_AUDIT.md).
 
 SAVE format **v9** appends Method/tolerances. Frozen v3–v8 readers default to RK4
 and the tolerance defaults while preserving their existing migration behavior.

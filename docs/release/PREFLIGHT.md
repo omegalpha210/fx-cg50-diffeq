@@ -1,3 +1,20 @@
+# v0.12.0-beta.5 preflight
+
+Development 212f3a4c04174062ec50278aff24a2f7d0a38b22, hardware-crash-fix; public parent 4deabae (beta.4).
+Gates: 47 host/UBSan groups, clean 28-unit strict SH compile/link, zero warnings,
+13 package checks, fixed TRACE/connected bounds/Y-only follow/reset/PHASE regression,
+menu geometry/key/pixel tests and common warning backplate/overlay checks. Preserve
+all previous 44 groups and protected numerical/parser/storage source. Check actual
+memory, icon provenance, current host captures, both README links/GitHub rendering.
+Public-safe snapshot only: preserve history/tags/MIT/notices, exclude manuals,
+private paths/history/secrets/logs/toolchains/binaries. Repeat checks from exact tag;
+publish prerelease, re-download all assets and verify bytes/SHA256/GitHub digests,
+remote tag/ancestry and source tree. Exact results appear in release VALIDATION.md.
+
+Previous records below are historical.
+
+---
+
 # v0.12.0-beta.4 preflight
 
 Development 83de31314b6c1df0052aab7a412eb914af69ec48, hardware-crash-fix; public parent f95cf5f (beta.3).

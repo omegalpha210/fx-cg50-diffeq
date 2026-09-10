@@ -19,19 +19,19 @@ def progress(out,n):
 assert bar(run(''))==['','','','','','OPEN']
 assert plot(run('F1 F2 F3 F4 F5'))==plot(run(''))
 for n in range(1,7):
-    direct=run(str(n));selected='DOWN '*(n-1)
+    direct=run(str(n));selected='DOWN '*((n-1)//2)+'RIGHT '*((n-1)%2)
     assert plot(direct)==plot(run(selected+'EXE'))==plot(run(selected+'F6'))
     progress(direct,1 if n==2 else 0)
 assert plot(run('UP DOWN'))==plot(run(''))
-assert plot(run('UP'))==plot(run('DOWN '*5))
-assert plot(run('5 EXIT'))==plot(run('DOWN '*4)) # Internal return keeps selector.
+assert plot(run('UP'))==plot(run('DOWN DOWN'))
+assert plot(run('5 EXIT'))==plot(run('DOWN DOWN')) # Internal return keeps selector.
 # Confirmation does no backend work; EXE/F6 save once, NO/EXIT never write.
 prepared='2 EXIT '
 for key in ['','F5','EXIT','R:EXE R:F6']:
     with tempfile.TemporaryDirectory() as directory:
         out=run(prepared+'6 '+key,directory)
         assert metrics(out)==(0,0,0,0,0,0) and not list(Path(directory).iterdir())
-        if key in ['F5','EXIT']:assert plot(out)==plot(run('DOWN '*5))
+        if key in ['F5','EXIT']:assert plot(out)==plot(run('DOWN DOWN RIGHT'))
         else:assert 'Save current session?' in tail(out)
 confirmed=[]
 for key in ['EXE','F6']:
@@ -44,7 +44,7 @@ assert confirmed[0]==confirmed[1]
 with tempfile.TemporaryDirectory() as directory:
     (Path(directory)/'DIFFEQ0.dat').mkdir();(Path(directory)/'DIFFEQ1.dat').mkdir()
     out=run(prepared+'6 EXE EXE',directory)
-    assert 'Save failed.' in out and plot(out)==plot(run('DOWN '*5))
+    assert 'Save failed.' in out and plot(out)==plot(run('DOWN DOWN RIGHT'))
 # All main ODE modes, including long/nine-state titles, have exactly three stages.
 families=[('1 1',2,1),('1 2',2,1),('1 3',3,1),('1 4',1,1),
           ('2',3,2),('3 9 F6',1,9),('4 9 F6',9,9)]

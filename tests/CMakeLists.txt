@@ -33,7 +33,7 @@ add_test(NAME equation_models COMMAND test_model)
 set_tests_properties(equation_models PROPERTIES TIMEOUT 30)
 
 # The actual UI/app code against a small drawing/key adapter, not a CPU emulator.
-set(HOST_APP_SOURCES ../src/graph/trace.c ../src/main.c ../src/app.c ../src/ui/common.c
+set(HOST_APP_SOURCES ../src/ui/menu.c ../src/graph/trace.c ../src/main.c ../src/app.c ../src/ui/common.c
   ../src/ui/editor.c ../src/ui/forms.c ../src/ui/solver.c ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/graph_screen.c
   ../src/ui/table_screen.c host/gint_host.c)
 add_executable(host_app ${HOST_APP_SOURCES})
@@ -187,3 +187,16 @@ add_test(NAME graph_interaction COMMAND test_graph_interaction)
 add_test(NAME graph_interaction_ui COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/test_interaction_ui.py $<TARGET_FILE:host_app>)
 set_tests_properties(graph_interaction_ui PROPERTIES TIMEOUT 60)
+
+add_executable(test_trace_fixed test_trace_fixed.c ../src/graph/trace.c
+  ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/common.c host/gint_host.c)
+target_include_directories(test_trace_fixed PRIVATE host)
+target_link_libraries(test_trace_fixed core m)
+add_test(NAME trace_fixed_warning COMMAND test_trace_fixed)
+add_executable(test_menu test_menu.c ../src/ui/menu.c ../src/ui/common.c host/gint_host.c)
+target_include_directories(test_menu PRIVATE host)
+target_link_libraries(test_menu core m)
+add_test(NAME menu_geometry COMMAND test_menu)
+add_test(NAME tiles_trace_ui COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_tiles_trace_ui.py $<TARGET_FILE:host_app>)
+set_tests_properties(tiles_trace_ui PROPERTIES TIMEOUT 60)

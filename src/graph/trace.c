@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 static TraceSamples samples;
-/* During extension overlays are restored, so their existing storage becomes
+/* During preparation overlays are restored, so their existing storage becomes
    the staging cache. No trajectory or framebuffer allocation is added. */
 static union {
     struct {unsigned char bits[384*198/8];uint16_t rows[384*19];} overlay;
@@ -21,6 +21,8 @@ static uint16_t highlight_xor;
 static bool cache_ready;
 static uint64_t cache_key,plot_key;
 static bool plot_ready;
+static TraceViewport viewport;
+const TraceViewport *trace_viewport(void){return &viewport;}
 static uint64_t hash_bytes(uint64_t hash,const void *data,size_t size)
 {
     const unsigned char *bytes=data;
@@ -237,6 +239,9 @@ static void selected_mask(const Document *d)
 bool trace_prepare(Document *d,CompiledModel *m,int family,int variable)
 {
     if(d->nic<1 || family<0 || family>=d->nic || variable<0 || variable>=d->dim)return false;
+    const ViewWindow *v=model_view_const(d);
+    viewport=(TraceViewport){v->xmin,v->xmax,v->xscale,model_xdot(&d->view),
+        d->view.phase!=0,v->phase_x};
     if(trace_cache_matches(d)) {
         trace_overlay_begin();return trace_select(d,family,variable);
     }
@@ -262,15 +267,25 @@ bool trace_has_invalid(void)
 {return samples.branch[samples.family][0].invalid || samples.branch[samples.family][1].invalid;}
 bool trace_direction_invalid(int direction)
 {return samples.branch[samples.family][direction>0 ? 1:0].invalid;}
+static bool in_view(const TracePoint *p)
+{
+    double x=viewport.phase ? p->y[viewport.axis]:p->x;
+    return isfinite(x) && x>=viewport.xmin && x<=viewport.xmax;
+}
+/* PHASE never projects an offscreen sample onto a fake horizontal edge.
+   Only a run of retained, linked, in-view states is traversable. */
+static bool phase_sample(const TracePoint *p){return !viewport.phase || in_view(p);}
 static bool interpolate(double x,TracePoint *point)
 {
     for(int side=0;side<2;side++) {
         TraceBranch *b=&samples.branch[samples.family][side];
         for(unsigned j=0;j<b->count;j++) {
             unsigned i=b->start+j;TracePoint *q=&samples.point[i];
-            if(x==q->x){*point=*q;return true;}
+            if(x==q->x && in_view(q)){*point=*q;return true;}
             if(!j || !samples.link[i])continue;
             TracePoint *p=&samples.point[i-1];
+            if(!phase_sample(p) || !phase_sample(q) || (!viewport.phase &&
+                (x<viewport.xmin || x>viewport.xmax)))continue;
             if(x<fmin(p->x,q->x) || x>fmax(p->x,q->x) || p->x==q->x)continue;
             double t=(x-p->x)/(q->x-p->x);point->x=x;
             for(int k=0;k<samples.dim;k++)point->y[k]=(1-t)*p->y[k]+t*q->y[k];
@@ -282,12 +297,15 @@ static bool interpolate(double x,TracePoint *point)
 bool trace_point_near(double x,TracePoint *point)
 {
     if(!samples.valid)return false;
+    if(!isfinite(x))return false;
+    if(!viewport.phase)x=fmax(viewport.xmin,fmin(viewport.xmax,x));
     if(interpolate(x,point))return true;
     double best=INFINITY;
     for(int side=0;side<2;side++) {
         TraceBranch *b=&samples.branch[samples.family][side];
         for(unsigned j=0;j<b->count;j++) {
-            TracePoint *p=&samples.point[b->start+j];double distance=fabs(p->x-x);
+            TracePoint *p=&samples.point[b->start+j];if(!in_view(p))continue;
+            double distance=fabs(p->x-x);
             if(distance<best){best=distance;*point=*p;}
         }
     }
@@ -300,7 +318,8 @@ bool trace_move(double x,int direction,TracePoint *point)
     for(int side=0;side<2;side++) {
         TraceBranch *b=&samples.branch[samples.family][side];
         for(unsigned j=0;j<b->count;j++) {
-            TracePoint *p=&samples.point[b->start+j];double distance=direction*(p->x-x);
+            TracePoint *p=&samples.point[b->start+j];if(!in_view(p))continue;
+            double distance=direction*(p->x-x);
             if(distance>1e-12*fmax(1,fabs(x)) && distance<best){best=distance;*point=*p;}
         }
     }
@@ -388,21 +407,18 @@ bool trace_cache_time_window(const Document *d,ViewWindow *window)
 static void cached_render(Document *d,CompiledModel *m)
 {
     graph_backdrop(d,m);trace_cache_render(d);graph_event_markers(d);graph_phase_markers(d,-1);
-    graph_labels(d,m);
-    if(samples.has_invalid)ui_text(7,4,C_RED,"ERROR: Numerical limit");
+    graph_labels(d,m);graph_status(samples.result);
 }
 static OdeStatus follow_point(Document *d,CompiledModel *m,const TracePoint *point,bool redraw)
 {
     ViewWindow *view=model_view(d),before=*view,next=*view;
-    /* Geometry's ordinary follow helper rejects legacy phase views. Project
-       once here, then reuse its bounded two-axis follow on a temporary view. */
-    next.phase=0;
     double x=d->view.phase ? point->y[view->phase_x]:point->x;
     double y=point->y[d->view.phase ? view->phase_y:samples.variable];
-    if(isfinite(point->x) && fabs(point->x)<=1e100 &&
-        ode_values_status(point->y,samples.dim)==ODE_OK && graph_follow_window(&next,x,y)) {
-        next.phase=view->phase;*view=next;redraw=true;
-    }
+    if(!isfinite(point->x) || fabs(point->x)>1e100 ||
+        ode_values_status(point->y,samples.dim)!=ODE_OK || !in_view(point))return ODE_HAS_INVALID;
+    if(graph_follow_y(&next,y)){*view=next;redraw=true;}
+    int px,py;
+    if(!graph_point(view,x,y,&px,&py)){*view=before;return ODE_NONFINITE;}
     /* Configured solver range remains independent of runtime cache and view. */
     if(redraw) {
         if(model_phase_supported(d) && d->view.phase) {
@@ -415,50 +431,47 @@ static OdeStatus follow_point(Document *d,CompiledModel *m,const TracePoint *poi
 }
 void trace_follow(Document *d,CompiledModel *m,const TracePoint *point)
 {(void)follow_point(d,m,point,false);}
+/* Grow the connected component containing x from linked cache runs. Two
+   branches can share their initial point. Three scans cover either branch order;
+   no array, numerical query or extension transaction is needed. */
+static bool visible_component(double x,double *low,double *high)
+{
+    *low=x;*high=x;bool found=false;
+    for(int pass=0;pass<3;pass++)for(int side=0;side<2;side++) {
+        const TraceBranch *b=&samples.branch[samples.family][side];
+        for(unsigned j=0;j<b->count;) {
+            unsigned begin=j++,end=begin;
+            if(!phase_sample(&samples.point[b->start+begin]))continue;
+            while(j<b->count && samples.link[b->start+j] &&
+                phase_sample(&samples.point[b->start+j]))end=j++;
+            double a=samples.point[b->start+begin].x,z=samples.point[b->start+end].x;
+            double left=fmin(a,z),right=fmax(a,z);
+            if(!viewport.phase){left=fmax(left,viewport.xmin);right=fmin(right,viewport.xmax);}
+            if(left<=right && left<=*high && right>=*low) {
+                *low=fmin(*low,left);*high=fmax(*high,right);found=true;
+            }
+        }
+    }
+    return found;
+}
 OdeStatus trace_navigate(Document *d,CompiledModel *m,double target,bool jump,TracePoint *point)
 {
-    if(!samples.valid || !isfinite(target) || fabs(target)>1e100)return ODE_BAD_INPUT;
-    for(int side=0;side<2;side++) {
-        TraceBranch *b=&samples.branch[samples.family][side];
-        if(!b->event || !b->count)continue;
-        TracePoint *terminal=&samples.point[b->start+b->count-1];
-        if((side ? 1:-1)*(target-terminal->x)>0) {
-            OdeStatus status=follow_point(d,m,terminal,false);
-            if(status!=ODE_OK)return status;
-            *point=*terminal;return ODE_EVENT_STOP;
-        }
-    }
-    bool extended=false;
-    if(!d->view.phase && (target<samples.extent.xmin || target>samples.extent.xmax)) {
-        OdeSettings extent=samples.extent;
-        extent.xmin=fmin(extent.xmin,target);extent.xmax=fmax(extent.xmax,target);
-        trace_overlay_restore();
-        OdeStatus status=prepare_range(d,m,&extent,samples.family,samples.variable,&scratch.staging);
-        if(status==ODE_OK) {
-            samples=scratch.staging;extended=true;cache_ready=model_phase_supported(d);
-            if(cache_ready)cache_key=numerical_key(d);
-        plot_key=plot_identity(d);plot_ready=true;
-        }
-        /* Staging aliases overlay storage. Rebuild it even on cancellation;
-           failed work has changed neither the view, cache, cursor nor VRAM. */
-        trace_overlay_begin();selected_mask(d);
-        if(status!=ODE_OK)return status;
-    }
-    TracePoint next=*point;
-    bool exact=interpolate(target,&next);
-    if(!exact) {
-        if(jump)trace_point_near(target,&next);
-        else trace_move(point->x,target>point->x ? 1:-1,&next);
-    }
-    if(ode_values_status(next.y,samples.dim)!=ODE_OK)return ODE_HAS_INVALID;
-    OdeStatus followed=follow_point(d,m,&next,extended);
+    (void)jump; /* Endpoints obey exactly the same connected, visible limits. */
+    if(!samples.valid || !isfinite(target) || fabs(target)>1e100 || !in_view(point))return ODE_BAD_INPUT;
+    double low,high;if(!visible_component(point->x,&low,&high))return ODE_HAS_INVALID;
+    double limited=fmax(low,fmin(high,target));TracePoint next=*point;
+    if(!interpolate(limited,&next))return ODE_HAS_INVALID;
+    OdeStatus followed=follow_point(d,m,&next,false);
     if(followed!=ODE_OK)return followed;
     *point=next;
-    if(!exact)for(int side=0;side<2;side++) {
-        TraceBranch *b=&samples.branch[samples.family][side];
-        if(b->event && b->count && next.x==samples.point[b->start+b->count-1].x)return ODE_EVENT_STOP;
+    if(limited!=target)for(int side=0;side<2;side++) {
+        const TraceBranch *b=&samples.branch[samples.family][side];
+        if(b->count && next.x==samples.point[b->start+b->count-1].x) {
+            if(b->event)return ODE_EVENT_STOP;
+            if(b->invalid)return ODE_HAS_INVALID;
+        }
     }
-    return exact ? ODE_OK:ODE_HAS_INVALID;
+    return ODE_OK;
 }
 
 static void invert_mask(void)

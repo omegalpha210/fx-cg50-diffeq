@@ -107,12 +107,12 @@ assert "TEXT 14 9 Phase View Window\n" in phase_again
 assert "TEXT 144 35 -2\n" in phase_again
 assert "TEXT 144 57 4\n" in phase_again
 
-# Phase TRACE reports one combined (x,y1,y2) family. Direct x input and held
+# Phase TRACE reports one combined (x,y1,y2) family. INIT and held
 # repeats use the captured trajectory without another numerical solve.
 trace_start = run(phase_graph + "F1")
-assert bar(trace_start) == ["x=", "NORMAL", "FAST", "FASTER", "LEFT", "RIGHT"]
+assert bar(trace_start) == ["INIT", "NORMAL", "FAST", "FASTER", "LEFT", "RIGHT"]
 assert phase_points(trace_start)[-1] == (0.0, 1.0, 0.0)
-direct = phase_points(run(phase_graph + "F1 F1 1 EXE"))[-1]
+direct = phase_points(run(phase_graph + "F1 " + "RIGHT " * 30))[-1]
 assert abs(direct[0] - 1.0) < 1e-12
 assert abs(direct[1] - math.cos(1.0)) < 2e-4
 assert abs(direct[2] + math.sin(1.0)) < 2e-4
@@ -135,9 +135,9 @@ field_and_null = run(phase_graph + "F5 F2")
 null_only = run(phase_graph + "F5 F1 F2")
 assert all(bar(output) == analysis_bar for output in [field_only, neither, field_and_null, null_only])
 assert len({last_plot(output) for output in [field_only, neither, field_and_null, null_only]}) == 4
-assert "TEXT 12 8 N1\n" not in tail(neither)
-assert "TEXT 12 8 N1\n" in tail(field_and_null)
-assert "TEXT 37 8 N2\n" in tail(field_and_null)
+assert "TEXT 12 24 N1\n" not in tail(neither)
+assert "TEXT 12 24 N1\n" in tail(field_and_null)
+assert "TEXT 37 24 N2\n" in tail(field_and_null)
 restored = run(phase_graph + "F5 F1 F2 F1 F2")
 assert last_plot(restored) == last_plot(field_only)
 retained = run(phase_graph + "F5 F1 F2 EXIT F4 F1 F4 F2 F5")

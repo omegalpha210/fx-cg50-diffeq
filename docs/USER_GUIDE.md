@@ -1,7 +1,7 @@
 # DIFF EQ 사용 설명서 — v0.12.0-beta.4
 
 기본 RK4와 TRACE·G-Solve·10개 초기값·SYS 2D Phase 기능을 보존하면서
-Main/SAVE 확인, INIT/ADV, 순환 selector와 3단계 진행 표시를 정리했습니다.
+Main/subtype native 타일, 고정 X/Y-only TRACE 및 공통 top-left 경고를 제공합니다. 기존 INIT/BOX/draft와 3단계 workflow는 유지합니다.
 실제 fx-CG50의 새 경로 검증은 **HARDWARE TEST REQUIRED**입니다.
 
 ## 화면별 조작
@@ -31,7 +31,7 @@ Main/SAVE 확인, INIT/ADV, 순환 selector와 3단계 진행 표시를 정리�
 | ZOOM 하위 메뉴 | IN | OUT | AUTO | ORIG | BOX | — |
 | G-Solve 1쪽 | ROOT | MAX | MIN | Y-ICPT | ICPT | 다음 |
 | G-Solve 2쪽 | Y-CAL | X-CAL | — | — | — | 이전 |
-| Trace | x= | NORMAL | FAST | FASTER | LEFT | RIGHT |
+| Trace | INIT | NORMAL (주황/검정) | FAST | FASTER | LEFT | RIGHT |
 | X-CAL / Y-CAL 숫자 입력 | — | — | — | — | — | RUN |
 | Table | TOP | BTM | MID | — | STAT | GRAPH |
 
@@ -55,7 +55,7 @@ Equation·IC·Parameters·V-Window·차수/변수 개수의 일반 입력을 편
 G-Solve의 곡선 선택 등 특수 방향키 동작은 그대로입니다. 팝업·하위 메뉴의 전용 안내가
 우선하고, 일반 폼에서는 EDIT 안내 → 화면별 필요한 안내 → 빈 줄 순서입니다.
 Graph Settings의 ON/OFF·Style·Color 선택은 문자 입력 EDIT가 아니므로 전용 안내를 씁니다.
-TRACE x=와 X/Y-CAL의 계산 입력은 각 화면에 표시된 기존 조작을 따릅니다.
+TRACE F1은 cursor INIT입니다. 숫자 x 조회는 G-Solve Y-CAL을 사용합니다.
 
 Equation/IC NEXT는 모든 required field를 검증하고 첫 오류 필드에 머뭅니다.
 Equation/IC F1은 INIT이며 Equation F3 VAR는 지원 모드 EDIT에서만 표시합니다. F3 V-WIN은 Parameters와 Graph에만 있습니다.
@@ -76,10 +76,10 @@ EXIT 순서는 Graph → Parameters → IC → Equation → subtype/order → Ma
 진짜 새 실행은 defaults로 시작하며 저장 파일을 자동으로 읽지 않습니다.
 
 Main의 숫자 **1/2/3/4/5/6**은 각각 1st/2nd/N-th/SYS/RCL/SAVE입니다. F1~F5는 비어 있습니다.
-UP/DOWN으로 선택한 항목은 EXE 또는 **F6 OPEN**으로 엽니다. 숫자 shortcut도 같은 handler를 사용합니다.
+Main은 **2열×3행**: 1st/2nd, N-th/SYSTEM, RECALL/SAVE입니다. 위 네 타일은 184×58, 마지막 그림 없는 행은 184×25입니다. subtype은 같은 네 타일의 **2열×2행**이며 아래 공간은 비웁니다. LEFT/RIGHT는 같은 행, UP/DOWN은 같은 열에서 순환합니다. 선택 항목은 EXE 또는 **F6 OPEN**으로 엽니다. 숫자 shortcut도 같은 handler를 사용합니다.
 진짜 새 실행은 첫 항목, 내부 복귀는 기존 selector를 유지합니다. Main 하단은
 `MENU: return to MAIN MENU`이며 첫 MENU는 Red입니다.
-SYS/RCL 사이에는 작은 간격과 구분선이 있고 추가 선택 행은 없습니다.
+각 타일의 숫자는 우측 상단 배지에 한 번만 표시합니다. 청록/파랑 선택 테두리만 바뀌며 그래프 색은 유지합니다. 제목줄·도움말·기능키 위치는 기존 native 크기입니다.
 일반 선택 메뉴는 UP/DOWN, EXE 또는 F6 OPEN, 숫자 shortcut을 지원합니다.
 N-th/SYS 개수는 1~9 한 자리 정수를 입력한 뒤 첫 EXE로 확정하고 **두 번째 EXE 또는 F6 OPEN**으로 엽니다.
 EXIT 편집 확정은 화면에 머뭅니다. 잘못된 값은 오류를 표시합니다.
@@ -100,7 +100,7 @@ Equation의 F3 VAR/F2 FUNC는 현재 식 화면을 유지하고 **하단 bar만 
 길게 누른 EXIT 반복 이벤트는 이 계층을 연속으로 닫지 않습니다. EXE/방향키는 메뉴를 닫고 기존 편집 동작을 수행하며,
 F6는 submenu 페이지 전환만 수행합니다. VAR는 N-th의 2~9차 도함수 별칭과 SYS의 y1~y9에만 표시합니다.
 모든 1차 모드·선형 2차·N-th 1차에서는 F1이 비어 있으며 눌러도 팝업이 열리지 않습니다.
-V-Window 편집의 CLEAR/DEL 등은 표시된 기능을 따릅니다. TRACE x=는 물리 숫자·함수·DEL/AC로 입력하고 EXE/EXIT로 확정합니다.
+V-Window 편집의 CLEAR/DEL 등은 표시된 기능을 따릅니다. TRACE의 직접 x= 입력은 제거되었으며 F1은 cursor INIT입니다.
 
 X-CAL/Y-CAL은 **매번 빈 입력·깜빡이는 커서**로 시작합니다. 숫자, 소수점, 음수와 EXP의 과학적 표기를 입력한 뒤
 **EXE 또는 F6 RUN 한 번**으로 검증과 계산을 실행합니다. F1~F5는 비어 있습니다.
@@ -265,38 +265,20 @@ Field 팔레트는 기존 선명한 solution 팔레트와 별개입니다. 설�
 - ORIG는 V-WIN INIT와 같은 기본 창으로 돌아갑니다. 식·IC·h는 유지하며 TIME의 Solver AUTO만 새 창을 따릅니다. 수동 Solver 범위는 유지됩니다.
 - AUTO는 현재 X 범위를 유지하고, Solver와 X 창의 교집합에 있는 ON 상태의 곡선의 유한한 값으로 Y 범위를 맞춥니다. 현재 Y 창 밖의 값도 사용하며 상수 곡선에도 여백을 줍니다. 유효한 점이 없거나 계산이 중단되면 기존 창을 보존하고 하단에 안내합니다. SYS 2D PHASE AUTO는 보관된 원래 trajectory의 y1/y2 전체 유한 범위에 여백을 더해 두 축을 맞춥니다. TIME AUTO는 현재 X 창을 유지합니다.
 - OPTN 물리 키: SYS 2D에서는 Graph Settings와 계산 상세입니다. 다른 2-state 이상 모드는 기존 phase projection/축 선택을 유지합니다.
-- TRACE: **F2 NORMAL / F3 FAST / F4 FASTER**는 한 번의 유효 LEFT/RIGHT 이동을 각각
-  **1× / 2× / 3× 실제 Xdot**으로 정합니다. `Xdot=(Xmax-Xmin)/378`이며 표시 문자열의 반올림값을 쓰지 않습니다.
-  x=.6, Xdot=.025이면 다음 RIGHT는 .625/.65/.675입니다. NORMAL은 노랑, FAST는 Bright Green, FASTER는 Cyan 배경이며 모두 검정 글씨입니다. 선택 버튼의 검정 테두리로 현재 속도를 표시하고 배경색은 유지합니다.
-  모드 버튼 자체는 현재 x·곡선·blink·창·h·Step을 바꾸거나 solver를 실행하지 않습니다.
-  새 TRACE는 NORMAL이며 속도는 저장하지 않습니다. 숫자 x= 편집 중에는 속도 버튼이 숨겨집니다.
-  저장된 유효
-  선택한 solver의 보관점 사이를 선형 보간합니다. 캐시 내부의 x 이동과 blink는 적분하지 않습니다. **표시되는 y는 보간 근사값**이며
-  TIME에서 지정 x까지 수치적으로 적분한 결과가 필요하면 F1 x=를 사용합니다. SYS 2D PHASE의 x=는 보관된 trajectory를 보간하며 새 적분을 하지 않습니다. 보간은 invalid gap을 건너지 않습니다.
-  UP/DOWN은 ON 곡선을 바꾸고 가능한 경우 같은 x를 유지합니다. SYS 2D PHASE는 TIME 창의 Xdot으로 이동하고 필요하면 phase 창만 pan합니다. Phase zoom은 시간 진행 간격을 바꾸지 않으며 Phase에서 적분 범위를 확장하지 않습니다.
-  **F5 LEFT / F6 RIGHT**는 현재 설정된 Solver Xrange min/max로 이동합니다. 캐시의 유효 endpoint/보간을
-  우선하며 numerical-invalid endpoint에서는 가장 가까운 유효 점과 짧은 numerical-limit 안내를 사용합니다.
-  현재 곡선·속도는 유지되고, runtime 계산 범위가 넓어져도 점프 기준은 설정 범위입니다.
-  유효한 커서가 X 또는 Y 여백 10%를 넘으면 해당 축을 평행 이동하여 30% 내부에 둡니다.
-  두 축이 동시에 필요하면 한 번에 갱신하고 한 번만 다시 그립니다. X/Y span·scale·h·Step은 유지합니다.
-  NaN/Inf, 절댓값 1e100 초과, invalid gap의 가짜 값으로 창을 옮기지 않습니다.
-  **설정 Solver Xrange / runtime 계산 범위 / 표시 V-Window는 별개**입니다.
-  TRACE 이동은 자동/수동 Solver Xrange를 모두 보존합니다.
-  TIME runtime [-6,6]에서 x=5.9, x=6, F6 RIGHT는 추가 적분하지 않습니다. 실제 요청 target이 범위를
-  벗어날 때만 그 target까지 기존 preflight와 제한 아래 캐시를 재계산합니다. 여분 범위를 미리 계산하지 않습니다.
-  예를 들어 x=5.95, Xdot=.1, FASTER RIGHT는 같은 입력에서 6.25까지 확장·이동합니다.
-  TIME의 캐시 밖 연속 이동은 매번 계산이 필요할 수 있으며 한 작업만 진행하고 repeat를 병합합니다.
-  취소·work-limit 실패 시 임시 결과를 버려 이전 캐시·커서·창·완성 그래프를 보존합니다.
-  캐시는 표시 중인 모든 IC에 **총 258점**을 나누어 사용하므로, 긴 구간이나 많은 IC에서는
-  TRACE 보간·pan 후 곡선의 해상도가 낮아질 수 있습니다. 보관량과 내부 solver 단계 수는 별개입니다.
-  선택 곡선은 250 ms timer로 강조/해제됩니다. Black은 **Black↔Blue**이며 G-Solve도 같은 정책입니다.
-  LEFT/RIGHT hold는 세 모드 모두 400 ms 후 일정한 125 ms(8회/초) 간격입니다.
-  FAST/FASTER는 이동 간격만 바꾸며 보간 정확도나 CPU/키 반복 속도를 높이지 않습니다.
-  target x가 현재 x와 같아지는 극단적 범위나 non-finite target은 안전하게 거부합니다.
-  중복 반복을 합치고 EXIT/MENU를 우선합니다. 확장 중 취소하면 이전 캐시·그래프·창을 유지합니다.
-  정상 pan 후 EXIT는 현재 이동한 창을 유지하며 Graph bar로 돌아갑니다. 실제 LCD 해상도·반복키·취소 반응은
-  **HARDWARE TEST REQUIRED**입니다.
+- TRACE는 진입 당시 **가로 창과 Xscale/Xdot을 고정**합니다. 일반 Graph의 X/Y pan과 구간 확장은 그대로 유지합니다.
+  TIME에서는 고정 X 창과 선택한 해의 연결된 유효 수치 구간의 교집합만 탐색합니다. 수동 Solver 범위가 창보다 넓거나 좁아도 경계에서 멈추며, TRACE 때문에 캐시를 확장하지 않습니다.
+  **F1 INIT / F2 NORMAL / F3 FAST / F4 FASTER / F5 LEFT / F6 RIGHT**입니다.
+  INIT는 노랑/검정, NORMAL은 주황/검정, FAST는 Bright Green/검정, FASTER는 Cyan/검정입니다.
+  NORMAL/FAST/FASTER는 **1×/2×/3× 진입 시 실제 Xdot** 이동 간격이며 키 반복 속도 변경이 아닙니다. 선택 속도 테두리는 유지합니다.
+  F1 INIT는 이번 TRACE의 최초 cursor와 curve로 복귀하고 현재 속도·solver·식·IC·Event·Output·Graph entry snapshot을 보존합니다. 직접 숫자 x= 입력은 제거했습니다. 특정 x의 수치 평가에는 G-Solve Y-CAL을 사용합니다.
+  F5/F6는 설정된 Solver Xrange min/max를 목표로 하되, 화면 밖 또는 Event/invalid 경계 너머이면 현재 연결된 유효 구간의 가장 가까운 경계에 멈춥니다. FASTER도 overshoot하지 않습니다.
+  UP/DOWN은 curve를 바꾸며 가능한 경우 x를 유지합니다. 유효한 y가 상하 여백을 넘으면 **Y만 평행 이동**하여 커서를 다시 표시합니다. 기존 10% trigger / 30% landing margin을 사용하며 Y span/Yscale, X bounds/Xscale/Xdot, h/Step과 Solver 설정을 유지합니다.
+  NaN/Inf·magnitude-invalid 값, 부동소수점 해상도 때문에 span이 유지되지 않는 큰 이동은 거부합니다.
+  보관점 사이의 유효한 linked 구간을 선형 보간하므로 표시 y는 화면용 근사입니다. gap이나 Event STOP을 가로질러 가짜 값을 만들지 않습니다.
+  SYS2 PHASE에서는 가로 y1 범위를 고정하고 세로 y2만 따라갑니다. 이동 순서는 적분 x이며 TIME 창의 Xdot을 사용합니다. 다음 보관 상태가 가로 범위를 벗어나면 멈추고 이후 재진입 구간으로 건너뛰지 않습니다. 아주 좁은 창에 보관 상태가 없으면 해당 창에서 TRACE unavailable을 표시하고 그래프를 유지합니다.
+  TRACE 종료 후 일반 Graph/ZOOM/G-Solve-menu 방향키 pan은 기존 안전한 재계산과 AUTO 범위 갱신을 수행합니다. HOLD 중 EXIT/MENU 우선 처리와 2px 선택 곡선 blink, 9px point cross는 유지합니다.
 
+Graph numerical/domain 경고는 공통 **좌측 상단 (7,4)**에 normal-weight 빨간 글씨로 표시합니다. 뒤에는 실제 문자열 폭·높이와 작은 여백만큼 불투명한 흰 배경을 그립니다. 그래프 높이는 줄이지 않으며, 문구가 바뀌거나 없어지면 기존 redraw가 복구합니다. Event STOP은 정상적인 중립색 `END: Event`입니다. 우측 TIME/PHASE/EVT와 두 번째 줄 Phase legend/곡선 선택 안내를 분리합니다. 경고는 비치명 상태이며 유효 구간 TRACE/G-Solve는 계속 사용할 수 있습니다.
 
 G-SLV 메뉴를 열거나 페이지를 바꿨다가 EXIT만 하면 그래프와 계산 횟수가 유지됩니다. G-SLV의 수치 범위는 현재 V-Window X 범위와 Solver 범위의 교집합입니다. Ymin/Ymax는 그리기와 pointer clipping에만 사용됩니다. ROOT, MAX/MIN, Y-ICPT(x=0), Y-CAL, X-CAL과 두 보이는 곡선의 교점 ICPT는 화면 밖 y도 계산하고 좌표를 하단에 표시합니다. G-Solve menu에서 방향키는 pan이고, operation을 고른 뒤 현재 candidate가 깜빡이며 UP/DOWN은 blink 대상을 옮깁니다. EXE는 곡선을 확정하고 LEFT/RIGHT는 여러 결과를 이동합니다. 보이는 곡선이 정확히 둘이면 ICPT가 자동 선택하며 더 많으면 Curve A와 B를 각각 고릅니다. 결과 없음과 오류는 dialog 없이 같은 graph 하단에 표시됩니다. 접하는 근, h 사이의 매우 빠른 진동, 특이점과 불완전 trajectory는 놓칠 수 있습니다.
 
@@ -353,10 +335,10 @@ guard는 유지하며 실패한 점을 그리거나 빈 구간 양쪽을 선으�
 Graph의 `END: Magnitude > 1e100` 등은 계산된 유효한 구간을 폐기하지 않습니다.
 명시적 사용자 중단은 별도의 `Partial: Cancelled`입니다.
 
-TRACE는 남아 있는 유효 점에서 계속 이동하며 경계에서는 `TRACE: Numerical limit`을 표시합니다.
-신뢰할 수 있는 다음 구간이 제공되면 가장 가까운 다음 유효 점으로 이동합니다. X-CAL/ROOT/MAX/MIN/ICPT는
+TRACE는 고정한 화면 안의 연결된 유효 점에서 이동하고 경계에서 멈춥니다.
+다른 유효 구간이 있어도 현재 component의 gap을 넘어 이동하지 않습니다. X-CAL/ROOT/MAX/MIN/ICPT는
 계산된 유효 구간에서만 찾고 x순으로 결과를 표시하며, 빈 구간을 가로질러 근·극값을 만들지 않습니다.
-Y-CAL과 TRACE x=는 요청한 x까지 해당 IC에서 적분할 수 있을 때만 값을 반환합니다.
+Y-CAL은 요청한 x까지 해당 IC에서 적분할 수 있을 때만 값을 반환합니다. TRACE는 보관된 유효 구간의 화면용 보간을 사용합니다.
 
 **두 solver 모두 각 IC에서 양방향으로 성공한 prefix를 보존합니다.** 실패 지점 너머의 같은 해를
 새 초기조건 없이 재시작하지 않습니다. 반대 방향과 별도 IC는 계속 사용할 수 있지만 별도 IC는 별도 곡선입니다.
@@ -410,8 +392,8 @@ RK45 Rejected는 오차 제어의 정상적인 일부일 수 있고 Attempts=Acc
 취소·실패한 trial은 Rejected에 포함될 수 있으며 완전한 trial보다 RHS 호출 횟수가 적을 수 있습니다.
 h min/max도 scratch를 포함한 수락 step의 절댓값입니다. Phase FIELD/NULL/EQPT 작업은 제외합니다.
 
-새 Graph 계산과 성공한 TRACE 준비/확장은 보고서를 갱신합니다. Graph 실패/취소도 실제 작업량과
-상태를 남깁니다. 취소한 TRACE 확장은 이전 graph·marker·보고서를 함께 보존합니다.
+새 Graph 계산과 성공한 TRACE 준비는 보고서를 갱신합니다. Graph 실패/취소도 실제 작업량과
+상태를 남깁니다. 취소한 TRACE 준비는 이전 graph·marker·보고서를 함께 보존합니다.
 Table/G-Solve/Phase 분석과 INFO 방문은 보고서를 덮어쓰지 않습니다.
 새 문서·load·recall 후에는 `No solver run yet`이며 Event 설정만 SAVE v10에 저장됩니다.
 [정확한 수치 정책과 한계](EVENTS.md), [하드웨어 재시험](HARDWARE_RETEST.md)을 참고하십시오.
@@ -432,7 +414,7 @@ RK45 Max steps는 IC/방향 또는 수치 query당 수락+거절 시도 합계(�
 STAT 전체 export도 같은 budget을 공유합니다. EXIT는 거절 재시도·각 stage에서도 검사합니다.
 
 RK45 Step은 숨기며 Graph/Table 출력은 TIME Xdot과 범위/1024 중 큰 간격의 IC 기준 격자입니다.
-수치 Table/G-Solve/TIME x=는 요청 x에 직접 도착하도록 적분합니다. TRACE 방향키/Phase x=는
+수치 Table/G-Solve는 요청 x에 직접 도착하도록 적분합니다. TIME/PHASE TRACE 이동은
 기존 258점 캐시의 화면용 선형 보간이며 tolerance 정확도를 보장하지 않습니다.
 RK45는 explicit adaptive 방식이며 **stiff ODE 전용 solver가 아닙니다**.
 강성·특이점·엄격한 tolerance에서는 Step underflow/Work limit에 도달할 수 있습니다.
@@ -510,7 +492,7 @@ Fugue 저장/취소 반응은 HARDWARE RETEST REQUIRED**입니다. 빈값을 0�
 NEXT/PREV/EXIT에서는 RAM만 유지하며 자동으로 session 파일을 쓰지 않습니다.
 
 Main **5 RCL** 또는 RCL 선택 후 EXE/F6 OPEN에서 **Last calculation (RAM)** 또는 **Load saved session**을 선택합니다.
-Main의 짧은 설명 `Recall / load session`은 이 두 기능을 함께 나타냅니다.
+Main의 RECALL 텍스트 타일은 이 두 기능의 선택 화면을 엽니다.
 Last calculation은 기존 의미를 유지해 마지막 GRAPH 계산의 식·IC·Output을 복원하고
 현재 app-wide Solver/V-Window와 Field Density/Style/Color는 유지합니다. Load saved session은 확인 후 저장된
 current/recall과 설정을 모두 복원합니다. 진짜 새 실행은 defaults이며, 기존 파일은 삭제하지

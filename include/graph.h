@@ -16,6 +16,7 @@ typedef enum {
 bool graph_clip(const ViewWindow *v,double *x0,double *y0,double *x1,double *y1);
 bool graph_point(const ViewWindow *v,double x,double y,int *px,int *py);
 bool graph_follow_window(ViewWindow *v,double x,double y);
+bool graph_follow_y(ViewWindow *v,double y);
 /* Local9px cross: black arms around a white3x3 center, clipped to plot. */
 typedef struct {uint16_t pixels[81];int x,y;bool active;} GraphPointPatch;
 void graph_point_cross(int x,int y,GraphPointPatch *patch);
@@ -43,6 +44,6 @@ GraphResult graph_render(Document *d,CompiledModel *m,bool first);
 OdeStatus graph_auto_window(Document *d,CompiledModel *m);
 OdeStatus graph_highlight_curve(Document *d,CompiledModel *m,int family,int variable);
 UiGraphAction ui_graph(App *a,bool first);
-void ui_trace(App *a);
+void ui_trace(App *a,GraphResult result);
 void ui_table(App *a);
 #endif

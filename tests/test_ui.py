@@ -56,7 +56,7 @@ run('4 9 F6 '+'DOWN '*8+'0 EXE F6 '+'DOWN '*9,["y9'",'Initial Conditions','y9'])
 for invalid in ['0','1 0','NEG 2','1 DOT 5','LEFT ACON']:
     run('3 '+invalid+' F6',['Enter one integer from 1 to 9.'],['DIFF EQ / Higher order'])
 run('3 3 F6 5 EXE EXIT EXE F6',['TEXT 144 57 5\n'],['Change Equation Size'])
-run('3 3 F6 5 EXE EXIT 2 F6 F5 EXIT',['Change Equation Size','Differential Equation'])
+run('3 3 F6 5 EXE EXIT 2 F6 F5 EXIT',['Change Equation Size','DIFF EQ'])
 kept=run('3 3 F6 5 EXE EXIT 2 F6 F5 3 F6')
 assert 'TEXT 144 57 5\n' in kept[kept.rfind('TEXT 14 9 DIFF EQ /'):]
 run('3 3 F6 OPTN F6',['Convert to system','1st order system','y3'])
@@ -105,7 +105,7 @@ run(graph+'F5 F6 F1 EXE 1 F6',['Y-CAL 1/1','X=1','Y=0.540302'])
 run(graph+'F5 F6 F2 EXE 0 F6 RIGHT',['X-CAL 2/4'])
 run(graph+'F5 RIGHT F2 EXE',['MAX 1/2'])
 run(graph+'F1 DOWN RIGHT',["IC1 x=0 y'=0","IC1 x=0.03333333 y'=-0.03327778"])
-run('1 4 NEG A:SUB F6 F6 F6 F1 F1 1 EXE',['IC1 x=1 y=0.3678798'])
+run('1 4 NEG A:SUB F6 F6 F6 F1 '+('RIGHT '*30),['IC1 x=1 y=0.3678798'])
 hidden=run('2 F6 F6 F4 DOWN RIGHT EXIT F6 F1 DOWN',['IC1 x=0 y=1'])
 assert all(" y'=" not in line for line in hidden.splitlines() if line.startswith('TEXT 14 188 IC1 x='))
 run(graph+'F3 DOWN DOWN DOWN DOWN DOWN 2 0 EXIT UP 5 EXIT EXIT F5 F1 EXE',

@@ -151,9 +151,9 @@ typedef enum {SOFTKEY_NORMAL,SOFTKEY_INIT,SOFTKEY_ADV,SOFTKEY_VWIN,
     SOFTKEY_SET,SOFTKEY_NEXT,SOFTKEY_PREV,SOFTKEY_EXECUTE} SoftkeyStyle;
 static SoftkeyStyle softkey_style(const char *label)
 {
-    if(!strcmp(label,"INIT") || !strcmp(label,"NORMAL"))return SOFTKEY_INIT;
+    if(!strcmp(label,"INIT"))return SOFTKEY_INIT;
     if(!strcmp(label,"ADV"))return SOFTKEY_ADV;
-    if(!strcmp(label,"V-WIN"))return SOFTKEY_VWIN;
+    if(!strcmp(label,"V-WIN") || !strcmp(label,"NORMAL"))return SOFTKEY_VWIN;
     if(!strcmp(label,"SET") || !strcmp(label,"FAST"))return SOFTKEY_SET;
     if(!strcmp(label,"NEXT") || !strcmp(label,"FASTER"))return SOFTKEY_NEXT;
     if(!strcmp(label,"PREV"))return SOFTKEY_PREV;

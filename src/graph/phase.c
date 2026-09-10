@@ -73,13 +73,13 @@ void graph_phase_labels(const Document *d,const CompiledModel *m)
 {
     if(!active(d))return;
     if(d->phase_nullclines) {
-        ui_rect(4,2,50,13,C_WHITE);
-        ui_text(6,4,graph_palette_color(1),"N1");ui_text(31,4,graph_palette_color(0),"N2");
+        ui_rect(4,18,50,13,C_WHITE);
+        ui_text(6,20,graph_palette_color(1),"N1");ui_text(31,20,graph_palette_color(0),"N2");
     }
     if(!phase_autonomous(m) && (d->phase_field || d->phase_nullclines)) {
         char text[48];int width;snprintf(text,sizeof(text),"Field at x=%.6g",d->ic[0].x);
-        dsize(text,NULL,&width,NULL);ui_rect(60,2,width+4,13,C_WHITE);
-        ui_text(62,4,UI_MUTED,"%s",text);
+        dsize(text,NULL,&width,NULL);ui_rect(60,18,width+4,13,C_WHITE);
+        ui_text(62,20,UI_MUTED,"%s",text);
     }
 }
 void graph_phase_markers(const Document *d,int selected)

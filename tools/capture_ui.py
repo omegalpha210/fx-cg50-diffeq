@@ -33,7 +33,7 @@ cases += [
     ('table-limit','Table / last valid row', '1 1 LEFT ACON F2 F2 XOT RIGHTP EXE F6 F6 F6 F4 F2'),
     ('table-scroll','Table / frozen x', '4 4 F6 F6 F6 F6 F4 RIGHT RIGHT'),
     ('preflight','Preflight / no calculation', '2 F6 F6 DOWN DOWN DOWN 0 DOT 0 0 0 1 EXE F6'),
-    ('trace-follow','TRACE / followed viewport', '2 EXE EXE EXE F1 '+'RIGHT '*160),
+    ('trace-follow','TRACE / fixed horizontal viewport', '2 EXE EXE EXE F1 '+'RIGHT '*160),
     ('zoom-pan','ZOOM / arrow pan keeps menu', '2 EXE EXE EXE F2 RIGHT')]
 ux_start=len(cases)
 field='1 4 F6 F6 F5 '

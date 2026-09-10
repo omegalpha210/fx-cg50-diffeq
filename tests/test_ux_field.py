@@ -41,12 +41,12 @@ for entry in ['3 9 F6','4 9 F6']:
 
 # Fixed Xdot=.025, independently selected x=.6. Mode changes are only button state.
 graph='2 F6 F6 F3 DOWN DOWN DOWN 0 DOT 0 2 5 EXE EXIT EXE '
-trace=graph+'F1 F1 0 DOT 6 EXE '
+trace=graph+'F1 '+'RIGHT '*24
 base=run(trace)
 for key,multiple in [('F2',1),('F3',2),('F4',3)]:
     changed=run(trace+key)
     assert point(changed)==.6 and plot(changed)==plot(base) and solves(changed)==solves(base)
-    assert bar(changed)==['x=','NORMAL','FAST','FASTER','LEFT','RIGHT']
+    assert bar(changed)==['INIT','NORMAL','FAST','FASTER','LEFT','RIGHT']
     for direction,sign in [('LEFT',-1),('RIGHT',1)]:
         out=run(trace+key+' '+direction)
         assert abs(point(out)-(.6+sign*multiple*.025))<1e-7 and solves(out)==solves(base)
@@ -59,9 +59,9 @@ for speed in ['F3','F4']:
     assert point(blink)==point(before) and plot(blink)==plot(before) and solves(blink)==solves(before)
 limited='2 F6 F6 DOWN DOWN DOWN 0 DOT 0 0 1 EXE F6 F1 F4 '
 out=run(limited+'RIGHT '*250)
-assert 'TRACE: too many steps' in out and 'Partial: Cancelled' not in out
+assert point(out)==6 and solves(out)==solves(run(limited)) and 'Partial: Cancelled' not in out
 out=run('1 4 1 0 0 MUL A:SUB EXE F6 F6 F6 F1 F4 '+'RIGHT '*100)
-assert 'TRACE: Numerical limit' in out and 'nan' not in tail(out).lower()
+assert 'TEXT 13 8 END:' in out and 'IC1 x=' in tail(out)
 
 params='1 4 F6 F6 '
 sf=params+'DOWN DOWN DOWN DOWN DOWN '

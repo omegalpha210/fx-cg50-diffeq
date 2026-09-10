@@ -85,6 +85,15 @@ bool graph_follow_window(ViewWindow *v,double x,double y)
     if(changed)*v=next;
     return changed;
 }
+bool graph_follow_y(ViewWindow *v,double y)
+{
+    if(!isfinite(y) || fabs(y)>1e100)return false;
+    double low,high;
+    if(!follow_axis(v->ymin,v->ymax,y,&low,&high))return false;
+    bool changed=low!=v->ymin || high!=v->ymax;
+    if(changed){v->ymin=low;v->ymax=high;}
+    return changed;
+}
 
 int graph_field_color(unsigned color)
 {

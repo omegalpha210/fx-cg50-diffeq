@@ -13,6 +13,8 @@ static unsigned text_glyphs;
 unsigned host_text_glyphs(void){return text_glyphs;}
 unsigned host_clear_count(void){return clears;}
 static char title[128];
+const font_t *dfont_default(void)
+{static const font_t font={9,11};return &font;}
 void host_metrics_print(void);
 void dsetvram(uint16_t *main,uint16_t *secondary) {(void)main;(void)secondary;}
 void dpixel(int x,int y,int color)

@@ -1,3 +1,14 @@
+# Current beta.5 interaction ownership
+
+Main/subtype use src/ui/menu.c with const authored geometry and partial two-tile
+focus repaint. TRACE owns a frozen 36-byte horizontal snapshot and a local origin
+cursor/curve; its navigator no longer calls prepare_range to extend on movement.
+Connected visible cached runs bound TIME/PHASE traversal and only Y follow may
+translate a view. General graph pan/AUTO still use their original redraw/sync path.
+All warning overlays share graph_status. See [TILES_TRACE_AUDIT](TILES_TRACE_AUDIT.md)
+for the exact current contract. Earlier TRACE X-extension descriptions below are
+historical and are superseded; numerical/storage/cache layouts otherwise remain.
+
 # Architecture
 
 The application is native C11. The numerical engine, expression compiler, equation model, graph geometry and UI are independent modules. The target links against installed gint headers and `Gint::Gint`; host tests link the same mathematical core against the host C library.

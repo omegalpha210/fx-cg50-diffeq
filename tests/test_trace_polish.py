@@ -36,8 +36,8 @@ for speed,multiple in [('F2',1),('F3',2),('F4',3)]:
     for jump,x in [('F5',-6),('F6',6)]:
         out,rgb=run(trace+speed+' '+jump,image=True)
         assert point(out)==(2,x,x+1) and solves(out)==solves(base)
-        assert bar(out)==['x=','NORMAL','FAST','FASTER','LEFT','RIGHT']
-        for slot,color in [(1,0xffe0),(2,0x37e6),(3,0x07ff)]:
+        assert bar(out)==['INIT','NORMAL','FAST','FASTER','LEFT','RIGHT']
+        for slot,color in [(1,0xfc40),(2,0x37e6),(3,0x07ff)]:
             assert pixel(rgb,6+64*slot+3,204)==rgb565(color)
             # Text pixels in each label are black; the selection border is black.
             colors=[pixel(rgb,xx,yy) for xx in range(6+64*slot+4,6+64*slot+60) for yy in range(206,215)]
@@ -46,14 +46,14 @@ for speed,multiple in [('F2',1),('F3',2),('F4',3)]:
             assert border==rgb565(0 if slot==multiple else color)
         direction='LEFT' if x<0 else 'RIGHT'
         moved=run(trace+speed+' '+jump+' '+direction)
-        assert abs(point(moved)[1]-(x+(1 if x>0 else -1)*multiple/30))<1e-6
-        assert solves(moved)>solves(out)
+        assert point(moved)==point(out)  # Frozen visible numerical boundary.
+        assert solves(moved)==solves(out)
         returned=run(trace+speed+' '+jump+' '+direction+' '+jump)
         assert point(returned)==(2,x,x+1) and solves(returned)==solves(moved)
         assert bar(run(trace+speed+' '+jump+' EXIT'))==['TRACE','ZOOM','V-WIN','TABLE','G-SLV','INIT']
-# A FAST target crosses in the same input, with no forced endpoint pause.
-cross=trace+'F1 5 DOT 9 5 EXE F4 RIGHT '
-assert abs(point(run(cross))[1]-6.05)<1e-7
+# FASTER cannot overshoot an endpoint or trigger horizontal extension.
+cross=trace+'F6 F4 RIGHT '
+assert point(run(cross))[1]==6
 # Panned Y bounds keep their span; configured endpoints are still -6 and 6.
 params=run(trace+'F6 EXIT EXIT')
 assert 'TEXT 144 35 -6\n' in tail(params) and 'TEXT 144 57 6\n' in tail(params)
@@ -84,4 +84,4 @@ long_input='1 4 F6 DOWN '+('0 '*192)
 assert 'Input too long; Max: 191 characters' in tail(run(long_input))
 assert 'Input too long' in tail(run(long_input+'F6')) and 'Max: 191 characters' in tail(run(long_input+'F6'))
 assert ': return to MAIN MENU' in tail(run(''))
-print('TRACE colors/black text/selection, exact configured jumps, same-input crossing, Y pan, settings arrows, ten families/frozen columns and bounded length feedback passed.')
+print('TRACE colors/black text/selection, exact configured jumps, fixed-boundary clamp, Y pan, settings arrows, ten families/frozen columns and bounded length feedback passed.')

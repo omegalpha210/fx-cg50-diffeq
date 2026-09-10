@@ -61,7 +61,7 @@ out,rgb=run(graph,image=True);assert bar(out)==BASE
 _,prev=run('2 F6',image=True)
 assert pixel(rgb,327,203)==rgb565(0xffe0) and pixel(prev,7,203)==rgb565(0xffe0)
 assert 'TEXT 14 9 Parameter\n' in tail(run(graph+'EXIT'))
-assert bar(run(graph+'F1'))==['x=','NORMAL','FAST','FASTER','LEFT','RIGHT']
+assert bar(run(graph+'F1'))==['INIT','NORMAL','FAST','FASTER','LEFT','RIGHT']
 assert bar(run(graph+'F2'))==['IN','OUT','AUTO','ORIG','BOX','']
 assert bar(run(graph+'F5'))==['ROOT','MAX','MIN','Y-ICPT','ICPT','>']
 for menu in ['F1','F2','F5']:

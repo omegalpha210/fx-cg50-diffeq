@@ -38,9 +38,14 @@ bool trace_cache_time_window(const Document *d,ViewWindow *window);
 const OdeSettings *trace_extent(void);
 bool trace_select(const Document *d,int family,int variable);
 bool trace_step(double x,int direction,double dx,TracePoint *point);
-/* Follow a known valid point without integrating or changing solver settings. */
+/* A TRACE session freezes its horizontal view and integration-time stride.
+   samples.extent retains the entry trajectory range; navigation cannot extend it.
+   In PHASE xmin/xmax refer to the selected state axis, never integration time. */
+typedef struct {double xmin,xmax,xscale,xdot;bool phase;unsigned char axis;} TraceViewport;
+const TraceViewport *trace_viewport(void);
+/* Follow a valid point vertically only, preserving scales and solver settings. */
 void trace_follow(Document *d,CompiledModel *m,const TracePoint *point);
-/* One transaction: extend only for an actual out-of-cache target, resolve, pan. */
+/* Clamp to the visible connected valid trajectory, then perform Y follow only. */
 OdeStatus trace_navigate(Document *d,CompiledModel *m,double target,bool jump,TracePoint *point);
 bool trace_prepare(Document *d,CompiledModel *m,int family,int variable);
 bool trace_point_near(double x,TracePoint *point);

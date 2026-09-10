@@ -38,36 +38,33 @@ int main(void)
         assert(host_rhs_calls()==calls && !memcmp(trace_extent(),&extent,sizeof(extent)));
         assert(!memcmp(&d.solver,&solver,sizeof(solver)));
     }
-    ViewWindow before=d.view;original=hash();unchanged=point;
-    host_cancel_after(10);assert(trace_navigate(&d,&m,6.25,false,&point)==ODE_CANCELLED);
-    assert(!memcmp(&d.view,&before,sizeof(before)) && !memcmp(&point,&unchanged,sizeof(point)));
-    assert(!memcmp(trace_extent(),&extent,sizeof(extent)) && hash()==original);
-    UiBlink blink={0};assert(ui_trace_key(&blink).key==KEY_EXIT);
-    assert(trace_navigate(&d,&m,6.25,false,&point)==ODE_OK && point.x==6.25);
-    assert(trace_extent()->xmax==6.25 && !memcmp(&d.solver,&solver,sizeof(solver)));
-    calls=host_rhs_calls();assert(trace_navigate(&d,&m,6,true,&point)==ODE_OK && point.x==6);
-    assert(host_rhs_calls()==calls && trace_extent()->xmax==6.25);
-    assert(trace_navigate(&d,&m,-6.1,false,&point)==ODE_OK && point.x==-6.1);
-    assert(trace_extent()->xmin==-6.1 && !memcmp(&d.solver,&solver,sizeof(solver)));
+    ViewWindow before=d.view;original=hash();
+    for(double target=-13;target<=13;target+=26) {
+        assert(trace_navigate(&d,&m,target,false,&point)==ODE_OK && point.x==(target<0 ? -6:6));
+        assert(host_rhs_calls()==calls && !memcmp(trace_extent(),&extent,sizeof(extent)));
+        assert(!memcmp(&d.view,&before,sizeof(before)) && !memcmp(&d.solver,&solver,sizeof(solver)));
+    }
     unsigned committed=hash();trace_overlay_show(&d,&point,0,true);trace_overlay_restore();assert(hash()==committed);
-    assert(trace_select(&d,0,1) && trace_point_near(point.x,&point) && point.x==-6.1);
+    assert(trace_select(&d,0,1) && trace_point_near(point.x,&point) && point.x==6);
     trace_follow(&d,&m,&point);assert(fabs(point.y[1]+sin(point.x))<.003);
-    /* Both auto and explicit settings survive extension. Preflight fails before RHS. */
-    d.solver_custom=1;assert(trace_navigate(&d,&m,13,false,&point)==ODE_OK);
-    assert(!memcmp(&solver,&d.solver,sizeof(solver)));
-    before=d.view;extent=*trace_extent();unchanged=point;committed=hash();calls=host_rhs_calls();
-    assert(trace_navigate(&d,&m,1e8,false,&point)==ODE_STEP_LIMIT);
-    assert(host_rhs_calls()==calls && hash()==committed && !memcmp(trace_extent(),&extent,sizeof(extent)));
+    d.solver_custom=1;assert(trace_navigate(&d,&m,1e8,false,&point)==ODE_OK && point.x==6);
+    assert(host_rhs_calls()==calls && !memcmp(&solver,&d.solver,sizeof(solver)));
+    /* Actual preparation remains transactional/cancellable; navigation no longer
+       invokes this path just because the requested x is outside the viewport. */
+    committed=hash();before=d.view;extent=*trace_extent();unchanged=point;
+    host_cancel_after(10);assert(!trace_prepare(&d,&m,0,0));
+    assert(hash()==committed && !memcmp(trace_extent(),&extent,sizeof(extent)));
     assert(!memcmp(&before,&d.view,sizeof(before)) && !memcmp(&unchanged,&point,sizeof(point)));
+    UiBlink blink={0};assert(ui_trace_key(&blink).key==KEY_EXIT);
     d.solver.h=1e-300;assert(!trace_prepare(&d,&m,0,0));assert(hash()==committed);
     /* Ten families share the same 258-point total. Every family is selectable. */
     model_defaults(&d,EQ_GENERAL,1);strcpy(d.text[0],"1");d.solver.sf=0;
     InitialValues values;assert(initial_values_parse("{0,1,2,3,4,5,6,7,8,9}",&values)==IC_LIST_OK);
     initial_values_apply(&d,&values);prepare(9,0);solver=d.solver;
     unsigned renders=host_clear_count();calls=host_rhs_calls();
-    assert(trace_navigate(&d,&m,6,true,&point)==ODE_OK); /* simultaneous X/Y */
+    assert(trace_navigate(&d,&m,6,true,&point)==ODE_OK); /* Y only */
     assert(host_clear_count()==renders+1 && host_rhs_calls()==calls);
-    assert(d.view.xmin>-6.3 && d.view.ymin>-3.1);
+    assert(d.view.xmin==-6.3 && d.view.ymin>-3.1);
     for(int f=0;f<10;f++) {
         assert(trace_select(&d,f,0));assert(trace_navigate(&d,&m,6,true,&point)==ODE_OK);
         assert(point.x==6 && fabs(point.y[0]-(f+6))<1e-12);
@@ -89,6 +86,6 @@ int main(void)
     before=d.view;point.y[0]=NAN;trace_follow(&d,&m,&point);
     assert(!memcmp(&before,&d.view,sizeof(before)));
     point.y[0]=1e101;trace_follow(&d,&m,&point);assert(!memcmp(&before,&d.view,sizeof(before)));
-    puts("TRACE: exact endpoints/no prefetch, requested crossing, transactional cancel/preflight, configured range preservation, ten families, Y follow and invalid endpoints passed.");
+    puts("TRACE: exact endpoints/no prefetch, fixed bounds, transactional preparation cancel/preflight, configured range preservation, ten families, Y follow and invalid endpoints passed.");
     ui_trace_input(false);
 }

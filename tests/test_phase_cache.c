@@ -109,7 +109,10 @@ int main(void)
     /* Following in PHASE preflights expensive layers before committing either
        the window or cursor, and retains the EXIT for the TRACE event loop. */
     d.phase_field=1;d.phase_nullclines=1;ui_trace_input(true);
-    assert(trace_point_near(-1,&p));TracePoint before_point=p;
+    d.phase_view.xmin=-1.3;d.phase_view.xmax=1.3;
+    d.phase_view.ymin=-.1;d.phase_view.ymax=.1;
+    assert(trace_prepare(&d,&m,0,1));
+    assert(trace_point_near(-1.5,&p));TracePoint before_point=p;
     before_phase=d.phase_view;before_time=d.view;solver=d.solver;
     OdeSettings extent=*trace_extent();before=hash();
     host_cancel_after(2);

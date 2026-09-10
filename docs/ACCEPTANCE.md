@@ -1,3 +1,37 @@
+# Native tiles / fixed TRACE acceptance — v0.12.0-beta.5
+
+Baseline development 83de313 / public 4deabae. [Full audit](TILES_TRACE_AUDIT.md).
+
+- Final development **47/47 host/UBSan groups PASS**, 31.03s; all previous 44
+  remain enabled. Additional PHASE warning/legend collision assertions also pass.
+- Clean **28-unit SH compile/link**, zero warnings/errors, **13/13 package checks**.
+  G3A **243640 B**; text214208/data752/BSS72352, max application frame2664 B.
+- Main 2x3 (four184x58, two184x25) and subtype2x2 share exact geometry; native
+  header/help/OPEN bar, badges once, 2D wrap and partial two-tile repaint verified.
+- Eight original icons:832 B const geometry +8 B palette; eight native PNGs3378 B.
+  Generator consistency and exact firmware renderer PNG export pass.
+- TRACE entry X bounds/scale/Xdot and connected valid cache remain fixed; no
+  additional solves during endpoint/long-repeat movement. Y-only follow retains
+  span/scale/settings. INIT restores cursor/curve while preserving speed; NORMAL
+  orange/black. Phase state axes stay distinct from integration x and stop before
+  offscreen/gap reentry. Ordinary Graph pan still expands/redraws under AUTO.
+- No changes to numerical/parser/solver/Event/Phase-analysis/storage sources.
+  Preparation rollback/cancellation, RK4/RK45 and Event report tests remain.
+- Common top-left warning: opaque measured width +normal font11px data height,
+  2px padding, neutral Event STOP, readable right status and second-row legends.
+  Cached redraw clears stale messages; valid-side TRACE/G-Solve tests pass.
+- [18 production views](ui-review/tiles-overview.png), six native/3x menu states,
+  eight icon PNGs, refreshed previous review galleries and public README captures.
+
+**HARDWARE TEST REQUIRED / HARDWARE RETEST REQUIRED:** all16 current priority
+checks remain pending. Host frames are not device photos or an SH emulator.
+Exact public candidate/tag validation and downloaded asset byte/SHA256 verification
+are recorded in Release VALIDATION.md. Individual frames are not stack high-water.
+
+Earlier milestone records below are historical.
+
+---
+
 # Graph interaction acceptance — v0.12.0-beta.4
 
 Baseline development15fb84f/publicf95cf5f. [Full audit](INTERACTION_AUDIT.md).

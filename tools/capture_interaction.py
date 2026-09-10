@@ -20,7 +20,7 @@ domain='1 4 S:SQUARE 1 SUB XOT RIGHTP F6 F6 F6 '
 pole='1 4 1 DIV LEFTP XOT SUB 1 RIGHTP F6 F6 DOWN DOWN DOWN 0 DOT 2 5 EXE F6 '
 sinh='1 4 LEFT ACON F2 F2 A:SUB RIGHTP F6 F6 F6 '
 cases=[
- ('main','Main /3px pale-blue divider',''),
+ ('main','Main / compact graph tiles',''),
  ('equation-select','Equation SELECT / INIT','4 2 F6'),
  ('equation-edit','Equation EDIT / INIT FUNC VAR','4 2 F6 LEFT'),
  ('ic','Initial Conditions / INIT','1 4 F6 DOWN'),

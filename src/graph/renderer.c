@@ -173,7 +173,8 @@ void graph_labels(const Document *d,const CompiledModel *m)
 void graph_status(GraphResult result)
 {
     if(result.status!=ODE_OK) {
-        /* Termination is below corner legends, never on top of VIEW/EVT/N1. */
+        /* One top-left anchor; leave the right VIEW/EVT corner unobscured.
+           Callers restore the plot before changing/removing a status. */
         char text[96],visible[96];
         if(result.status==ODE_EVENT_STOP)snprintf(text,sizeof(text),"END: Event");
         else if(result.status==ODE_HAS_INVALID)
@@ -181,9 +182,11 @@ void graph_status(GraphResult result)
         else if(result.failed_family>=0)
             snprintf(text,sizeof(text),"Partial: %s (IC %d)",ode_status_text(result.status),result.failed_family+1);
         else snprintf(text,sizeof(text),"Partial: %s",ode_status_text(result.status));
-        ui_short(visible,sizeof(visible),text,UI_W-14);
-        int width;dsize(visible,NULL,&width,NULL);ui_rect(5,18,width+4,15,C_WHITE);
-        ui_text(7,20,result.status==ODE_EVENT_STOP ? UI_INK:C_RED,"%s",visible);
+        ui_short(visible,sizeof(visible),text,UI_W-100);
+        /* gint's line_height is9, but data_height is11 including descenders. */
+        int width,height=dfont_default()->data_height;dsize(visible,NULL,&width,NULL);
+        ui_rect(5,2,width+4,height+4,C_WHITE);
+        ui_text(7,4,result.status==ODE_EVENT_STOP ? UI_INK:C_RED,"%s",visible);
     }
 }
 static bool captured_point(double x,const double *y,uint32_t step,void *ctx)

@@ -48,10 +48,10 @@ base=run(graph+'F1')
 assert 'IC1 x=0 y=1' in base and solves(base)>0
 moved=run(graph+'F1 F4 '+('R:RIGHT '*70)+'EXIT')
 assert bar(moved)==['TRACE','ZOOM','V-WIN','TABLE','G-SLV','INIT']
-exact=tail(run(graph+'F1 F1 0 DOT 7 3 3 EXE'))
+exact=tail(run(graph+'F1 F4 RIGHT DOWN F1'))
 x,y=map(float,re.findall(r'IC1 x=([\d.eE+-]+) y=([\d.eE+-]+)',exact)[-1])
 import math
-assert abs(x-.733)<1e-12 and abs(y-math.cos(.733))<2e-6
+assert x==0 and y==1  # INIT restores the entry cursor and curve.
 assert 'ROOT 1/' in run(graph+'F5 F1 EXE')
 assert 'Y-CAL 1/1' in run(graph+'F5 F6 F1 EXE 0 DOT 7 3 3 F6')
 assert 'END' in tail(run(graph+'F4 F2'))

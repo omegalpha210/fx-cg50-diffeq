@@ -1,3 +1,29 @@
+# Tiles / fixed TRACE priority retest — v0.12.0-beta.5
+
+**HARDWARE TEST REQUIRED / HARDWARE RETEST REQUIRED — all 16 cases pending.**
+Record OS/version, release SHA256, exact keys, expected/observed result and timing.
+
+1. Main 2x3 and subtype 2x2: same large tiles, short RECALL/SAVE row, native text fit.
+2. Eight graph motifs, badge digits once, thin borders and selected outline on LCD.
+3. Numeric shortcuts, 2D direction/wrap, EXE/F6 OPEN, blank F1-F5, subtype EXIT context.
+4. RECALL/SAVE confirmation, opening HOLD ignored, selector restored, no premature I/O.
+5. TRACE X bounds/scale/Xdot stay fixed after left/right and every speed, including long holds.
+6. Increasing/decreasing valid curves follow Y only; span/scale and solver settings remain.
+7. F1 INIT restores entry cursor/curve and retains current speed; NORMAL orange/black.
+8. F5/F6 inside/outside viewport endpoints stop at connected visible numerical boundaries.
+9. Event STOP and invalid gaps: no false continuation; valid-side TRACE/G-Solve remain usable.
+10. Hold followed by EXIT/MENU responds promptly without spurious Partial: Cancelled.
+11. TRACE EXIT followed by Graph, ZOOM-menu or G-Solve-menu pan still expands/recalculates under AUTO.
+12. Graph INIT/ORIG/BOX retain independent semantics; MAN solver bounds stay manual.
+13. All Graph warnings use top-left red text with small opaque white padding; no stale old text.
+14. PHASE y1 stays horizontally fixed, y2 follows; time endpoints and offscreen reentry stay distinct.
+15. TIME/PHASE/EVT, N1/N2, warnings and active result/cursor layers remain readable.
+16. MENU/Fugue, native SAVE/RCL, long menu/draft navigation, two-tile refresh and heap/stack margin.
+
+Earlier milestone records below are historical; current controls above take priority.
+
+---
+
 # Graph interaction priority retest — v0.12.0-beta.4
 
 **HARDWARE RETEST REQUIRED — all46 new cases pending.** Record OS/version, release

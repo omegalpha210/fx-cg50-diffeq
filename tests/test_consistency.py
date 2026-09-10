@@ -31,10 +31,12 @@ assert 'EXE' not in tail(main) and 'TEXT 14 188 MENU\n' in main
 assert 'TEXT 47 188 : return to MAIN MENU\n' in main
 colors={pixel(data,x,y) for y in range(184,201) for x in range(6,390)}
 assert rgb(0xf800) in colors and rgb(0x001f) not in colors
-assert all(pixel(data,x,120)==rgb((21<<11)|(25<<6)|30) for x in range(16,381)) # Divider, outside any row.
-assert plot(run('DOWN '*3+'DOWN'))==plot(run('DOWN '*4))
+# Shared tile borders, clear horizontal/vertical gutters, same six shortcuts.
+assert all(pixel(data,x,152)==rgb(0xffff) for x in range(6,390))
+assert plot(run('DOWN DOWN DOWN'))==plot(run(''))
 for number in range(1,7):
-    assert plot(run(str(number)))==plot(run('DOWN '*(number-1)+'F6'))==plot(run('DOWN '*(number-1)+'EXE'))
+    moves='DOWN '*((number-1)//2)+'RIGHT '*((number-1)%2)
+    assert plot(run(str(number)))==plot(run(moves+'F6'))==plot(run(moves+'EXE'))
 for entry in ['1 1','1 2','1 3','1 4','2','3 9 F6','4 9 F6']:
     assert 'EXE' not in tail(run(entry))
     assert 'EXE' not in tail(run(entry+' F6'))
@@ -89,7 +91,7 @@ for path,label in [(system,'TIME'),(system+'F4 F2 ','PHASE'),
     assert label in tail(traced)
     blink=run(path+'F1 '+'BLINK '*20)
     assert plot(blink)==plot(traced) and metrics(blink)==metrics(traced)
-assert 'TEXT 13 24 END: Event\n' in tail(run(event))
+assert 'TEXT 13 8 END: Event\n' in tail(run(event))
 assert 'EVT' in tail(run(event+'F5 F4'))
 assert 'END: Event' in tail(run(event+'F4 F2'))
 assert 'Linearized:' in tail(run(phase_event+'F5 F2 F3'))
@@ -110,7 +112,7 @@ inventory=[('', ['', '', '', '', '', 'OPEN']),('1',['','','','','','OPEN']),
     (graph,['TRACE','ZOOM','V-WIN','TABLE','G-SLV','INIT']),
     (system+'F4',['TIME','PHASE','TABLE','','','']),
     (graph+'F2',['IN','OUT','AUTO','ORIG','BOX','']),
-    (graph+'F1',['x=','NORMAL','FAST','FASTER','LEFT','RIGHT']),
+    (graph+'F1',['INIT','NORMAL','FAST','FASTER','LEFT','RIGHT']),
     (graph+'F5',['ROOT','MAX','MIN','Y-ICPT','ICPT','>']),
     (system+'F4 F2 F5',['FIELD','NULL','EQPT','INFO','','']),
     (graph+'F4',['TOP','BTM','MID','','STAT','GRAPH'])]

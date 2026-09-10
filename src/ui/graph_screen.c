@@ -80,19 +80,17 @@ static bool trace_value(const UiInlineEdit *edit,double *value)
     ExprError error=expr_compile(edit->text,(ExprScope){0,false,false,false},&program);
     return error.status==EXPR_OK && expr_eval(&program,0,NULL,0,value)==EXPR_OK && isfinite(*value);
 }
-void ui_trace(App *a)
+void ui_trace(App *a,GraphResult result)
 {
-    Document *d=&a->doc;int count=0,selected=0,prepared=-1,stride=1;
-    if(d->view.phase) {for(int i=0;i<d->nic;i++)if(graph_family_enabled(d,i))count++;}
+    Document *d=&a->doc;int count=0,selected=0,prepared=-1,stride=1,origin_selected=0;
+    if(d->view.phase){for(int i=0;i<d->nic;i++)if(graph_family_enabled(d,i))count++;}
     else count=gsolve_curve_count(d);
     if(count<1)return;
-    TracePoint point={0};point.x=d->ic[0].x;
-    UiInlineEdit edit={0};UiBlink blink;ui_blink_start(&blink);
-    ui_trace_input(true);trace_overlay_begin();
-    bool valid=false,input_error=false,boundary=false;OdeStatus follow_error=ODE_OK;
+    TracePoint point={.x=d->ic[0].x},origin={0};
+    UiBlink blink;ui_blink_start(&blink);ui_trace_input(true);trace_overlay_begin();
+    bool valid=false,initialized=false,anchored=false;OdeStatus notice=ODE_OK;
     for(;;) {
         trace_overlay_restore();
-        graph_labels(d,&a->model);
         GsolveCurve curve={0,0};
         if(d->view.phase) {
             int visible=0;
@@ -100,104 +98,56 @@ void ui_trace(App *a)
             curve.variable=model_view_const(d)->phase_y;
         } else gsolve_curve_at(d,selected,&curve);
         if(prepared!=selected) {
-            /* Capture into bounded scratch without modifying any graph pixel.
-               A cancelled preparation never replaces the complete plot. */
-            valid=prepared<0 ? trace_prepare(d,&a->model,curve.family,curve.variable):
-                trace_select(d,curve.family,curve.variable);
-            if(valid && trace_point_near(point.x,&point))trace_follow(d,&a->model,&point);
+            valid=initialized ? trace_select(d,curve.family,curve.variable):
+                trace_prepare(d,&a->model,curve.family,curve.variable);
+            if(valid) {
+                initialized=true;result=trace_cache_result();
+                valid=trace_point_near(point.x,&point);
+                if(valid) {
+                    notice=trace_navigate(d,&a->model,point.x,false,&point);
+                    if(notice==ODE_OK && !anchored){origin=point;origin_selected=selected;anchored=true;}
+                }
+            }
             prepared=selected;
         }
         if(valid)trace_overlay_show(d,&point,curve.variable,blink.highlighted);
-        /* Labels stay readable above the reversible local point patch. */
-        graph_labels(d,&a->model);
+        graph_labels(d,&a->model);graph_status(result);
         ui_rect(0,179,384,19,C_WHITE);
-        if(edit.active) {
-            ui_text(8,184,UI_BLUE,"x=");ui_inline_draw(&edit,25,184,210,UI_BLUE,C_WHITE);
-        } else if(valid) {
+        if(valid) {
             char label[16];model_variable_label(d,curve.variable,label,sizeof(label));
             if(model_phase_supported(d) && d->view.phase)
                 ui_text(8,184,UI_BLUE,"x=%.5g y1=%.5g y2=%.5g",point.x,point.y[0],point.y[1]);
             else ui_text(8,184,UI_BLUE,"IC%d x=%.7g %s=%.7g",curve.family+1,point.x,label,point.y[curve.variable]);
-        } else ui_text(8,184,UI_BLUE,"Trace unavailable; graph retained");
-        if(boundary) {
-            ui_rect(0,179,384,19,C_WHITE);ui_text(8,184,UI_BLUE,follow_error==ODE_STEP_LIMIT || follow_error==ODE_WORK_LIMIT ?
-                "TRACE: too many steps; increase h":(follow_error==ODE_EVENT_STOP ? "END: Event":"TRACE: Numerical limit"));
+        } else ui_text(8,184,UI_BLUE,"Trace unavailable in this view");
+        if(notice!=ODE_OK && notice!=ODE_HAS_INVALID && notice!=ODE_EVENT_STOP && notice!=ODE_CANCELLED) {
+            ui_rect(0,179,384,19,C_WHITE);ui_text(8,184,UI_BLUE,"TRACE: %s",ode_status_text(notice));
         }
-        if(input_error)ui_softkeys("Invalid x","","","","","");
-        else if(edit.active)ui_softkeys("x=","","","","","");
-        else {
-            ui_softkeys("x=","NORMAL","FAST","FASTER","LEFT","RIGHT");
-            int left=64*stride+1;
-            ui_line(left,199,left+61,199,C_BLACK);ui_line(left,215,left+61,215,C_BLACK);
-            ui_line(left,199,left,215,C_BLACK);ui_line(left+61,199,left+61,215,C_BLACK);
-        }
-        dupdate();
-        key_event_t event=edit.active ? ui_getkey():ui_trace_key(&blink);int key=event.key;
-        if(edit.active) {
-            if(key==KEY_EXE || key==KEY_EXIT) {
-                double value;
-                if(!trace_value(&edit,&value)){input_error=true;continue;}
-                input_error=false;
-                const OdeSettings *extent=valid ? trace_extent():&d->solver;
-                if(model_phase_supported(d) && d->view.phase)value=fmax(extent->xmin,fmin(extent->xmax,value));
-                else value=fmax(fmax(extent->xmin,d->view.xmin),fmin(fmin(extent->xmax,d->view.xmax),value));
-                if(model_phase_supported(d) && d->view.phase) {
-                    OdeStatus status=trace_navigate(d,&a->model,value,true,&point);
-                    if(status==ODE_CANCELLED) {
-                        if(ui_trace_key(&blink).key==KEY_EXIT)break;
-                        continue;
-                    }
-                    if(status!=ODE_OK && status!=ODE_HAS_INVALID && status!=ODE_EVENT_STOP){input_error=true;continue;}
-                    a->dirty=true;edit.active=false;boundary=status!=ODE_OK;follow_error=status;continue;
-                }
-                model_work_begin(&a->model);
-                a->model.event_family=curve.family;
-                OdeResult r=model_integrate(d,&a->model,d->ic[curve.family].x,
-                    d->ic[curve.family].y,value,extent,NULL,NULL,ui_trace_cancel,NULL);
-                if(r.status==ODE_CANCELLED) {
-                    int control=ui_trace_key(&blink).key;
-                    if(control==KEY_EXIT)break;
-                    continue;
-                }
-                if(r.status!=ODE_OK && r.status!=ODE_EVENT_STOP){input_error=true;continue;}
-                point.x=r.x;for(int j=0;j<d->dim;j++)point.y[j]=r.y[j];
-                trace_follow(d,&a->model,&point);a->dirty=true;
-                edit.active=false;boundary=r.status==ODE_EVENT_STOP;follow_error=r.status;continue;
-            }
-            if((key<KEY_F1 || key>KEY_F6) && key!=KEY_OPTN)ui_inline_key(&edit,event);
-            continue;
-        }
+        ui_softkeys("INIT","NORMAL","FAST","FASTER","LEFT","RIGHT");
+        int left=64*stride+1;
+        ui_line(left,199,left+61,199,C_BLACK);ui_line(left,215,left+61,215,C_BLACK);
+        ui_line(left,199,left,215,C_BLACK);ui_line(left+61,199,left+61,215,C_BLACK);
+        dupdate();key_event_t event=ui_trace_key(&blink);int key=event.key;
         if(key==KEY_EXIT)break;
         if(key>=KEY_F2 && key<=KEY_F4){stride=key-KEY_F2+1;continue;}
-        if(key==KEY_MENU && !valid)prepared=-1;
-        if(key==KEY_F1 || ui_inline_input(event)) {
-            boundary=false;
-            char text[EXPR_TEXT];snprintf(text,sizeof(text),"%.12g",point.x);
-            ui_inline_begin(&edit,text,true);
-            if(key!=KEY_F1)ui_inline_key(&edit,event);
+        if(key==KEY_MENU && !valid){prepared=-1;continue;}
+        if(key==KEY_F1 && anchored) {
+            selected=origin_selected;point=origin;prepared=-1;notice=ODE_OK;continue;
         }
         if(valid && (key==KEY_LEFT || key==KEY_RIGHT || key==KEY_F5 || key==KEY_F6)) {
             trace_overlay_restore();
             bool jump=key==KEY_F5 || key==KEY_F6;
             int direction=key==KEY_LEFT || key==KEY_F5 ? -1:1;
             double target=jump ? (direction<0 ? d->solver.xmin:d->solver.xmax):
-                point.x+direction*stride*model_xdot(&d->view);
-            if(!isfinite(target) || (!jump && target==point.x)) {
-                boundary=true;follow_error=ODE_BAD_STEP;continue;
-            }
-            OdeStatus status=trace_navigate(d,&a->model,target,jump,&point);
-            if(status==ODE_CANCELLED) {
-                int control=ui_trace_key(&blink).key;
-                if(control==KEY_EXIT)break;
-                continue;
-            }
-            boundary=status!=ODE_OK;follow_error=status;
-            if(status==ODE_OK || status==ODE_HAS_INVALID || status==ODE_EVENT_STOP)a->dirty=true;
+                point.x+direction*stride*trace_viewport()->xdot;
+            if(!isfinite(target) || (!jump && target==point.x)){notice=ODE_BAD_STEP;continue;}
+            notice=trace_navigate(d,&a->model,target,jump,&point);
+            if(notice==ODE_OK || notice==ODE_HAS_INVALID || notice==ODE_EVENT_STOP)a->dirty=true;
         }
-        if(key==KEY_UP){selected=(selected+count-1)%count;boundary=false;}
-        if(key==KEY_DOWN){selected=(selected+1)%count;boundary=false;}
+        if(key==KEY_UP){selected=(selected+count-1)%count;notice=ODE_OK;}
+        if(key==KEY_DOWN){selected=(selected+1)%count;notice=ODE_OK;}
     }
-    trace_overlay_restore();graph_labels(d,&a->model);ui_blink_stop(&blink);ui_trace_input(false);
+    trace_overlay_restore();graph_labels(d,&a->model);graph_status(result);
+    ui_blink_stop(&blink);ui_trace_input(false);
 }
 static void curve_name(const Document *d,GsolveCurve curve,char *out,unsigned size)
 {
@@ -218,12 +168,13 @@ static bool choose_curve(App *a,GsolveCurve *curve,const GsolveCurve *excluded,c
         if(excluded && curve->family==excluded->family && curve->variable==excluded->variable) {
             selected=(selected+1)%count;continue;
         }
-        graph_render(&a->doc,&a->model,false);
+        GraphResult rendered=graph_render(&a->doc,&a->model,false);
         if(blink.highlighted)graph_highlight_curve(&a->doc,&a->model,curve->family,curve->variable);
         graph_labels(&a->doc,&a->model);
-        ui_rect(0,0,280,18,C_WHITE);char name[32];curve_name(&a->doc,*curve,name,sizeof(name));
+        graph_status(rendered);
+        ui_rect(0,18,280,18,C_WHITE);char name[32];curve_name(&a->doc,*curve,name,sizeof(name));
         char hint[96];snprintf(hint,sizeof(hint),"%s %s UP/DOWN EXE: SELECT",prompt,name);
-        ui_help(7,4,hint,false);
+        ui_help(7,20,hint,false);
         ui_softkeys("","","","","","CANCEL");dupdate();
         int key=ui_blink_key(&blink).key;
         if(key==KEY_EXIT || key==KEY_F6){ui_blink_stop(&blink);return false;}
@@ -236,9 +187,9 @@ static bool gsolve_input(App *a,GsolveCurve curve,const char *label,double *valu
 {
     UiInlineEdit edit;ui_inline_begin(&edit,"",false);int selected=0;
     UiBlink blink;ui_blink_start(&blink);bool error=false;
-    graph_render(&a->doc,&a->model,false);
+    GraphResult rendered=graph_render(&a->doc,&a->model,false);
     graph_highlight_curve(&a->doc,&a->model,curve.family,curve.variable);
-    graph_labels(&a->doc,&a->model);
+    graph_labels(&a->doc,&a->model);graph_status(rendered);
     for(;;) {
         ui_rect(0,179,384,19,C_WHITE);ui_text(8,184,UI_BLUE,"%s=",label);
         ui_inline_draw_cursor(&edit,31,184,200,UI_BLUE,C_WHITE,edit.active && blink.highlighted);
@@ -274,11 +225,12 @@ static void show_results(App *a,GsolveCurve curve,const GsolveCurve *other,
     if(result.status==ODE_CANCELLED)return;
     int selected=0;
     for(;;) {
-        graph_render(&a->doc,&a->model,false);
+        GraphResult rendered=graph_render(&a->doc,&a->model,false);
         graph_highlight_curve(&a->doc,&a->model,curve.family,curve.variable);
         if(other)graph_highlight_curve(&a->doc,&a->model,other->family,other->variable);
         if(result.status==ODE_OK && result.count)result_pointer(&a->doc,result.point[selected]);
         graph_labels(&a->doc,&a->model);
+        graph_status(rendered);
         /* A cross at the bottom edge must not cut through result text. */
         ui_rect(0,179,384,19,C_WHITE);
         if(result.status!=ODE_OK)ui_text(7,184,C_RED,"%s: %s",mode,ode_status_text(result.status));
@@ -476,6 +428,8 @@ UiGraphAction ui_graph(App *a,bool first)
                 ui_text(6,182,UI_BLUE,"Linearized: %s",phase_type_name(p->type));
             } else ui_text(6,181,UI_BLUE,"EQPT: Not found%s",r->has_invalid ? " (valid regions)":"");
         }
+        /* Also cover preflight returns and repaint after active Phase markers. */
+        graph_status(result);
         if(notice!=ODE_OK) {
             ui_rect(0,179,384,19,C_WHITE);ui_text(6,184,UI_BLUE,"Phase: %s",ode_status_text(notice));
         }
@@ -526,7 +480,7 @@ UiGraphAction ui_graph(App *a,bool first)
             else redraw=true; /* Cache replaced/incompatible: use the normal safe renderer. */
             continue;
         }
-        if(menu==BASE && key==KEY_F1){ui_trace(a);continue;}
+        if(menu==BASE && key==KEY_F1){ui_trace(a,result);continue;}
         if(menu==BASE && key==KEY_F2){menu=ZOOM;continue;}
         before=change_begin(d);ViewWindow *v=model_view(d);
         bool changed=pan_key(v,key);

@@ -1,7 +1,7 @@
 # Building and developing DIFFEQ
 
 The runtime/numerical/UI source and all existing tests match the validated local
-milestone `83de313`. This beta updates the existing public snapshot history; private
+milestone `212f3a4`. This beta updates the existing public snapshot history; private
 development branches and manuals are not imported. Public-only changes cover
 release metadata, documentation and the host-only README image helper.
 
@@ -73,7 +73,7 @@ python3 tools/capture_ui.py
 python3 tools/capture_readme.py
 ```
 
-The script configures `tests/`, builds and runs all 44 CTest groups with strict
+The script configures `tests/`, builds and runs all 47 CTest groups with strict
 warnings, assertions and UBSan by default. The drawing/key adapter executes the
 actual application sources, with deterministic counters and temporary test files.
 It is not a SuperH/OS emulator. Physical timing, Fugue behavior and stack/allocator
@@ -89,10 +89,10 @@ redistributed with the add-in. Normal builds/tests do not need it.
 
 `VERSION` is the public prerelease string. CMake's project version and numeric G3A
 metadata use its numeric base (`0.12.0`, `00.12.0000`); the container cannot express
-`-beta.4`. The Git tag and Release make the beta designation explicit.
+`-beta.5`. The Git tag and Release make the beta designation explicit.
 
 Release from a clean tagged commit: clean target build, host tests, package check,
-then calculate SHA256. Attach `DIFFEQ.g3a`, `SHA256SUMS.txt` and the assembled
+then calculate SHA256. Attach `DIFFEQ.g3a`, `SHA256SUMS.txt` `VALIDATION.md` and the assembled
 `THIRD_PARTY_NOTICES.txt` to the prerelease. Relinking embeds a build timestamp, so
 hashes can differ across builds even with unchanged source. Do not commit binaries,
 manuals, local toolchains, private paths or raw diagnostic logs.
@@ -101,8 +101,11 @@ Phase renderer screenshots: `python3 tools/capture_phase.py`. Bounded analysis b
 
 Event/Diagnostics screenshots: `python3 tools/capture_events.py`. Event benchmark: `build-host/test_events`. SAVE format v10; frozen v3–v9 readers retained. See [EVENTS](docs/EVENTS.md).
 
-The v0.12.0-beta.4 graph interaction pass adds transactional BOX, entry-view INIT,
-local point markers, delayed busy feedback and deferred Equation/IC validation.
-Numerical algorithms/storage are unchanged; model.c only extracts existing defaults.
-`tools/capture_interaction.py` reproduces 28 review frames; busy uses deterministic
-host RTC advancement. Native feedback reads the installed gint RTC driver.
+The v0.12.0-beta.5 pass adds native Main/subtype tiles, fixed-horizontal TRACE
+with Y-only follow and entry-cursor INIT, and a common text-sized warning backplate.
+All 44 earlier test groups remain; three new groups cover menu geometry, connected
+TRACE bounds and real UI key/pixel behavior. Numerical/parser/storage sources are unchanged.
+`python3 tools/generate_menu_icons.py --check` verifies compact const motifs;
+`python3 tools/capture_tiles.py` generates 18 current frames, six 3x menu previews
+and the eight exact firmware-rendered icon PNGs. No new image heap or framebuffer.
+See [audit and conservative Phase limits](docs/TILES_TRACE_AUDIT.md).

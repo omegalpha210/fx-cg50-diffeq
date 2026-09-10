@@ -1,3 +1,5 @@
+> Historical beta.4 audit. Main layout, TRACE navigation/keys and warning placement are superseded by [TILES_TRACE_AUDIT](TILES_TRACE_AUDIT.md). Other INIT/BOX/draft contracts remain.
+
 # Interaction audit — beta.4 baseline
 
 Baseline: development15fb84f / publicf95cf5f,42 passing host/UBSan groups.

@@ -1,7 +1,9 @@
 #include "app.h"
 #include "graph.h"
+#include "trace.h"
 #include "storage.h"
 #include "ui.h"
+#include "menu.h"
 #ifndef DIFFEQ_STORAGE_DIR
 #define DIFFEQ_STORAGE_DIR "/"
 #endif
@@ -184,21 +186,7 @@ static void clear_input_drafts(AppUi *ui)
 
 static ScreenTransition screen_main(App *a,AppUi *ui)
 {
-    static const char *const labels[]={"1  1st","2  2nd","3  N-th","4  SYS","5  RCL","6  SAVE"};
-    static const char *const descriptions[]={"First-order equation","Linear second-order equation",
-        "Higher-order equation (1-9)","First-order system (1-9)",
-        "Recall saved session","Save current session"};
-    ui_frame("Differential Equation",NULL);
-    for(int i=0;i<6;i++)ui_field_at(31+i*22+(i>=4 ? 4:0),labels[i],descriptions[i],i==ui->main_selected);
-    /* This gap is not an item: SYS -> RCL keeps the same six indices. */
-    ui_rect(10,114,365,5,C_WHITE);ui_rect(10,115,365,3,C_RGB(21,25,30));
-    ui_help(8,184,"MENU: return to MAIN MENU",true);
-    ui_softkeys("","","","","","OPEN");dupdate();
-    int key=ui_getkey().key,choice=-1;
-    if(key==KEY_EXIT)return stay();
-    ui_select_move(key,&ui->main_selected,6);
-    if(key==KEY_EXE || key==KEY_F6)choice=ui->main_selected;
-    int digit=ui_digit(key);if(digit>=1 && digit<=6)choice=digit-1;
+    int choice=ui_menu_choose(false,&ui->main_selected);
     if(choice<0)return stay();
     ui->main_selected=choice;
     if(choice==0)return open_screen(APP_SCREEN_FIRST_ORDER);
@@ -227,9 +215,7 @@ static ScreenTransition screen_main(App *a,AppUi *ui)
 
 static ScreenTransition screen_first_order(App *a,AppUi *ui)
 {
-    static const char *const names[]={"Separable","Linear","Bernoulli",
-        "Others: general first-order"};
-    int selected=ui_choose("First-order equation",names,4,ui->first_selected);
+    int selected=ui_menu_choose(true,&ui->first_selected);
     if(selected<0)return back_screen();
     ui->first_selected=selected;
     EquationKind kind=(EquationKind)selected;
@@ -485,7 +471,7 @@ int app_run(void)
             }
             case APP_SCREEN_CALCULATE:transition=screen_calculate(&app,&ui);break;
             case APP_SCREEN_GRAPH:transition=screen_graph(&app,&ui);break;
-            case APP_SCREEN_TRACE:ui_trace(&app);transition=back_screen();break;
+            case APP_SCREEN_TRACE:ui_trace(&app,trace_cache_result());transition=back_screen();break;
             case APP_SCREEN_TABLE:ui_table(&app);transition=back_screen();break;
             case APP_SCREEN_SAVE: {
                 if(!ui_save_confirm()){transition=back_screen();break;}

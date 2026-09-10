@@ -68,10 +68,14 @@ int main(void)
     assert(graph_render(&d,&m,true).status==ODE_OK && trace_prepare(&d,&m,0,0));
     unsigned old_marks=solver_report()->markers.count;double last_x=solver_report()->markers.point[old_marks-1].x;
     ui_trace_input(true);TracePoint point;assert(trace_point_near(0,&point));
-    host_cancel_after(30);assert(trace_navigate(&d,&m,12,false,&point)==ODE_CANCELLED);
+    OdeSettings extent=*trace_extent();unsigned long calls=host_rhs_calls();
+    assert(trace_navigate(&d,&m,12,false,&point)==ODE_OK && point.x==6);
+    assert(solver_report()->markers.count==old_marks && solver_report()->markers.point[old_marks-1].x==last_x);
+    assert(host_rhs_calls()==calls && !memcmp(&extent,trace_extent(),sizeof(extent)));
+    /* Event capture cancellation still preserves the committed report. */
+    trace_cache_invalidate();host_cancel_after(30);assert(!trace_prepare(&d,&m,0,0));
     assert(solver_report()->markers.count==old_marks && solver_report()->markers.point[old_marks-1].x==last_x);
     UiBlink blink={0};assert(ui_trace_key(&blink).key==KEY_EXIT);
-    assert(trace_navigate(&d,&m,12,false,&point)==ODE_OK && solver_report()->markers.count>old_marks);
     ui_trace_input(false);
     puts("Event consumers: STOP Graph/Table/TRACE/G-Solve bounds, marker/diagnostic persistence, both methods and shared Phase cache passed.");
 }

@@ -1,3 +1,34 @@
+# Current UI conventions — v0.12.0-beta.5
+
+[Full tiles/TRACE audit](TILES_TRACE_AUDIT.md) supplements the retained beta.4
+INIT/BOX/draft/semantic-color rules. Current changes:
+
+- Main is 2x3: four shared 184x58 graph tiles and two 184x25 text-only tiles.
+  Subtype is 2x2 using identical first-four geometry; its third-row area stays blank.
+  Digits appear once in badges. LEFT/RIGHT wraps rows; UP/DOWN wraps columns.
+  Header/help/softkeys keep native geometry; Main title DIFF EQ; F1-F5 blank,
+  F6 OPEN. No fake battery/F-key placeholders. Focus repaints only old/new tiles.
+- Graph warnings share logical (7,4), text-sized opaque white padding at (5,2),
+  normal red text; Event STOP stays neutral. Fresh/cached/active overlays share
+  graph_status. Right VIEW/EVT corner stays clear; Phase legends and G-Solve choice
+  help use the second compact row. Restore old text via existing base redraw.
+- TRACE freezes entry horizontal min/max/scale and actual Xdot. Traverse only the
+  selected visible connected valid sample component; no TRACE X pan, prefetch or
+  extension. Y translation retains span/scale and rejects invalid/unrepresentable
+  windows. Ordinary Graph/ZOOM/G-Solve-menu pan and AUTO extension stay unchanged.
+- PHASE freezes state-axis horizontal bounds, follows the vertical state, and
+  traverses integration-time order; stop at offscreen/gap boundaries, never project
+  an outside state onto the screen. A slab without retained states stays unavailable.
+- TRACE bar: INIT / NORMAL / FAST / FASTER / LEFT / RIGHT. INIT yellow/black;
+  NORMAL orange/black; FAST bright green/black; FASTER cyan/black. Speed outline
+  retained. F1 restores entry cursor/curve, preserving speed and all document
+  settings. F5/F6 target configured endpoints clamped to reachable visible bounds.
+  Arbitrary TRACE x= entry is removed; G-Solve Y-CAL still provides numerical queries.
+
+Earlier milestone records below are historical; current controls above take priority.
+
+---
+
 # Current UI conventions — v0.12.0-beta.4
 
 The complete before/after interaction inventory is [INTERACTION_AUDIT](INTERACTION_AUDIT.md).

@@ -67,9 +67,9 @@ for entry,count in [('3 9 F6',8),('4 9 F6',9)]:
         assert 'Insert variable' not in out
 # Main F1-F4 have neither labels nor actions; digits and selection remain.
 assert plot(run('F1 F2 F3 F4'))==plot(run(''))
-for n in range(1,5):assert plot(run(str(n)))==plot(run('DOWN '*(n-1)+'EXE'))
+for n in range(1,5):assert plot(run(str(n)))==plot(run('DOWN '*((n-1)//2)+'RIGHT '*((n-1)%2)+'EXE'))
 assert 'Recall' in tail(run('5')) and 'Save current session?' in tail(run('6'))
-assert 'Recall saved session' in run('')
+assert 'RECALL' in run('')
 # Current semantic stage colors and OUTPUT-specific styles.
 for keys,colors in [('2',[None,None,None,None,None,0x07ff]),
  ('2 F6',[None,None,None,None,None,0x07ff]),

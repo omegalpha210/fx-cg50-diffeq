@@ -1,3 +1,30 @@
+# Tiles / fixed TRACE memory — v0.12.0-beta.5
+
+| SH measurement (B) | beta.4 | beta.5 | Delta |
+|---|---:|---:|---:|
+| text | 212548 | 214208 | +1660 |
+| data | 752 | 752 | 0 |
+| BSS | 72304 | 72352 | +48 |
+| largest application frame | 2648 (app_run) | 2664 (app_run) | +16 |
+| G3A | 241980 | 243640 | +1660 |
+
+The frozen TraceViewport is 36 B; remaining BSS delta is alignment/layout padding.
+Menu data is const/read-only: 756 B coordinate pairs, 60 B stroke records and
+16 B ranges = 832 B geometry, plus 8 B pastel palette. Eight 108x34 PNG previews
+sum to 3378 B and are not linked into firmware. Menu movement uses no image heap
+cache, ODE solve or full redraw; only old/new tiles are repainted.
+
+TRACE's origin cursor/selection uses bounded local metadata. No new framebuffer,
+trajectory array or heap allocation. Existing IC draft heap limit stays 1920 B
+payload plus allocator overhead. Next frames: phase_equilibria 2144,
+model_convert_system 1944, ui_initial_conditions 1860, ui_table 1768, ui_graph 1524 B.
+Single .su frames exclude nested calls, libraries, interrupts and OS stack use.
+**HARDWARE RETEST REQUIRED:** total memory margin and native refresh/key timing.
+
+Earlier milestone records below are historical; current controls above take priority.
+
+---
+
 # Graph interaction memory — v0.12.0-beta.4
 
 | SH target | beta.3 | beta.4 | Delta |

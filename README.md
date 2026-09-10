@@ -10,9 +10,9 @@ Solve, graph, and explore ordinary differential equations on your calculator.
 DIFFEQ is a native **fx-CG50 add-in** with colorful solution curves, slope fields,
 TRACE, G-Solve, numerical tables, and phase analysis for two-variable systems.
 
-**Public Beta · v0.12.0-beta.4 · [MIT License](LICENSE)**
+**Public Beta · v0.12.0-beta.5 · [MIT License](LICENSE)**
 
-**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.4)**
+**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.5)**
 · [All releases](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [Report a bug](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -24,6 +24,17 @@ Core first/second-order workflows have been tested on an fx-CG50 by the project
 owner; this beta's latest UI and device behavior still need hardware retesting.*
 
 Open any image for its full-size view, especially on a phone.
+
+## Choose an equation family
+
+| Main: 2 columns × 3 rows | First-order types: 2 columns × 2 rows |
+|---|---|
+| ![DIFF EQ native tiles: 1st selected; compact RECALL and SAVE row](docs/ui-review/tiles-main-first.png) | ![Four first-order tiles with Separable selected](docs/ui-review/tiles-subtype-first.png) |
+
+Use arrows to select by row/column, digits for shortcuts, and EXE or **F6 OPEN**.
+Main's graph tiles and subtype tiles share the same 184×58 geometry; RECALL/SAVE
+are shorter text tiles. The eight original graph motifs are drawn from compact
+const geometry; [icon files and reproduction](assets/menu/README.md).
 
 ## From an equation to a graph
 
@@ -98,8 +109,8 @@ tolerances and hidden Step persist. INIT retains Method and resets its settings.
 v3–v8 sessions load as RK4; v9 retains its saved method. All older formats load Event OFF.
 
 RK45 supports every equation mode, Graph/TRACE/Table/G-Solve and Phase.
-Numerical Table/G-Solve and TIME x= queries land at their requested x. Ordinary
-TRACE movement and Phase x= retain bounded, display-only linear interpolation;
+Numerical Table/G-Solve queries land at their requested x. TIME and Phase
+TRACE movement uses bounded, display-only linear interpolation;
 they do not guarantee tolerance accuracy between cached points. RK45 output
 uses a TIME Xdot-based grid separately from adaptive internal steps.
 **RK45 is an explicit adaptive Runge–Kutta method, not a stiff ODE solver.**
@@ -139,20 +150,31 @@ one step; root accuracy remains limited by the numerical solution.
 - **2D SYS Phase:** normalized vector fields, numerical nullclines, up to 16
   equilibrium candidates, and local linear stability with Jacobian/eigenvalue details.
 - **V-Window, pan and zoom**, six solution colors and dependent-output ON/OFF.
-- **TRACE:** NORMAL / FAST / FASTER movement, curve switching, x queries and
-  X/Y viewport following, and jumps to configured solver endpoints.
+- **TRACE:** fixed horizontal viewport, Y-only following, NORMAL / FAST / FASTER,
+  curve switching, entry-cursor INIT and bounded solver-endpoint jumps.
 - **G-Solve:** ROOT, MAX, MIN, Y-ICPT, ICPT, X-CAL and Y-CAL.
 - **Table:** ascending x, TOP / BTM / MID, a fixed x column and horizontally
   scrollable solution columns. **STAT-compatible CSV** exports up to 998 data rows.
 - **Explicit SAVE / RCL** with recoverable session slots and older-session migration.
 
-TIME TRACE speed buttons are **yellow / bright green / cyan**, with black text and a
-border on the active mode: NORMAL=1×Xdot, FAST=2×, FASTER=3×. F5 LEFT and F6 RIGHT
-jump to configured Solver Xrange endpoints without changing curve or speed.
-Reaching an endpoint does not prefetch; a move beyond the calculated range extends
-in that input. X/Y follow pans the view while preserving spans and solver settings.
-Explicit TIME `x=` queries use the selected solver at the requested in-range x;
-they are not replaced by Phase's cached interpolation.
+TRACE is restricted to the **entry horizontal viewport ∩ the selected curve's
+connected valid numerical range**. No TRACE movement extends that range or pans X.
+Y follows valid points while retaining the Y span, both scales, Xdot and solver settings.
+F1 **INIT** (yellow/black) restores the entry cursor and curve, retaining speed.
+F2 **NORMAL** (orange/black), F3 **FAST** (bright green/black), F4 **FASTER** (cyan/black)
+move 1×/2×/3× entry Xdot with the existing repeat clock and selected-speed outline.
+F5 LEFT/F6 RIGHT target configured solver endpoints and clamp to reachable visible
+boundaries. They cannot cross invalid gaps or Event STOP.
+
+Phase fixes the horizontal state bounds (SYS2 y1), follows y2, and traverses the
+existing trajectory in integration-time order. It stops before an offscreen retained
+point; it never projects a point onto a fake screen edge. A narrow slab containing
+no retained state can make TRACE unavailable. **Ordinary Graph/ZOOM/G-Solve-menu pan
+and its existing safe expansion remain available after EXIT.**
+
+All numerical/domain warnings now share the plot's top-left anchor, red normal text
+and a small opaque white backplate measured to the text. Valid-side TRACE/G-Solve
+remain usable; normal Event STOP stays neutral. [Warning and TRACE examples](docs/ui-review/tiles-overview.png).
 
 Graph Settings uses **F1 INIT** to reset Grid, Axis Label and field style/color.
 The Style row uses LEFT/RIGHT; F1 INIT is visible and works on every Settings row. F2 stays blank.
@@ -182,7 +204,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 ## Install on your calculator
 
-1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.4).
+1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.5).
 2. Download **DIFFEQ.g3a**. `SHA256SUMS.txt` is available to check your download.
 3. Connect the fx-CG50 by USB, select USB Flash mode, and open its storage drive.
 4. Copy `DIFFEQ.g3a` to the drive's **root directory**, outside `@MainMem`.
@@ -199,7 +221,7 @@ Older add-ins may reject new saves; adaptations are explained in the
 
 | Context | Keys |
 |---|---|
-| Main Menu | Digits 1–6 open 1st/2nd/N-th/SYS/RCL/SAVE; UP/DOWN selects, EXE or F6 OPEN opens; F1–F5 blank |
+| Main Menu | Digits 1–6 open 1st/2nd/N-th/SYS/RCL/SAVE; arrows select by row/column with wrap, EXE or F6 OPEN opens; F1–F5 blank |
 | Selected ordinary field | UP/DOWN selects cyclically; LEFT/RIGHT starts editing; EXE runs NEXT/GRAPH/DONE/OPEN |
 | Editing | EXE commits and selects the next field; the last field stays. EXIT commits and stays |
 | Equation | F1 INIT; F2 FUNC/F3 VAR only in EDIT (VAR in supported modes). EXIT closes the token bar first |
@@ -208,8 +230,8 @@ Older add-ins may reject new saves; adaptations are explained in the
 | Graph (except 2D SYS) | Arrows pan; F1 TRACE, F2 ZOOM, F3 V-WIN, F4 TABLE, F5 G-SLV, F6 yellow/black INIT; EXIT returns Parameters |
 | 2D SYS Graph | F4 VIEW → F1 TIME / F2 PHASE / F3 TABLE; Phase uses F5 ANLYS; F6 INIT retains selected view |
 | Phase analysis | F1 FIELD, F2 NULL, F3 EQPT, F4 INFO; LEFT/RIGHT cycles equilibria, EXIT returns |
-| TIME TRACE | LEFT/RIGHT moves, UP/DOWN switches curves; F1 x=, F2–F4 speed, F5/F6 configured endpoints, EXIT returns |
-| Phase TRACE | Shows x, y1 and y2 along the retained trajectory; cached/interpolated x queries, no time-range extension |
+| TIME TRACE | LEFT/RIGHT moves, UP/DOWN switches curves; F1 entry-cursor INIT, F2–F4 speed, F5/F6 endpoints clamped to visible valid bounds, EXIT returns |
+| Phase TRACE | Shows x, y1 and y2 along the retained trajectory; fixed horizontal state bounds, Y-only follow; no time-range extension |
 | Table | UP/DOWN pages, LEFT/RIGHT scrolls columns; TOP/BTM/MID, F5 STAT |
 | Session | SAVE confirmation: F5 NO/EXIT cancels, F6 YES/EXE saves once; RCL offers last calculation or saved load; MENU returns to OS |
 
@@ -222,7 +244,7 @@ retains Method and Event; V-WIN resets window geometry; Graph Settings resets
 Grid/Label/field style/color; Output resets dependent outputs/colors. ADV is black
 with white text and opens utilities without calculating. SELECT lists wrap at the
 ends; editor cursors, Graph/TRACE/Phase and Table navigation retain their behavior.
-Main uses a clear 3px pale-blue divider and MENU-only help (red MENU). Generic
+Main uses pastel tiles, a cyan-blue selection outline and MENU-only help (red MENU). Generic
 EXE OPEN/NEXT/GRAPH hints stay hidden; EDIT/palette/BOX/curve confirmation keeps
 normal-weight blue EXE. Solver AUTO/MAN and RK45 h0 are unchanged. **TIME/PHASE**
 appears only for switchable SYS2 VIEW; enabled **EVT** is independent of equation type.
@@ -242,10 +264,10 @@ own inputs. Incomplete drafts remain editable until NEXT validates all fields
 and focuses the first error. IC numeric values update only after complete validation;
 unfinished IC drafts are runtime-only. Red numerical/domain END remains nonfatal,
 with valid-side TRACE/G-Solve available. Output color-line previews persist when OFF.
-[Full interaction audit and limits](docs/INTERACTION_AUDIT.md),
+[Current tile/TRACE audit and limits](docs/TILES_TRACE_AUDIT.md),
 [UI conventions](docs/UI_CONVENTIONS.md), [BOX and updated screens](docs/ui-review/interaction-overview.png).
 
-[Updated Main, SAVE and workflow screens](docs/ui-review/workflow-overview.png)
+[Six native and 3× Main/subtype previews; current TRACE and warning screens](docs/ui-review/tiles-overview.png)
 
 ## Build from source
 

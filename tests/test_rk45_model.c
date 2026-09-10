@@ -55,13 +55,17 @@ int main(void)
     assert(page.result.status==ODE_WORK_LIMIT);
     assert(graph_render(&d,&m,true).status==ODE_OK && trace_prepare(&d,&m,0,0));
     ui_trace_input(true);TracePoint cursor;assert(trace_point_near(0,&cursor));
-    TracePoint before=cursor;OdeSettings extent=*trace_extent(),solver=d.solver;ViewWindow view=d.view;
-    host_cancel_after(10);assert(trace_navigate(&d,&m,3.25,false,&cursor)==ODE_CANCELLED);
-    assert(!memcmp(&cursor,&before,sizeof(cursor)) && !memcmp(trace_extent(),&extent,sizeof(extent))
-        && !memcmp(&d.view,&view,sizeof(view)));
+    OdeSettings extent=*trace_extent(),solver=d.solver;ViewWindow view=d.view;
+    unsigned calls=m.work.rhs;
+    assert(trace_navigate(&d,&m,3.25,false,&cursor)==ODE_OK && cursor.x==3);
+    assert(m.work.rhs==calls && !memcmp(trace_extent(),&extent,sizeof(extent)));
+    assert(!memcmp(&d.view,&view,sizeof(view)) && fabs(cursor.y[0]-cos(3))<2e-8);
+    assert(!memcmp(&d.solver,&solver,sizeof(solver)));
+    /* RK45 cache preparation still rolls back on cancellation. */
+    TracePoint before=cursor;trace_cache_invalidate();host_cancel_after(10);
+    assert(!trace_prepare(&d,&m,0,0));
+    assert(!memcmp(&cursor,&before,sizeof(cursor)) && !memcmp(&d.view,&view,sizeof(view)));
     UiBlink blink={0};assert(ui_trace_key(&blink).key==KEY_EXIT);
-    assert(trace_navigate(&d,&m,3.25,false,&cursor)==ODE_OK && cursor.x==3.25);
-    assert(fabs(cursor.y[0]-cos(3.25))<2e-8 && !memcmp(&d.solver,&solver,sizeof(solver)));
     ui_trace_input(false);
     setup(EQ_GENERAL,1);strcpy(d.text[0],"y");d.nic=10;
     for(int i=0;i<10;i++)d.ic[i].y[0]=(i+1)*.1;
