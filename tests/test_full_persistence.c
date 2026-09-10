@@ -10,7 +10,7 @@ static void preferences(Document *d,int kind,int dim,int method)
 {
     model_defaults(d,kind,dim);
     if(kind<=EQ_GENERAL)d->nic=10;
-    d->power=3.25;d->solver=(OdeSettings){-2,3,.025,12345,7,50};
+    d->ic_enabled=method ? 0:0x155;d->power=3.25;d->solver=(OdeSettings){-2,3,.025,12345,7,50};
     d->solver_custom=1;d->adaptive=(OdeAdaptive){method,2e-7,3e-10};
     d->view.xmin=-8;d->view.xmax=11;d->view.ymin=-7;d->view.ymax=13;
     d->view.xscale=2;d->view.yscale=3;d->view.grid=0;d->view.labels=0;

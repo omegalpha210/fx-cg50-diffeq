@@ -31,6 +31,7 @@ void graph_point_restore(GraphPointPatch *patch)
 bool graph_family_enabled(const Document *d,int family)
 {
     if(family<0 || family>=d->nic)return false;
+    if(model_field_supported(d))return model_curve_visible(d,family,0);
     unsigned mask=d->enabled;
     if(!d->view.phase)return mask!=0;
     if(model_phase_supported(d))return true;
@@ -144,7 +145,7 @@ static bool curve_point(double x,const double *y,uint32_t step,void *ctx)
             if(graph_family_enabled(d,c->family)) graph_solution_segment(v,
                 c->y[v->phase_x],c->y[v->phase_y],y[v->phase_x],y[v->phase_y],
                 c->color<0 ? graph_palette_color(model_color(d,c->family,v->phase_y)):c->color);
-        } else for(int j=0;j<d->dim;j++) if((d->enabled&(1u<<j))
+        } else for(int j=0;j<d->dim;j++) if(model_curve_visible(d,c->family,j)
             && (c->variable<0 || c->variable==j))
             graph_solution_segment(&d->view,c->x,c->y[j],x,y[j],
                 c->color<0 ? graph_palette_color(model_color(d,c->family,j)):c->color);
@@ -208,6 +209,14 @@ static GraphResult render(Document *d,CompiledModel *m,bool first,UiBusy *busy)
            request; preserve the previous canonical graph/report for rollback. */
         return (GraphResult){.status=plan.status,.failed_family=plan.family};
     }
+    if(first) {
+        /* Initial entry has no prior Graph on the LCD. Establish its axes and
+           normal controls once; subsequent busy updates touch only the bar. */
+        dclear(C_WHITE);axes(model_view_const(d),model_phase_supported(d) && d->view.phase);
+        ui_softkeys("TRACE","ZOOM","V-WIN",model_phase_supported(d) ? "VIEW":"TABLE",
+            model_phase_supported(d) && d->view.phase ? "ANLYS":"G-SLV","INIT");
+        dupdate();
+    }
     OdeStatus phase_status=graph_phase_preflight(d,m,ui_busy_cancel,busy);
     if(phase_status!=ODE_OK) {
         return (GraphResult){.status=phase_status,.failed_family=-1};
@@ -226,7 +235,7 @@ static GraphResult render(Document *d,CompiledModel *m,bool first,UiBusy *busy)
     GraphResult result={.status=ODE_OK,.failed_family=-1};
     if(!slope_field(d,m,busy)) result.status=ODE_CANCELLED;
     for(int i=0;i<d->nic && result.status!=ODE_CANCELLED;i++) {
-        if(!system && !graph_family_enabled(d,i)) continue;
+        if(!system && !model_field_supported(d) && !graph_family_enabled(d,i)) continue;
         for(int direction=-1;direction<=1;direction+=2) {
             Curve c={.d=d,.family=i,.variable=-1,.stride=first || d->adaptive.method==ODE_RK45 ? 1:d->solver.step,.color=-1};
             if(capture)trace_capture_branch_begin(d,i,direction<0 ? 0:1);
@@ -269,7 +278,7 @@ void graph_event_markers(const Document *d)
     for(unsigned i=0;i<r->markers.count;i++) {
         const EventMarker *p=&r->markers.point[i];
         if(!graph_family_enabled(d,p->family))continue;
-        int variable=0;while(variable<d->dim && !(d->enabled&(1u<<variable)))variable++;
+        int variable=0;while(variable<d->dim && !model_curve_visible(d,p->family,variable))variable++;
         if(!d->view.phase && variable==d->dim)continue;
         int x,y;
         if(!graph_point(v,d->view.phase ? p->y[v->phase_x]:p->x,
@@ -284,7 +293,7 @@ OdeStatus graph_highlight_curve(Document *d,CompiledModel *m,int family,int vari
 {
     if(!d || !m || family<0 || family>=d->nic || !graph_family_enabled(d,family)
         || (!d->view.phase && (variable<0 || variable>=d->dim
-            || !(d->enabled&(1u<<variable)))))
+            || !model_curve_visible(d,family,variable))))
         return ODE_BAD_INPUT;
     OdeStatus status=ODE_OK;
     int base=graph_palette_color(model_color(d,family,d->view.phase ? d->view.phase_y:variable));
@@ -312,7 +321,7 @@ static bool bound_point(double x,const double *y,uint32_t step,void *ctx)
 {
     (void)step;Bounds *b=ctx;if(!y)return true;
     if(b->d->view.phase) bounds_add(b,y[b->d->view.phase_x],y[b->d->view.phase_y]);
-    else for(int i=0;i<b->d->dim;i++)if(b->d->enabled&(1u<<i))bounds_add(b,x,y[i]);
+    else for(int i=0;i<b->d->dim;i++)if(model_field_supported(b->d) || (b->d->enabled&(1u<<i)))bounds_add(b,x,y[i]);
     return true;
 }
 OdeStatus graph_auto_window(Document *d,CompiledModel *m)

@@ -1,3 +1,17 @@
+# Current closure — v0.12.0-beta.8
+
+**R1 and UIR1: Resolved by user decision / Implemented / Validated.**
+Independent scalar IC visibility and immediate numeric EXIT cancellation are now
+implemented with v11 migration and consumer/key regressions. Drawing uses the
+requested Graph-preserving bottom bar. Current open review decisions: **0**.
+Final59/59 host/UBSan, strict28-unit SH/zero warnings, package13/13; all previous57
+groups remain. [Current complete evidence](VISIBILITY_PROMPT_AUDIT.md),
+[34 pending device checks](HARDWARE_RETEST.md). The audit below preserves beta.7
+scope, findings and numerical limitations; current beta.8 policy supersedes its
+old shared visibility and preparation-page descriptions.
+
+---
+
 # Full functionality and consistency audit — beta.7
 
 ## Scope and sequence
@@ -220,7 +234,7 @@ while refining CONS-1 are not separate defects.
 | Actionable systematic findings | P0 | P1 | P2 | P3 | Total |
 |---|---:|---:|---:|---:|---:|
 | AUTO-FIX defects, all fixed | 0 | 2 | 3 | 0 | 5 |
-| REVIEW REQUIRED decisions, unchanged | 0 | 0 | 2 | 0 | 2 |
+| Former review decisions (both closed in beta.8) | 0 | 0 | 2 | 0 | 2 |
 | Total defects/review decisions | 0 | 2 | 5 | 0 | 7 |
 
 The four explicit requests are separate work. Five INFO themes below are
@@ -229,44 +243,16 @@ Every reproduced P0/P1 defect passed its regression and final development gates;
 none remains unresolved in the executed matrix. Device success is not implied
 by these counts.
 
-## Review-required issues
+## Former review decisions — closed in beta.8
 
-### R1 — P2: per-IC visibility would change the output contract
+| Finding | Decision and implementation | Status / evidence |
+|---|---|---|
+| R1, P2, scalar IC visibility | Owner approved independent ON/OFF. Appended v11 ten-bit preference; common visible-curve predicate; output/export filtering; hidden numerical/Event data retained. | Resolved by user decision / Implemented / Validated: trajectory_visibility, output_instances, field_storage, full_persistence_matrix, visibility_prompt_ui. |
+| UIR1, P2, G-Solve numeric EXIT | Owner approved unconditional temporary-operation cancel. Separate EXIT branch before validation; retain page2 and HOLD boundary; EXE alone commits. | Resolved by user decision / Implemented / Validated: visibility_prompt_ui and retained G-Solve/UI/key lifecycle groups. |
 
-- **ID:** R1, the visibility review from MULTI_IC_COLOR_AUDIT.
-- **Screen/Feature:** Multiple first-order IC Output and Graph/TRACE/G-Solve/
-  Table/CSV/STAT consumers.
-- **Observed:** Each IC has independent persistent color; one dependent y mask
-  still controls all trajectories and output columns together.
-- **Why questionable:** Independent color does not imply independent ON/OFF.
-  That expansion needs consistent Table/CSV columns and persistent semantics.
-- **Possible choices:** Keep explicit shared visibility with independent colors;
-  or define per-IC visibility across every consumer and save migration.
-- **Recommended option:** Keep current visibility for this milestone; specify
-  any independent visibility extension separately.
-- **Risk:** Casual expansion could hide different data in Graph and CSV, reorder
-  columns or change save compatibility. Current behavior cannot hide one family.
-- **Evidence:** Document.enabled, Table/export mapping, and 1/2/5/10-IC tests
-  prove shared visibility and truthful color-only rows; see MULTI_IC_COLOR_AUDIT.
-
-### UIR1 — P2: invalid G-Solve numeric EDIT cannot immediately EXIT
-
-- **ID:** UIR1.
-- **Screen/Feature:** Y-CAL/X-CAL x=/y= numeric input.
-- **Observed:** The prompt begins empty EDIT. EXIT validates/commits; empty or
-  invalid input stays with Invalid number. A valid commit then another EXIT leaves.
-- **Why questionable:** It follows established numeric EDIT behavior, but a
-  temporary query reasonably could cancel without first supplying valid input.
-- **Possible choices:** Keep EXIT-commit; make EXIT cancel only temporary
-  G-Solve input; or add a separate cancel action.
-- **Recommended option:** If later changed, prefer immediate EXIT cancellation
-  for this temporary query alone, retaining EXE/F6 validation and persistent-form
-  contracts. No change is made here.
-- **Risk:** Changes the learned commit/leave workflow and requires fresh/held
-  EXIT boundary regression. A global editor change could affect Parameters/V-WIN.
-- **Evidence:** Single-curve Graph → second G-Solve page → Y-CAL → EXIT twice
-  stays in the empty prompt; AUDIT_UI records source/reproduction. Selector,
-  result and palette cancellation are separate and pass.
+Root causes, exact migrations, controls and regression cases are in
+[beta.8 audit](VISIBILITY_PROMPT_AUDIT.md). No open review remains for R1/UIR1.
+The preceding beta.7 matrix and severity counts are historical baseline evidence.
 
 ## Known intentional limitations / INFO
 

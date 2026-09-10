@@ -1,3 +1,26 @@
+# Current memory — v0.12.0-beta.8
+
+| SH bytes | beta.7 | beta.8 | Delta |
+|---|---:|---:|---:|
+| text |219056|220020|+964|
+| data |768|768|+0|
+| BSS |72192|72192|+0|
+| largest single application frame |2664|2664 (app_run)|0|
+| G3A |248504|249468|+964|
+
+No new heap allocation or framebuffer. SH Document grows3040→3044B; App symbol
+grows15160→15168B for current/recall, absorbed by linker alignment in total BSS.
+The ten-bit v11 mask is appended after the frozen v10 prefix. Drawing borrows
+2304B of existing2852B staging tail for three384-pixel rows; six uploads/bar.
+Table retains2376B three396-pixel rows,75 initial/seven header uploads.
+ui_graph1616B/search1052B remain; IC draft payload cap1920B remains. Single .su
+frames do not prove cumulative device stack/heap margin. HARDWARE TEST REQUIRED.
+[Complete architecture and validation](VISIBILITY_PROMPT_AUDIT.md).
+
+Earlier milestone records below are historical where superseded above.
+
+---
+
 # Full audit and explicit fixes memory — v0.12.0-beta.7
 
 | SH measurement (B) | beta.6 | beta.7 | Delta |

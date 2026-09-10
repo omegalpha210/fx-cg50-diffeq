@@ -1,13 +1,12 @@
-# v0.12.0-beta.7 preflight
+# v0.12.0-beta.8 preflight
 
-Required sequence: four explicit fixes and baseline regression; predefined full
-capability matrix; objective audit fixes and final regression; renderer review;
-development commit; clean public snapshot; exact candidate and exact tag gates;
-prerelease; re-download and compare bytes/SHA256/GitHub asset digests.
+Baseline audit → three approved changes → targeted/existing/full regression →
+strict clean SH and package → renderer review/docs → development commit → clean
+public snapshot → exact candidate and tag gates → prerelease → asset re-download.
 
-Gates: 57 host/UBSan groups, 28 strict SH C units, zero warnings, 13 package checks.
-Compare source to development; scan candidate and public history for excluded
-material; retain original MIT/dependency notices, parent 490b624 and all old tags.
-Verify EN/KO README links/GitHub rendering and complete remote source tree.
-No unresolved P0/P1 AUTO-FIX may be released. Review decisions and hardware gaps
-are documented in FULL_AUDIT/HARDWARE_RETEST. Exact results: Release VALIDATION.md.
+Required gates:59 host/UBSan groups,28 strict SH C units,zero warnings,13 package
+checks. Compare source to development, validate README links/GitHub rendering,
+scan candidate/public history/binary, preserve original MIT/notices and public
+parent1a5a49d. Tags are immutable. Verify downloaded bytes/SHA256/GitHub digests,
+remote source tree and all prior tags. R1/UIR1 are closed; physical validation
+remains pending. Exact evidence is release VALIDATION.md.

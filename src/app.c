@@ -64,6 +64,7 @@ static uint32_t input_fingerprint(const Document *document)
     for(size_t i=0;i<offsetof(Document,solver);i++){hash^=bytes[i];hash*=16777619u;}
     for(size_t i=offsetof(Document,enabled);i<offsetof(Document,field_style);i++){hash^=bytes[i];hash*=16777619u;}
     for(size_t i=offsetof(Document,event);i<offsetof(Document,event)+sizeof(document->event);i++){hash^=bytes[i];hash*=16777619u;}
+    for(size_t i=offsetof(Document,ic_enabled);i<offsetof(Document,ic_enabled)+sizeof(document->ic_enabled);i++){hash^=bytes[i];hash*=16777619u;}
     return hash;
 }
 

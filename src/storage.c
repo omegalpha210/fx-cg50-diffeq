@@ -16,13 +16,13 @@
 #endif
 
 #define RECORD_MAGIC 0x44455131u
-#define RECORD_VERSION 10u
+#define RECORD_VERSION 11u
 
 typedef struct {
     uint32_t magic,version,size,generation,has_recall;
 } RecordHeader;
 
-/* This type describes the current version-10 byte layout. No object of this
+/* This type describes the current version-11 byte layout. No object of this
    type is allocated; session data is streamed directly from App documents. */
 typedef struct {
     uint32_t magic,version,size,generation,has_recall;
@@ -87,6 +87,8 @@ typedef struct {
     uint8_t phase_field,phase_nullclines,phase_ready;OdeAdaptive adaptive;
 } Version9Document;
 _Static_assert(offsetof(Document,event)==sizeof(Version9Document),"v9 prefix changed");
+typedef struct {Version9Document prefix;EventConfig event;} Version10Document;
+_Static_assert(offsetof(Document,ic_enabled)==sizeof(Version10Document),"v10 prefix changed");
 typedef struct {
     char path[256];
     RecordHeader header;
@@ -174,6 +176,7 @@ static size_t document_size(uint32_t version)
     if(version==7)return sizeof(Version7Document);
     if(version==8)return sizeof(Version8Document);
     if(version==9)return sizeof(Version9Document);
+    if(version==10)return sizeof(Version10Document);
     return sizeof(Document);
 }
 static size_t checksum_offset(uint32_t version)
@@ -296,6 +299,11 @@ static bool read_document(int fd,Document *d,uint32_t version,bool present,uint3
 {
     memset(d,0,sizeof(*d));
     ode_adaptive_defaults(&d->adaptive);
+    d->ic_enabled=MODEL_IC_MASK; /* v3-v10 had no per-IC preference: all ON. */
+    if(version==10) {
+        if(!native_read_hashed(fd,d,sizeof(Version10Document),hash))return false;
+        model_sanitize_colors(d);model_sanitize_field(d);return true;
+    }
     if(version==9) {
         if(!native_read_hashed(fd,d,sizeof(Version9Document),hash))return false;
         model_sanitize_colors(d);model_sanitize_field(d);return true;

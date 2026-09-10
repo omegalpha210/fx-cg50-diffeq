@@ -53,7 +53,7 @@ x,y=map(float,re.findall(r'IC1 x=([\d.eE+-]+) y=([\d.eE+-]+)',exact)[-1])
 import math
 assert x==0 and y==1  # INIT restores the entry cursor and curve.
 assert 'ROOT 1/' in run(graph+'F5 F1 EXE')
-assert 'Y-CAL 1/1' in run(graph+'F5 F6 F1 EXE 0 DOT 7 3 3 F6')
+assert 'Y-CAL 1/1' in run(graph+'F5 F6 F1 EXE 0 DOT 7 3 3 EXE')
 assert 'END' in tail(run(graph+'F4 F2'))
 with tempfile.TemporaryDirectory() as directory:
     out=run(graph+'F4 F5',directory)

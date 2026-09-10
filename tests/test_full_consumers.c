@@ -122,7 +122,7 @@ static void families_and_table(void)
         assert(gsolve_intersections(&d,&m,(GsolveCurve){0,0},(GsolveCurve){0,0},NULL,NULL).status==ODE_BAD_INPUT);
         if(d.nic>1)assert(gsolve_intersections(&d,&m,(GsolveCurve){0,0},(GsolveCurve){d.nic-1,0},NULL,NULL).count==0);
         assert(!memcmp(&before,solver_report(),sizeof(before)));
-        d.enabled=0;assert(gsolve_curve_count(&d)==0);
+        d.ic_enabled=0;assert(gsolve_curve_count(&d)==0);
         assert(table_index_build(&d,&m,&index,NULL,NULL)==ODE_OK && index.count==0);
         table_read_page(&d,&m,&index,index.mid,&page,NULL,NULL);
         for(unsigned row=0;row<page.count;row++)assert(page.valid[row]==1);

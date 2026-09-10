@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.12.0-beta.8 — Drawing bar and approved output/navigation decisions
+
+- Graph-preserving bottom Drawing bar; Table preparation unchanged.
+- Independent IC ON/OFF/color, consistent visible consumers, safe all-OFF.
+- SAVE v11 mask persistence and explicit all-ON v3–v10 migration.
+- EXE-only numeric validation; unconditional EXIT to G-Solve page2.
+- Two closed review decisions,59 regression groups and34 pending hardware cases.
+- [Implementation and evidence](docs/VISIBILITY_PROMPT_AUDIT.md).
+
 ## v0.12.0-beta.7 — Preparation screens and full audit
 
 - Dedicated cancellable Table/Drawing screens; SF 0–50 with legacy normalization.

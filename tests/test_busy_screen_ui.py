@@ -49,23 +49,31 @@ def values(out):
 
 
 def verify_busy(out, frames, label):
-    phases = re.findall(r'^TEXT 14 9 ' + re.escape(label) + r' ([/\\|\-])$', out, re.M)
+    drawing = label == 'Drawing...'
+    anchor = 'TEXT 11 206 ' if drawing else 'TEXT 14 9 '
+    phases = re.findall(r'^' + anchor + re.escape(label) + r' ([/\\|\-])$', out, re.M)
     assert phases[:4] == ['/', '-', '\\', '|'], phases
-    selected = re.findall(r'^FRAME (\d+) ' + re.escape(label) + r' [/\\|\-]$', out, re.M)
-    assert selected
-    # FRAME titles can be inherited when Graph has no header, so check frames
-    # actually preceded by a busy title paint rather than title metadata alone.
     pending = False
     count = 0
+    previous = None
     for line in out.splitlines():
-        if line.startswith('TEXT 14 9 ' + label):
+        if line.startswith(anchor + label):
             pending = True
-        if line.startswith('FRAME ') and pending:
+        if line.startswith('FRAME '):
+            rgb = frames[int(line.split()[1])]
+            if pending:
+                if drawing:
+                    assert previous is not None
+                    assert rgb[:202*396*3] == previous[:202*396*3]
+                    assert rgb[220*396*3:] == previous[220*396*3:]
+                    # Every former separator is now solid application blue.
+                    for x in [69,133,197,261,325,389]:
+                        assert rgb[(203*396+x)*3:(203*396+x)*3+3] == bytes([24,80,197])
+                else:
+                    assert rgb[44*396*3:] == b'\xff' * ((224-44)*396*3)
+                count += 1
             pending = False
-            frame = int(line.split()[1]); rgb = frames[frame]
-            assert rgb[(5 * 396 + 7) * 3:(5 * 396 + 7) * 3 + 3] != b'\xff\xff\xff'
-            assert rgb[44 * 396 * 3:] == b'\xff' * ((224 - 44) * 396 * 3)
-            count += 1
+            previous = rgb
     assert count >= 4
 
 
@@ -97,7 +105,7 @@ assert bar(initial) == PARAMETERS
 params, _ = run('2 F6 F6')
 assert last(initial, 'REPORT') == last(params, 'REPORT')
 fast, _ = run('2 F6 F6 TICKS:0 F6')
-assert 'TEXT 14 9 Drawing...' not in fast and bar(fast) == BASE
+assert 'TEXT 11 206 Drawing...' not in fast and bar(fast) == BASE
 # Page buffers already contain all visible columns: column-only motion and an
 # unchanged row position must reuse them without solver work or spinner flash.
 for prefix, suffix in [(base + 'F4 ', 'F3'),

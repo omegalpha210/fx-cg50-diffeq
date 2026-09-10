@@ -56,8 +56,9 @@ int main(void)
     d.solver.sf=12;
     unsigned long rhs=host_rhs_calls();graph_render(&d,&m,false);assert(host_rhs_calls()-rhs==84);
     unsigned baseline=hash();d.nic=3;
-    for(int f=0;f<3;f++){d.ic[f]=d.ic[0];d.enabled=0;}
-    rhs=host_rhs_calls();graph_render(&d,&m,false);assert(host_rhs_calls()-rhs==84 && hash()==baseline);
+    for(int f=0;f<3;f++){d.ic[f]=d.ic[0];d.ic_enabled=0;}
+    rhs=host_rhs_calls();graph_render(&d,&m,false);unsigned long integrated=host_rhs_calls()-rhs-84;
+    assert(integrated>0 && hash()==baseline); /* OFF still integrates each IC. */
     for(unsigned c=0;c<FIELD_COLORS;c++) {
         d.field_color=(uint8_t)c;graph_render(&d,&m,false);assert(color_count((unsigned)graph_field_color(c))>0);
         assert(graph_field_color(c)!=0xffff && graph_field_color(c)!=0x37e6);
@@ -76,8 +77,8 @@ int main(void)
     assert(color_count((unsigned)graph_field_color(d.field_color))>0);
     for(int yy=0;yy<DHEIGHT;yy++)for(int xx=0;xx<DWIDTH;xx++)if(xx<UI_X || xx>UI_X+383 || yy<UI_Y || yy>UI_Y+197)
         assert(gint_vram[yy*DWIDTH+xx]!=(unsigned)graph_field_color(d.field_color));
-    d.solver.sf=0;rhs=host_rhs_calls();graph_render(&d,&m,false);assert(host_rhs_calls()==rhs);
-    d.solver.sf=12;strcpy(d.text[0],"sqrt(y)");d.nic=1;d.ic[0].y[0]=0;d.enabled=1;
+    d.solver.sf=0;rhs=host_rhs_calls();graph_render(&d,&m,false);assert(host_rhs_calls()-rhs==integrated);
+    d.solver.sf=12;strcpy(d.text[0],"sqrt(y)");d.nic=1;d.ic[0].y[0]=0;d.ic_enabled=MODEL_IC_MASK;
     assert(model_compile(&d,&m).expression.status==EXPR_OK);
     GraphResult result=graph_render(&d,&m,false);assert(result.status==ODE_OK && result.invalid==ODE_OK);
     unsigned before=hash();trace_overlay_begin();assert(trace_prepare(&d,&m,0,0));

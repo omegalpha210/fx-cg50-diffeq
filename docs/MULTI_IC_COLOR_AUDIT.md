@@ -1,3 +1,11 @@
+Current beta.8 changes are authoritative in [VISIBILITY_PROMPT_AUDIT](VISIBILITY_PROMPT_AUDIT.md).
+R1/UIR1 are resolved by owner decision, implemented and validated. Drawing now
+keeps Graph with a bottom bar; Output has per-IC ON/OFF and color; SAVE is v11;
+numeric EXIT cancels immediately to G-Solve page2. The beta.7 report below is
+historical evidence, including its former review choices and original controls.
+
+---
+
 # Multiple-IC output color audit
 
 This audit covers the explicit hardware feedback about first-order trajectory
@@ -65,7 +73,7 @@ fixed through the existing color state and existing consumer paths.
 Because that color now becomes independently visible, initialize the absent row
 with the established default, while preserving every existing stored row.
 
-**REVIEW REQUIRED, unchanged:** Per-IC ON/OFF would add a new visibility state and
+**Historical R1, now closed in beta.8:** Per-IC ON/OFF would add a new visibility state and
 require consistent Table/CSV column policy. It is outside the requested independent
 color correction. The existing shared component visibility remains explicit.
 

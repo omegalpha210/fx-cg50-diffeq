@@ -35,11 +35,12 @@ int timer_configure(int timer,uint64_t delay,gint_call_t callback)
 void timer_start(int timer) {assert(timer==3);starts++;}
 void timer_stop(int timer) {assert(timer==3 && timers==1);timers--;stops++;}
 static unsigned partial_uploads;
-static bool screen_upload;
+static int screen_upload;
 void r61524_display_rect(uint16_t *vram,int xmin,int xmax,int ymin,int ymax)
 {
     assert(vram==gint_vram);
-    if(screen_upload)assert(xmin==0 && xmax==DWIDTH-1 && ymin>=0 && ymax<DHEIGHT && ymax-ymin<3);
+    if(screen_upload==2)assert(xmin==UI_X && xmax==UI_X+383 && ymin>=UI_Y+198 && ymax<UI_Y+216 && ymax-ymin<3);
+    else if(screen_upload==1)assert(xmin==0 && xmax==DWIDTH-1 && ymin>=0 && ymax<DHEIGHT && ymax-ymin<3);
     else assert(xmin==11 && xmax-xmin<120 && ymin==188 && ymax-ymin==11);
     partial_uploads++;
 }
@@ -102,13 +103,13 @@ int main(void)
     for(int i=0;i<3;i++)assert(!ui_busy_cancel(&busy));
     assert(busy.visible && partial_uploads==1);ui_busy_end(&busy);assert(partial_uploads==2);host_tick_step(0);
     for(int area=UI_BUSY_TABLE;area<=UI_BUSY_DRAW;area++) {
-        screen_upload=true;partial_uploads=0;host_tick_step(8);
+        screen_upload=area==UI_BUSY_DRAW ? 2:1;partial_uploads=0;host_tick_step(8);
         ui_busy_begin(&busy,area==UI_BUSY_TABLE ? "Preparing Table...":"Drawing...",area,ui_cancel,NULL);
         for(int i=0;i<3;i++)assert(!ui_busy_cancel(&busy));
-        assert(busy.visible && partial_uploads==75); /* Once-only 224-row canvas. */
+        assert(busy.visible && partial_uploads==(area==UI_BUSY_DRAW ? 6:75)); /* Once-only 224-row canvas. */
         for(int i=0;i<2;i++)assert(!ui_busy_cancel(&busy));
-        assert(partial_uploads==82); /* Subsequent frame:21 header rows only. */
-        ui_busy_end(&busy);assert(partial_uploads==82);host_tick_step(0);
+        assert(partial_uploads==(area==UI_BUSY_DRAW ? 12:82)); /* Subsequent frame:21 header rows only. */
+        ui_busy_end(&busy);assert(partial_uploads==(area==UI_BUSY_DRAW ? 12:82));host_tick_step(0);
     }
     puts("Target-branch key policy: retained events, one MENU, bounded saturation, 100 timer lifetimes passed.");
     return 0;

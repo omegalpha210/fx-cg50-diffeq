@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Beta.7 review frames from production handlers and the host LCD adapter."""
+"""Current review frames from production handlers and the host LCD adapter."""
 import os,subprocess,tempfile
 from pathlib import Path
 from PIL import Image,ImageDraw
@@ -10,19 +10,19 @@ def params(count):
     return '1 4 0 EXE F6 DOWN '+initial+' EXE F6 '
 five=params(5);ten=params(10)
 colors='F4 '
-for choice in ['RIGHT ','','DOWN RIGHT RIGHT ','RIGHT RIGHT ','DOWN ']:
-    colors+='DOWN F3 LEFT LEFT UP '+choice+'EXE '
+for i,choice in enumerate(['RIGHT ','','DOWN RIGHT RIGHT ','RIGHT RIGHT ','DOWN ']):
+    colors+=('DOWN ' if i else '')+'F3 LEFT LEFT UP '+choice+'EXE '
 colored=five+colors+'F6 F3 NEG 6 EXE 6 EXE 1 EXE DOWN NEG 1 EXE 6 EXE 1 EXE F6 F6 '
 cases=[
  ('table-busy','Table: blue header, cancel row, hidden softkeys','2 F6 F6 F6 TICKS:8 F4','Preparing Table... /'),
- ('drawing-busy','Drawing: same dedicated preparation canvas','2 F6 F6 TICKS:8 F6','Drawing... /'),
+ ('drawing-busy','Drawing: Graph retained; bottom blue busy bar','2 F6 F6 TICKS:8 F6','Drawing... /'),
  ('sf50','SF50 accepted; default remains12','1 4 F6 F6 '+'DOWN '*5+'5 0 EXE',None),
  ('sf51-error','SF51: inline range error, field retained','1 4 F6 F6 '+'DOWN '*5+'5 1 EXE',None),
  ('output-single','Single IC: existing y row',params(1)+'F4',None),
  ('output-five','Five independently editable curve colors',five+'F4 DOWN',None),
  ('output-five-colors','Each selected IC owns its color',five+colors,None),
- ('output-ten-first','Ten IC: shared visibility and first six colors',ten+'F4',None),
- ('output-ten-last','Ten IC: last four colors remain accessible',ten+'F4 UP',None),
+ ('output-ten-first','Ten IC: first seven visibility/color rows',ten+'F4',None),
+ ('output-ten-last','Ten IC: final three rows remain accessible',ten+'F4 UP',None),
  ('colors-graph','Five actual trajectories with independent colors',colored,None),
  ('colors-gsolve','G-Solve uses those same curve colors',colored+'F5 F1',None),
  ('colors-trace','TRACE retains the selected family color',colored+'F1 DOWN DOWN',None),

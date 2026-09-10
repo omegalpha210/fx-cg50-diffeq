@@ -27,7 +27,7 @@ cases=[('main','Main',''),
     ('trace','TRACE / Xdot interpolation','2 F6 F6 F6 F1 RIGHT'),
     ('func','FUNC / softkeys only','1 4 LEFT F2'),
     ('var','VAR / second page','4 9 F6 LEFT F3 F6'),
-    ('scalar-prompt','Y-CAL / scalar RUN','2 F6 F6 F6 F5 F6 F1 EXE 2 DOT 5'),
+    ('scalar-prompt','Y-CAL / EXE confirms, EXIT cancels','2 F6 F6 F6 F5 F6 F1 EXE 2 DOT 5'),
     ('graph-settings','Graph settings / INIT','2 F6 F6 F5')]
 cases += [
     ('table-limit','Table / last valid row', '1 1 LEFT ACON F2 F2 XOT RIGHTP EXE F6 F6 F6 F4 F2'),

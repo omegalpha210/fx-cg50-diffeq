@@ -1,7 +1,7 @@
 # Building and developing DIFFEQ
 
 The runtime/numerical/UI source and all existing tests match the validated local
-milestone `297b109`. This beta updates the existing public snapshot history; private
+milestone `1a16b1b`. This beta updates the existing public snapshot history; private
 development branches and manuals are not imported. Public-only changes cover
 release metadata, documentation and the host-only README image helper.
 
@@ -73,7 +73,7 @@ python3 tools/capture_ui.py
 python3 tools/capture_readme.py
 ```
 
-The script configures `tests/`, builds and runs all 57 CTest groups with strict
+The script configures `tests/`, builds and runs all 59 CTest groups with strict
 warnings, assertions and UBSan by default. The drawing/key adapter executes the
 actual application sources, with deterministic counters and temporary test files.
 It is not a SuperH/OS emulator. Physical timing, Fugue behavior and stack/allocator
@@ -89,7 +89,7 @@ redistributed with the add-in. Normal builds/tests do not need it.
 
 `VERSION` is the public prerelease string. CMake's project version and numeric G3A
 metadata use its numeric base (`0.12.0`, `00.12.0000`); the container cannot express
-`-beta.7`. The Git tag and Release make the beta designation explicit.
+`-beta.8`. The Git tag and Release make the beta designation explicit.
 
 Release from a clean tagged commit: clean target build, host tests, package check,
 then calculate SHA256. Attach `DIFFEQ.g3a`, `SHA256SUMS.txt` `VALIDATION.md` and the assembled
@@ -99,17 +99,16 @@ manuals, local toolchains, private paths or raw diagnostic logs.
 
 Phase renderer screenshots: `python3 tools/capture_phase.py`. Bounded analysis benchmark: `build-host/benchmark_phase`. Algorithm limits are in [PHASE_NUMERICS.md](docs/PHASE_NUMERICS.md).
 
-Event/Diagnostics screenshots: `python3 tools/capture_events.py`. Event benchmark: `build-host/test_events`. SAVE format v10; frozen v3–v9 readers retained. See [EVENTS](docs/EVENTS.md).
+Event/Diagnostics screenshots: `python3 tools/capture_events.py`. Event benchmark: `build-host/test_events`. SAVE format v11; frozen v3–v10 readers retained. See [EVENTS](docs/EVENTS.md).
 
-The v0.12.0-beta.7 pass restores dedicated Table/Drawing busy screens, caps SF at
-50 and exposes the existing per-IC color matrix in Output. It also audits every
-mode/dimension and both solvers, consumers, nested UI state and persistence.
-All 49 prior groups remain. Eight added groups cover busy screens, per-IC colors,
-analytic/mapping cases, actual UI workflows, full Document roundtrips and consumers.
-RK4/RK45 stepping and parser arithmetic remain unchanged. G-Solve has a narrowly
-bounded Event STOP endpoint correction; SAVE remains version 10 with legacy readers.
-The host-only LCD adapter captures partial uploads accurately but does not establish
-physical latency. Installed gint dwindow/r61524 APIs provide bounded strip uploads.
-`python3 tools/capture_audit.py` generates 16 current frames and four 3x previews.
-See [full matrix, fixes and review decisions](docs/FULL_AUDIT.md) and
-[memory/ownership](docs/MEMORY_AUDIT.md). Hardware checks remain pending.
+The v0.12.0-beta.8 pass corrects Drawing to a Graph-preserving bottom bar, adds
+per-IC output visibility with v11 persistence, and makes G-Solve numeric EXIT an
+immediate cancellation to page 2. Table's dedicated screen remains. All 57 earlier
+groups remain; two added groups cover trajectory consumers/migration and actual
+numeric EXIT/HOLD workflows. RK4/RK45, parser and G-Solve search algorithms stay.
+`python3 tools/capture_visibility.py` generates 12 frames and four 3x previews;
+the native LCD-strip adapter checks exact Drawing bounds and retained Graph pixels.
+The host fixtures do not establish physical timing. See the
+[implementation audit](docs/VISIBILITY_PROMPT_AUDIT.md),
+[closed decisions](docs/FULL_AUDIT.md) and [memory report](docs/MEMORY_AUDIT.md).
+All 34 priority hardware cases remain pending.

@@ -1,3 +1,48 @@
+# Priority retest — v0.12.0-beta.8
+
+**HARDWARE TEST REQUIRED / HARDWARE RETEST REQUIRED — all34 cases pending.**
+Record device/OS, exact Release SHA256, keys, observed pixels/results and timing.
+Host LCD/RTC fixtures do not establish physical performance.
+
+1. Slow Drawing keeps the previous Graph visible (first entry establishes axes once).
+2. Bottom F-key rectangle becomes one uninterrupted application-blue bar.
+3. Drawing... spinner cycles / - backslash | after about156ms, max8Hz.
+4. White EXIT cancels is right-aligned and readable.
+5. No labels, cells or F-key separators remain during Drawing.
+6. Completion removes the bar and restores normal Graph softkeys without residue.
+7. Cancellation restores accepted Graph/window/report/Last calculation and F-keys; initial cancel returns Parameters.
+8. Fast draw has no busy flash.
+9. Five IC Output rows toggle independently with LEFT/RIGHT.
+10. F3 COLOR edits only the selected IC.
+11. OFF→ON preserves the original custom color and OFF swatch.
+12. Ten IC rows scroll/wrap; toggle/color IC10 without clipping.
+13. Graph plots exactly ON trajectories in configured colors.
+14. TRACE skips OFF curves and resets stale selection to a visible curve.
+15. Every G-Solve operation skips OFF curves; one visible curve skips chooser.
+16. ICPT requires two visible curves and uses only their indices.
+17. All-OFF: axes/grid/SF safe, TRACE/G-Solve unavailable, Table/CSV/STAT x-only.
+18. Output INIT restores all ON/default palette; IC INIT has separate scope.
+19. SAVE/cold RCL retains mixed/all-OFF masks, colors and inactive slot preferences.
+20. Y-CAL empty draft + EXIT returns G-Solve page2.
+21. Y-CAL partial minus/exponent draft + EXIT returns page2.
+22. X-CAL empty draft + EXIT returns page2.
+23. X-CAL partial draft + EXIT returns page2.
+24. EXIT never creates Invalid number, including valid-uncommitted/error drafts.
+25. EXE still displays Invalid number for empty/invalid draft; F6 is inert.
+26. Held EXIT crosses only to page2, including cursor blink timing.
+27. Release then fresh EXIT from page2 returns Graph.
+28. Valid X/Y-CAL via EXE keeps prior numeric results, marker and Y-follow.
+29. MENU/Fugue roundtrip across Graph, busy feedback, Output and numeric prompt.
+30. Native v3–v10 migration: new IC bits all ON, previous colors/SF/Phase/solver/Event policies retained.
+31. Physical LCD bar readability, clipping, transfer artifacts and original F-key geometry.
+32. Physical key repeat and cancellation priority under slow work.
+33. OFF IC Event hit data and actual diagnostics remain; its Graph marker hides.
+34. Shrink5→2→5 preserves inactive mask/colors; untouched new slots ON/default. CSV/STAT import confirms x,y1,y3,y5 mapping.
+
+Earlier milestone records below are historical where superseded above.
+
+---
+
 # Full audit and explicit fixes retest — v0.12.0-beta.7
 
 **HARDWARE TEST REQUIRED / HARDWARE RETEST REQUIRED — all 27 cases pending.**

@@ -10,9 +10,9 @@
 DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식의 수치해를
 컬러 그래프·기울기장·TRACE·G-Solve·표로 살펴보고, 2변수 시스템의 위상을 분석할 수 있습니다.
 
-**공개 베타 · v0.12.0-beta.7 · [MIT 라이선스](LICENSE)**
+**공개 베타 · v0.12.0-beta.8 · [MIT 라이선스](LICENSE)**
 
-**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.7)**
+**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.8)**
 · [전체 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [버그 신고](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -191,7 +191,7 @@ Parameters **F3 V-WIN**에서 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax
 
 ## 계산기에 설치하기
 
-1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.7)를 엽니다.
+1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.8)를 엽니다.
 2. **DIFFEQ.g3a**를 받습니다. 다운로드 확인용 `SHA256SUMS.txt`도 제공됩니다.
 3. fx-CG50을 USB로 연결하고 USB Flash 모드를 선택한 뒤 컴퓨터에서 계산기 드라이브를 엽니다.
 4. `DIFFEQ.g3a`를 드라이브 **최상위**에 복사합니다. `@MainMem` 폴더 안에 넣지 않습니다.
@@ -200,7 +200,7 @@ Parameters **F3 V-WIN**에서 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax
 
 [CASIO 공식 애드인 설치 안내](https://edu.casio.com/content/dam/casio/global/edu-casio-com/download/files/fx-cg50-series/Inst_Users_Guide.pdf)에 따른 절차입니다.
 계산기에는 `.g3a`만 있으면 됩니다. 업데이트 전에 기존 세션 파일을 백업하세요.
-이번 버전은 v10 형식으로 저장하며 같은 기기의 v3~v9 파일을 읽습니다. 구버전 앱은
+이번 버전은 v11 형식으로 저장하며 같은 기기의 v3~v10 파일을 읽습니다. 구버전 앱은
 새 저장 파일을 거부할 수 있고, 일부 이전 설정은 변환됩니다. [업그레이드 안내](docs/release/RELEASE_NOTES.md)를 확인하세요.
 
 ## 핵심 조작
@@ -250,24 +250,32 @@ HOLD는 계층을 건너뛰지 않고 scratch 계산 취소는 기존 그래프�
 결과 패널은 좌측 하단에 고정합니다. marker가 가려지면 X·scale·Y span·수치 결과를 유지하며
 Y만 최소한 평행 이동합니다. 이미 보이는 점은 창을 움직이지 않고 결과 순회는 재계산하지 않습니다.
 
-오래 걸리는 Table/Drawing 준비에는 파란 **Preparing Table...** 또는 **Drawing...**
-header, `/ - \ |` spinner, **EXIT cancels** 행과 흰 본문을 사용하며 F-key strip을 숨깁니다.
-약 156 ms 지연·최대 8 Hz로 표시하고 첫 canvas 이후에는 header만 갱신합니다.
-빠른 작업·같은 Table 페이지에는 불필요한 화면을 띄우지 않습니다. EXIT는 임시 작업을
-버리고 안정된 Graph로 돌아가며 최초 Drawing 취소는 Parameters로 돌아갑니다.
+오래 걸리는 **Drawing은 현재 Graph를 유지**하고 하단 여섯 softkey 영역만
+하나의 파란 바로 바꿉니다. 왼쪽 흰 **Drawing...** spinner, 오른쪽 **EXIT cancels**이며
+버튼 구분선은 없습니다. 약156ms 지연·최대8Hz로 bar만 갱신합니다. 완료/취소 시
+원래 F-key를 복구하고 안정된 결과와 Last calculation을 보존합니다.
+최초 Graph는 axes를 한 번 만든 뒤 계산하며 최초 취소는 Parameters로 돌아갑니다.
+**Table은 기존 전용 준비 화면**(파란 header·흰 EXIT 행/본문·숨긴 F-key)을 유지합니다.
 TRACE/G-Solve는 기존 하단 **CALCULATING...** 표시를 유지합니다.
-취소한 Drawing은 Last calculation을 덮어쓰지 않습니다.
 
-**복수 IC의 개별 색상:** Output의 IC1 y~IC10 y에서 F3 COLOR로 해당 곡선만 바꿉니다.
-별도 **y (all ICs)** 행은 공통 ON/OFF이며 IC 행은 색상만 편집합니다.
-INIT는 기존 palette로 복원하고 SAVE/RCL 및 IC 수 감소·재확장에서도 slot별 색을 보존합니다.
-단일 IC는 기존 y 행을 사용합니다. SF는 기본 12, 범위 0~50이며 초과 입력을 거부하고
-과거 저장값은 최대 50으로 정규화합니다. 저장 format은 바뀌지 않습니다.
+**각 1차 IC의 독립 ON/OFF와 색상:** 단일 IC는 y, 여러 IC는 IC1 y~IC10 y입니다.
+LEFT/RIGHT는 해당 IC만 ON/OFF, F3 COLOR는 해당 색만 바꿉니다. OFF도 실제 색 선을 유지합니다.
+Graph/TRACE/G-Solve/Table/CSV/STAT은 OFF 곡선을 제외하지만 내부 적분·Event hit와
+실제 작업량은 보존합니다. 숨긴 곡선의 Graph Event marker도 숨깁니다.
+모두 OFF이면 TRACE/G-Solve는 안전한 unavailable, Table/export는 x-only입니다.
+Output INIT는 전체 ON/default 색이며, SAVE v11은 비활성 slot도 보존합니다.
+IC 감소·재확장에서도 설정을 보존하고, v3~v10 migration은 모든 IC를 ON으로 초기화하며 색을 보존합니다.
+SF는 기존0~50, 기본12입니다.
 
-유효한 Event STOP 끝점의 G-Solve 결과 누락과 RK45 Table의 dx 안내도 수정했습니다.
-모든 방정식 mode·1~9차/변수·두 solver·1/2/5/10 IC와 소비자·상태·저장을 감사했습니다.
-[전체 감사·검토 보류 사항](docs/FULL_AUDIT.md) ·
-[실제 renderer 16개 화면](docs/ui-review/audit-overview.png).
+**X/Y-CAL 숫자 입력은 EXE 확정, EXIT 취소**입니다. 빈 값·미완성·유효한 미확정 값·오류 중에도
+EXIT는 검증 없이 G-Solve 2쪽으로 돌아갑니다. HOLD는 추가 단계를 나가지 않고,
+떼었다가 다시 누른 EXIT만 Graph로 돌아갑니다. EXE만 검증/확정하며 prompt의 F6는 비어 있습니다.
+다른 입력 화면은 기존 조작을 유지합니다.
+
+이전 두 검토 보류 사항을 닫았습니다. **59/59 host/UBSan**, SH28개 C 파일 warning0,
+package13/13을 정확한 공개 소스에서 반복 검증합니다. 수치 알고리즘은 그대로입니다.
+[구현·검증](docs/VISIBILITY_PROMPT_AUDIT.md) ·
+[실제 renderer 12개 화면](docs/ui-review/visibility-overview.png).
 Equation/IC F1 INIT는 해당 입력만 복구합니다. 미완성 draft는 NEXT에서 전체 검증하고 첫 오류를
 선택합니다. IC numeric 값은 전체 성공 후에만 반영하며 미완성 IC draft는 runtime-only입니다.
 빨간 domain/numerical END는 비치명 상태로 유지하고 유효 구간 TRACE/G-Solve를 계속 사용할 수 있습니다.

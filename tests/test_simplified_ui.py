@@ -68,9 +68,9 @@ assert 'Left/Right: columns' in tail(run(table))
 assert 'Left/Right: columns' not in tail(run(manual))
 # One shared visibility row controls all ICs; the remaining rows edit only colors.
 out=run(many+'F6 F4')
-assert re.findall(r'TEXT 20 \d+ ([^\n]+)',tail(out))==['y (all ICs)']+[f'IC{i} y' for i in range(1,7)]
+assert re.findall(r'TEXT 20 \d+ ([^\n]+)',tail(out))==[f'IC{i} y' for i in range(1,8)]
 out=run(many+'F6 F4 RIGHT EXIT F6 F1')
-assert 'IC1 x=' not in out and plot(out)==plot(run(many+'F6 F4 RIGHT EXIT F6'))
+assert 'IC1 x=' not in out and 'IC2 x=' in out
 # Higher modes have one complete state vector, never ADD/DROP or IC switching.
 for entry,n,last in [('2',2,"y'0"),('3 9 F6',9,'y(8)0'),('4 9 F6',9,'y9_0')]:
     prefix=entry+' F6 '

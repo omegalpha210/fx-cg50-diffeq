@@ -1,4 +1,4 @@
-"""Actual app Output rows reflect shared visibility and independent IC colors."""
+"""Actual app Output rows reflect independent visibility and independent IC colors."""
 import os,re,subprocess,sys,tempfile
 from pathlib import Path
 app=str(Path(sys.argv[1]).resolve())
@@ -22,21 +22,20 @@ for count in (1,2,5,10):
         assert rows(base)==['y'] and states(base)==['ON']
         assert 'ON/OFF toggle, F3: COLOR' in base
         continue
-    assert rows(base)==['y (all ICs)']+[f'IC{i} y' for i in range(1,min(count,6)+1)]
-    assert states(base)==['ON']+['']*min(count,6)
-    assert 'LEFT/RIGHT: ON/OFF for all ICs' in base
-    assert plot(run(prefix+'F3'))==plot(base) # No color action on the visibility row.
+    assert rows(base)==[f'IC{i} y' for i in range(1,min(count,7)+1)]
+    assert states(base)==['ON']*min(count,7)
+    assert 'LEFT/RIGHT: ON/OFF toggle, F3: COLOR' in base
     seen=set()
     for family in range(count):
-        selected=prefix+'DOWN '*(family+1);out=run(selected)
+        selected=prefix+'DOWN '*family;out=run(selected)
         assert f'IC{family+1} y' in rows(out)
         seen.update(label for label in rows(out) if label.startswith('IC'))
-        assert 'F3: COLOR' in out and 'ON/OFF' not in out
+        assert 'ON/OFF toggle, F3: COLOR' in out
         assert plot(run(selected+'LEFT RIGHT'))==plot(out)
         assert plot(run(selected+'F3 LEFT UP EXIT'))==plot(out) # Cancel preserves preview and focus.
         assert max(map(int,re.findall(r'^TEXT 20 (\d+)',out,re.M)))<=167
     assert seen=={f'IC{i} y' for i in range(1,count+1)}
-    assert plot(run(prefix+'UP'))==plot(run(prefix+'DOWN '*count))
+    assert plot(run(prefix+'UP'))==plot(run(prefix+'DOWN '*(count-1)))
     assert plot(run(prefix+'UP DOWN'))==plot(base)
     off=run(prefix+'RIGHT');assert states(off)[0]=='OFF'
     assert plot(run(prefix+'RIGHT F1'))==plot(base)
@@ -44,4 +43,4 @@ for prefix,last in [('2 F6 F6 F4 ',"y'"),('3 9 F6 F6 F6 F4 ','y(8)'),('4 9 F6 F6
     out=run(prefix+'UP')
     assert rows(out)[-1]==last and 'ON/OFF toggle, F3: COLOR' in out
     assert all(not name.startswith('IC') for name in rows(out))
-print('Output instances UI: truthful 1/2/5/10 color rows, shared y visibility, ten-row reachability/wrap, palette cancellation, INIT and higher/system components passed.')
+print('Output instances UI: truthful 1/2/5/10 color rows, independent visibility, ten-row reachability/wrap, palette cancellation, INIT and higher/system components passed.')

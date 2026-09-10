@@ -112,6 +112,14 @@ void model_output_defaults(Document *d)
 {
     model_color_defaults(d);
     d->enabled=(uint16_t)((1u<<d->dim)-1);
+    d->ic_enabled=MODEL_IC_MASK;
+}
+bool model_curve_visible(const Document *d,int family,int variable)
+{
+    if(!d || family<0 || family>=d->nic || family>=ODE_MAX_IC
+        || variable<0 || variable>=d->dim || variable>=ODE_MAX_DIM)return false;
+    return model_field_supported(d) ? (d->ic_enabled&(1u<<family))!=0:
+        (d->enabled&(1u<<variable))!=0;
 }
 void model_output_color(Document *d,int variable,unsigned color)
 {
@@ -192,7 +200,7 @@ OdeStatus model_validate(const Document *d)
         || (v->labels!=0 && v->labels!=1) || d->phase_field>1
         || d->phase_nullclines>1 || d->phase_ready>1)return ODE_BAD_INPUT;
     if(d->nic==0 && (d->kind>EQ_GENERAL || d->solver.sf==0)) return ODE_BAD_INPUT;
-    if(d->enabled>>d->dim)return ODE_BAD_INPUT;
+    if(d->enabled>>d->dim || d->ic_enabled&~MODEL_IC_MASK)return ODE_BAD_INPUT;
     for(int i=0;i<ODE_MAX_DIM;i++)if(!memchr(d->text[i],0,EXPR_TEXT))return ODE_BAD_INPUT;
     for(int i=0;i<ODE_MAX_IC;i++) {
         /* Validate inactive slots too: they can be re-enabled without parsing. */

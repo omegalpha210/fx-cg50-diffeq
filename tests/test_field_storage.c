@@ -37,6 +37,10 @@ static V8Record eight;
 typedef struct {V8Document prefix;OdeAdaptive adaptive;} V9Document;
 typedef struct {uint32_t magic,version,size,generation,has_recall;V9Document current,recall;uint32_t checksum;} V9Record;
 static V9Record nine;
+typedef struct {V9Document prefix;EventConfig event;} V10Document;
+typedef struct {uint32_t magic,version,size,generation,has_recall;V10Document current,recall;uint32_t checksum;} V10Record;
+static V10Record ten;
+_Static_assert(offsetof(Document,ic_enabled)==sizeof(V10Document),"frozen v10 prefix");
 typedef struct {uint32_t magic,version,size,generation,has_recall;Document current,recall;uint32_t checksum;} CurrentRecord;
 static V6Record six;
 static V7Record seven;
@@ -143,7 +147,7 @@ int main(void)
     strcpy(old[0].text[8],"A*y1+r+theta+1e-3");
     for(unsigned version=3;version<=5;version++) {
         write_old(paths[0],version);
-        assert(storage_load(&b,directory) && b.has_recall && b.doc.enabled==257);
+        assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && b.has_recall && b.doc.enabled==257);
         assert(b.doc.solver.sf==0 && b.recall.solver.sf==50 && b.migration_warnings==STORAGE_LEGACY);
         assert(!strcmp(b.doc.text[8],"(3)*y1+(2)+(1)+1e-3"));
         assert(model_compile(&b.doc,&b.model).expression.status==EXPR_OK);
@@ -157,27 +161,27 @@ int main(void)
     memset(&old[1],0,sizeof(old[1]));old_has_recall=0;
     for(unsigned version=3;version<=5;version++) {
         write_old(paths[0],version);
-        assert(storage_load(&b,directory) && !b.has_recall && b.doc.dim==9);
+        assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && !b.has_recall && b.doc.dim==9);
         assert(b.migration_warnings==STORAGE_LEGACY);
     }
     from_new(&old[1],&a.recall);old_has_recall=1;
     /* Two old higher-order sets become one complete vector, with explicit notice. */
     old[0].nic=2;old[0].ic[1]=old[0].ic[0];old[0].ic[1].y[8]=99;
-    write_old(paths[0],5);assert(storage_load(&b,directory) && b.doc.nic==1);
+    write_old(paths[0],5);assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && b.doc.nic==1);
     assert(b.migration_warnings&STORAGE_IC_ADAPTED);
     /* Keep shared-x scalar families, never silently move a legacy IC's x. */
     model_defaults(&a.doc,EQ_GENERAL,1);from_new(&old[0],&a.doc);
     old[0].nic=3;old[0].ic[1].x=2;old[0].ic[2].y[0]=7;
-    write_old(paths[0],5);assert(storage_load(&b,directory) && b.doc.nic==2 && b.doc.ic[1].y[0]==7);
+    write_old(paths[0],5);assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && b.doc.nic==2 && b.doc.ic[1].y[0]==7);
     assert(b.migration_warnings&STORAGE_IC_ADAPTED);
     strcpy(old[0].text[0],"A");old[0].constants[0]=INFINITY;
-    write_old(paths[0],4);assert(storage_load(&b,directory) && !strcmp(b.doc.text[0],"A"));
+    write_old(paths[0],4);assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && !strcmp(b.doc.text[0],"A"));
     assert(b.migration_warnings&STORAGE_EXPRESSION_REVIEW);
     /* Expansion overflow retains the source text and requires repair; never truncates it. */
     char long_text[192];memset(long_text,0,sizeof(long_text));
     for(int i=0;i<60;i++)strcat(long_text,i ? "+A":"A");
     strcpy(old[0].text[0],long_text);old[0].constants[0]=1.2345678901234567;
-    write_old(paths[0],3);assert(storage_load(&b,directory) && !strcmp(b.doc.text[0],long_text));
+    write_old(paths[0],3);assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && !strcmp(b.doc.text[0],long_text));
     assert(b.migration_warnings&STORAGE_EXPRESSION_REVIEW);
     /* Frozen nine-IC v6 streams into expanded current/recall without offset drift. */
     model_defaults(&a.doc,EQ_GENERAL,1);a.doc.nic=9;
@@ -188,7 +192,7 @@ int main(void)
     from_six(&six.current,&a.doc);a.doc.ic[8].y[0]=88;from_six(&six.recall,&a.doc);
     six.current.solver.sf=100;six.recall.solver.sf=51;
     write_bytes(paths[0],&six,sizeof(six),offsetof(V6Record,checksum));
-    assert(storage_load(&b,directory) && b.doc.nic==9 && b.recall.nic==9 && !b.migration_warnings);
+    assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && b.doc.nic==9 && b.recall.nic==9 && !b.migration_warnings);
     assert(b.doc.ic[8].y[0]==8 && b.recall.ic[8].y[0]==88 && b.doc.ic[9].y[0]==0);
     assert(b.doc.color[8][0]==2 && b.doc.solver_custom && b.doc.solver.xmin==-2 && b.doc.solver.xmax==3);
     for(int i=0;i<9;i++)assert(model_color(&b.doc,i,0)==(unsigned)(i%6));
@@ -199,7 +203,7 @@ int main(void)
     assert(model_compile(&b.doc,&b.model).expression.status==EXPR_OK);
     six.has_recall=0;memset(&six.recall,0,sizeof(six.recall));
     write_bytes(paths[0],&six,sizeof(six),offsetof(V6Record,checksum));
-    assert(storage_load(&b,directory) && !b.has_recall && b.doc.nic==9);
+    assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && !b.has_recall && b.doc.nic==9);
     /* Frozen v7 has ten IC slots but only one shared TIME/PHASE window. */
     model_defaults(&a.doc,EQ_SYSTEM,2);a.doc.nic=10;a.doc.ic[9].y[1]=91;
     a.doc.view=(ViewWindow){-8,9,-4,5,2,3,0,1,1,1,0};
@@ -212,7 +216,7 @@ int main(void)
     seven.magic=0x44455131;seven.version=7;seven.size=sizeof(seven);
     seven.generation=40;seven.has_recall=1;
     write_bytes(paths[0],&seven,sizeof(seven),offsetof(V7Record,checksum));
-    assert(storage_load(&b,directory) && b.has_recall && !b.migration_warnings);
+    assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && b.has_recall && !b.migration_warnings);
     assert(b.doc.nic==10 && b.doc.ic[9].y[1]==91);
     assert(b.doc.field_style==FIELD_ARROW && b.doc.field_color==0);
     assert(b.doc.view.xmin==-6.3 && b.doc.view.xmax==6.3 && b.doc.view.phase==1);
@@ -229,7 +233,7 @@ int main(void)
     assert(b.doc.phase_field==1 && b.doc.phase_nullclines==0 && b.doc.phase_ready==0);
     seven.current.solver.sf=100;seven.recall.solver.sf=51;
     write_bytes(paths[0],&seven,sizeof(seven),offsetof(V7Record,checksum));
-    assert(storage_load(&b,directory) && b.doc.solver.sf==50 && b.recall.solver.sf==50);
+    assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && b.doc.solver.sf==50 && b.recall.solver.sf==50);
 
     /* Current v9 round-trips independent windows and phase preferences. */
     model_defaults(&a.doc,EQ_SYSTEM,2);a.doc.view.phase=1;
@@ -292,22 +296,32 @@ int main(void)
     b=a;b.doc.solver.sf=51;assert(!storage_save(&b,directory));
     b=a;b.recall.solver.sf=51;assert(!storage_save(&b,directory));
 
+    /* Frozen v10 bytes, including an old shared OFF flag, migrate ICs to ON.
+       Poisoned old padding must not become the new visibility preference. */
+    memset(&ten,0xa5,sizeof(ten));ten.magic=0x44455131;ten.version=10;
+    ten.size=sizeof(ten);ten.generation=99;ten.has_recall=1;
+    memcpy(&ten.current,&a.doc,sizeof(ten.current));memcpy(&ten.recall,&a.recall,sizeof(ten.recall));
+    ten.current.prefix.prefix.enabled=0;
+    write_bytes(paths[0],&ten,sizeof(ten),offsetof(V10Record,checksum));
+    assert(remove(paths[1])==0);
+    assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && b.doc.ic_enabled==MODEL_IC_MASK && b.recall.ic_enabled==MODEL_IC_MASK);
+    assert(!memcmp(b.doc.color,a.doc.color,sizeof(a.doc.color)));
     /* Current invalid phase bytes are rejected; current field appearance sanitizes. */
     seven.generation=100;write_bytes(paths[0],&seven,sizeof(seven),offsetof(V7Record,checksum));
-    memset(&record,0,sizeof(record));record.magic=0x44455131;record.version=10;
+    memset(&record,0,sizeof(record));record.magic=0x44455131;record.version=11;
     record.size=sizeof(record);record.generation=101;record.has_recall=1;
     record.current=a.doc;record.recall=a.recall;record.current.field_style=255;record.current.field_color=255;
     record.current.solver.sf=100;record.recall.solver.sf=51;
     write_bytes(paths[1],&record,sizeof(record),offsetof(CurrentRecord,checksum));
-    assert(storage_load(&b,directory) && b.doc.field_style==FIELD_ARROW && b.doc.field_color==0);
+    assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && b.doc.field_style==FIELD_ARROW && b.doc.field_color==0);
     assert(b.doc.solver.sf==50 && b.recall.solver.sf==50);
     record.generation=102;record.current.phase_nullclines=2;
     write_bytes(paths[1],&record,sizeof(record),offsetof(CurrentRecord,checksum));
-    assert(storage_load(&b,directory) && b.doc.nic==10 && b.doc.phase_view.xmin==-8);
-    record.version=11;record.current.phase_nullclines=1;
+    assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && b.doc.nic==10 && b.doc.phase_view.xmin==-8);
+    record.version=12;record.current.phase_nullclines=1;
     write_bytes(paths[1],&record,sizeof(record),offsetof(CurrentRecord,checksum));
-    assert(storage_load(&b,directory) && b.doc.nic==10 && b.doc.phase_view.xmin==-8);
-    assert(truncate(paths[1],25)==0);assert(storage_load(&b,directory) && b.doc.field_style==FIELD_ARROW);
+    assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && b.doc.nic==10 && b.doc.phase_view.xmin==-8);
+    assert(truncate(paths[1],25)==0);assert(storage_load(&b,directory) && b.doc.ic_enabled==MODEL_IC_MASK && b.doc.field_style==FIELD_ARROW);
     FILE *f=fopen(paths[0],"rb");assert(f);unsigned char check[sizeof(seven)];size_t n=fread(check,1,sizeof(check),f);fclose(f);
     assert(n==sizeof(seven) && !memcmp(check,&seven,n));
     for(int i=0;i<2;i++)assert(remove(paths[i])==0);assert(rmdir(directory)==0);

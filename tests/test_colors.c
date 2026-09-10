@@ -27,11 +27,11 @@ int main(void)
         assert(gint_vram[pixel]==graph_palette_color(color));
         assert(graph_highlight_curve(&a.doc,&a.model,0,0)==ODE_OK);
         assert(gint_vram[pixel]!=graph_palette_color(color));
-        a.doc.enabled=0;
+        a.doc.ic_enabled=0;
         assert(gsolve_curve_count(&a.doc)==0);
         assert(graph_render(&a.doc,&a.model,false).status==ODE_OK);
         assert(gint_vram[pixel]==C_WHITE && model_color(&a.doc,0,0)==color);
-        a.doc.enabled=1;
+        a.doc.ic_enabled=MODEL_IC_MASK;
     }
     a.doc.color[0][0]=255;assert(model_color(&a.doc,0,0)==2);
     assert(graph_render(&a.doc,&a.model,false).status==ODE_OK);

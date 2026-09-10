@@ -1,3 +1,20 @@
+# Current validation — v0.12.0-beta.8
+
+Final development **59/59 host/UBSan PASS, 39.72s**, all prior57 groups retained.
+Strict clean **28 C-unit SH compile/link, zero warnings,13/13 package checks**.
+text220020/data768/BSS72192B; largest single frame2664B; G3A249468B.
+Two new groups cover trajectory consumers/migration and actual numeric EXIT/UI;
+existing busy, output, storage, numerical and cancellation groups were retained.
+Twelve current renderer frames/four3x previews and existing captures reviewed.
+R1/UIR1 are resolved/implemented/validated. Exact public candidate and tag repeat
+required gates; their measured provenance is Release VALIDATION.md.
+[Full beta.8 evidence](VISIBILITY_PROMPT_AUDIT.md). All34 current hardware cases
+remain HARDWARE TEST REQUIRED, with no emulator/device PASS claimed.
+
+Earlier milestone records below are historical where superseded above.
+
+---
+
 # Full audit and explicit fixes validation — v0.12.0-beta.7
 
 - The four explicit fixes first passed **53/53 host/UBSan groups**, followed by

@@ -25,17 +25,14 @@ static void make_script(void)
     for(unsigned c=0;c<sizeof(counts)/sizeof(*counts);c++) {
         int n=counts[c];
         for(int f=0;f<n;f++) {
-            select_row(n>1 ? f+1:0);keys("F3 LEFT LEFT UP ");
+            select_row(f);keys("F3 LEFT LEFT UP ");
             if(chosen(f)>=3)keys("DOWN ");
             for(unsigned j=0;j<chosen(f)%3;j++)keys("RIGHT ");
             keys("EXE F6 ");
         }
-        if(n>1) {
-            keys("F3 F6 "); /* Visibility row has no palette action. */
-            keys("DOWN LEFT RIGHT F6 "); /* Color rows cannot alter ON/OFF. */
-            keys("RIGHT F6 LEFT F6 "); /* Shared dependent-output visibility. */
-            keys("UP F6 "); /* Wrap to IC n, including the second page. */
-        }
+        for(int f=0;f<n;f++){select_row(f);keys("RIGHT F6 ");}
+        for(int f=0;f<n;f+=2){select_row(f);keys("LEFT F6 ");}
+        keys("UP F6 ");
         keys("F1 F6 ");
     }
     assert(!setenv("DIFFEQ_HOST_KEYS",script,1));
@@ -43,11 +40,10 @@ static void make_script(void)
 }
 static void preview(int selected)
 {
-    bool multiple=a.doc.nic>1;int count=multiple ? a.doc.nic+1:1;
+    int count=a.doc.nic;
     int page=selected/7;
     for(int row=0;row<7 && page*7+row<count;row++) {
-        int index=page*7+row;if(multiple && !index)continue;
-        int f=multiple ? index-1:0;
+        int f=page*7+row;
         assert(gint_vram[(UI_Y+36+row*22)*DWIDTH+UI_X+340]
             ==graph_palette_color(model_color(&a.doc,f,0)));
     }
@@ -59,9 +55,14 @@ static void consumers(void)
     strcpy(a.doc.text[0],"0");
     assert(model_compile(&a.doc,&a.model).expression.status==EXPR_OK);
     assert(graph_render(&a.doc,&a.model,false).status==ODE_OK);
-    assert(gsolve_curve_count(&a.doc)==a.doc.nic);
+    int visible=0;for(int f=0;f<a.doc.nic;f++)if(model_curve_visible(&a.doc,f,0))visible++;
+    assert(gsolve_curve_count(&a.doc)==visible);int ordinal=0;
     for(int f=0;f<a.doc.nic;f++) {
-        GsolveCurve curve;assert(gsolve_curve_at(&a.doc,f,&curve));
+        GsolveCurve curve;
+        if(!model_curve_visible(&a.doc,f,0)) {
+            assert(!trace_prepare(&a.doc,&a.model,f,0));continue;
+        }
+        assert(gsolve_curve_at(&a.doc,ordinal++,&curve));
         assert(curve.family==f && curve.variable==0);
         int x,y;assert(graph_point(&a.doc.view,1,a.doc.ic[f].y[0],&x,&y));
         size_t pixel=(size_t)(UI_Y+y)*DWIDTH+(unsigned)(UI_X+x);
@@ -76,21 +77,18 @@ static void consumers(void)
         assert(gint_vram[pixel]==graph_highlight_color(color,true));
         trace_overlay_restore();assert(gint_vram[pixel]==color);
     }
-    GsolveCurve beyond;assert(!gsolve_curve_at(&a.doc,a.doc.nic,&beyond));
+    GsolveCurve beyond;assert(!gsolve_curve_at(&a.doc,visible,&beyond));
     TableIndex index;assert(table_index_build(&a.doc,&a.model,&index,NULL,NULL)==ODE_OK);
-    assert(index.solutions && index.count==a.doc.nic);
-    for(int f=0;f<a.doc.nic;f++)assert(index.columns[f]==f);
-    a.doc.enabled=0;
+    assert(index.solutions && index.count==visible);
+    ordinal=0;for(int f=0;f<a.doc.nic;f++)if(model_curve_visible(&a.doc,f,0))assert(index.columns[ordinal++]==f);
+    uint16_t retained=a.doc.ic_enabled;a.doc.ic_enabled=0;
     assert(gsolve_curve_count(&a.doc)==0);
     assert(table_index_build(&a.doc,&a.model,&index,NULL,NULL)==ODE_OK && index.count==0);
     assert(graph_render(&a.doc,&a.model,false).status==ODE_OK);
-    a.doc.enabled=1;
+    a.doc.ic_enabled=retained;
 }
 int main(void)
 {
-    int width;dsize("y (all ICs)",NULL,&width,NULL);
-    assert(width<=104); /* Label x14 leaves at least4px before colon x122. */
-    printf("Shared visibility label width: %d / 104 pixels\n",width);
     make_script();
     char directory[]="instance-color-test-XXXXXX",path[256];assert(mkdtemp(directory));
     for(unsigned c=0;c<sizeof(counts)/sizeof(*counts);c++) {
@@ -101,24 +99,28 @@ int main(void)
         for(int f=0;f<n;f++) {
             expected=a.doc;expected.color[f][0]=(uint8_t)chosen(f);
             ui_output(&a.doc);assert(!memcmp(&a.doc,&expected,sizeof(expected)));
-            preview(n>1 ? f+1:0);
+            preview(f);
         }
-        if(n>1) {
-            ui_output(&a.doc);assert(!memcmp(&a.doc,&expected,sizeof(expected)));
-            ui_output(&a.doc);assert(!memcmp(&a.doc,&expected,sizeof(expected)));
-            ui_output(&a.doc);assert(a.doc.enabled==0);
-            ui_output(&a.doc);assert(!memcmp(&a.doc,&expected,sizeof(expected)));
-            ui_output(&a.doc);preview(n);assert(!memcmp(&a.doc,&expected,sizeof(expected)));
+        consumers();
+        for(int f=0;f<n;f++) {
+            expected=a.doc;expected.ic_enabled^=(uint16_t)(1u<<f);
+            ui_output(&a.doc);assert(!memcmp(&a.doc,&expected,sizeof(expected)));preview(f);
         }
+        assert(gsolve_curve_count(&a.doc)==0);consumers();
+        for(int f=0;f<n;f+=2) {
+            expected=a.doc;expected.ic_enabled^=(uint16_t)(1u<<f);
+            ui_output(&a.doc);assert(!memcmp(&a.doc,&expected,sizeof(expected)));preview(f);
+        }
+        ui_output(&a.doc);preview(n-1);
         consumers();a.recall=a.doc;a.has_recall=true;
         assert(storage_save(&a,directory) && storage_load(&b,directory));
-        assert(b.doc.nic==n && !memcmp(b.doc.color,a.doc.color,sizeof(a.doc.color)));
+        assert(b.doc.nic==n && b.doc.ic_enabled==a.doc.ic_enabled && !memcmp(b.doc.color,a.doc.color,sizeof(a.doc.color)));
         assert(!memcmp(b.recall.color,a.recall.color,sizeof(a.recall.color)));
         uint8_t colors[ODE_MAX_IC][ODE_MAX_DIM];memcpy(colors,a.doc.color,sizeof(colors));
         values.count=1;initial_values_apply(&a.doc,&values);
         assert(!memcmp(colors,a.doc.color,sizeof(colors)) && gsolve_curve_count(&a.doc)==1);
         values.count=ODE_MAX_IC;initial_values_apply(&a.doc,&values);
-        assert(!memcmp(colors,a.doc.color,sizeof(colors)) && gsolve_curve_count(&a.doc)==ODE_MAX_IC);
+        assert(!memcmp(colors,a.doc.color,sizeof(colors)) && gsolve_curve_count(&a.doc)==ODE_MAX_IC-n+n/2+n%2);
         for(int f=n;f<ODE_MAX_IC;f++)assert(model_color(&a.doc,f,0)==model_default_color(f,0,1));
         values.count=(unsigned)n;initial_values_apply(&a.doc,&values);
         expected=a.doc;model_output_defaults(&expected);ui_output(&a.doc);
@@ -126,5 +128,5 @@ int main(void)
     }
     for(int slot=0;slot<2;slot++){snprintf(path,sizeof(path),"%s/DIFFEQ%d.dat",directory,slot);assert(remove(path)==0);}
     assert(rmdir(directory)==0);
-    puts("1/2/5/10 IC colors: actual F3/INIT/wrap/scroll, independent preferences, shared visibility, Graph/TRACE/G-Solve/Table, SAVE/RCL and shrink/grow passed.");
+    puts("1/2/5/10 IC colors: actual F3/INIT/wrap/scroll, independent preferences, independent visibility, Graph/TRACE/G-Solve/Table, SAVE/RCL and shrink/grow passed.");
 }

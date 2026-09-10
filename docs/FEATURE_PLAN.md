@@ -1,3 +1,13 @@
+# Completed milestone — beta.8
+
+Drawing bar correction, individual IC visibility/color with v11 migration, and G-Solve numeric EXIT are implemented and validated. FULL_AUDIT R1/UIR1 are closed by explicit owner decision. No numerical feature or solver replacement was added. Hardware acceptance remains pending before RC readiness.
+
+[Implementation and tests](VISIBILITY_PROMPT_AUDIT.md).
+
+Earlier milestone records below are historical where superseded above.
+
+---
+
 # Beta.7 completed audit milestone
 
 Four explicit fixes (Table/Drawing preparation, SF50 and independent IC colors)

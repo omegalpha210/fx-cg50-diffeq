@@ -1,3 +1,13 @@
+# Current architecture — beta.8
+
+Drawing keeps LCD Graph and owns only the softkey rectangle using existing staging-tail strips. Table keeps its dedicated preparation screen. Document v11 appends ten IC visibility bits; model_curve_visible unifies output consumers while numerical/Event state remains independent. G-Solve local numeric EXIT unwinds to its retained page2 before validation; generic editors retain their contracts.
+
+[Implementation and tests](VISIBILITY_PROMPT_AUDIT.md).
+
+Earlier milestone records below are historical where superseded above.
+
+---
+
 # Beta.7 audit update
 
 [Full audit](FULL_AUDIT.md) records the mode/solver/IC/domain/consumer matrix.

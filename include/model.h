@@ -21,14 +21,16 @@ typedef struct {
     OdeSettings solver;
     int solver_custom;
     ViewWindow view;
-    uint16_t enabled; /* One dependent-output mask, shared by Graph/Table/CSV. */
+    uint16_t enabled; /* Dependent-output mask for higher-order/system modes. */
     uint8_t color[ODE_MAX_IC][ODE_MAX_DIM]; /* Persistent curve-instance colors, including inactive IC slots. */
     uint8_t field_style,field_color;
     ViewWindow phase_view;
     uint8_t phase_field,phase_nullclines,phase_ready;
     OdeAdaptive adaptive;
     EventConfig event;
+    _Alignas(double) uint16_t ic_enabled; /* Scalar trajectory visibility; inactive slots retained. */
 } Document;
+#define MODEL_IC_MASK ((1u<<ODE_MAX_IC)-1u)
 typedef struct {
     int kind,dim;
     double power;
@@ -52,6 +54,7 @@ unsigned model_default_color(int family,int variable,int dimension);
 unsigned model_color(const Document *d,int family,int variable);
 void model_color_defaults(Document *d);
 void model_output_defaults(Document *d);
+bool model_curve_visible(const Document *d,int family,int variable);
 void model_output_color(Document *d,int variable,unsigned color);
 void model_curve_color(Document *d,int family,int variable,unsigned color);
 void model_sanitize_colors(Document *d);

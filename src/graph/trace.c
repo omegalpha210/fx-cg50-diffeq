@@ -44,7 +44,7 @@ static uint64_t plot_identity(const Document *d)
     uint64_t hash=UINT64_C(14695981039346656037);
 #define KEY(field) hash=hash_bytes(hash,&d->field,sizeof(d->field))
     KEY(event);KEY(adaptive);KEY(kind);KEY(dim);KEY(nic);KEY(text);KEY(power);KEY(ic);
-    KEY(solver.h);KEY(solver.max_steps);KEY(solver.step);KEY(enabled);
+    KEY(solver.h);KEY(solver.max_steps);KEY(solver.step);KEY(enabled);KEY(ic_enabled);
 #undef KEY
     return hash;
 }
@@ -89,7 +89,7 @@ static struct {
     bool active,branch_active,failed;
 } graph_capture;
 static bool capture_family(const Document *d,int family)
-{return model_phase_supported(d) || graph_family_enabled(d,family);}
+{return model_phase_supported(d) || model_field_supported(d) || graph_family_enabled(d,family);}
 static void phase_bound(TraceSamples *out,const double *y)
 {
     if(ode_values_status(y,2)!=ODE_OK)return;
@@ -135,7 +135,7 @@ static void record_result(TraceSamples *out,TraceBranch *branch,ModelPathResult 
 bool trace_capture_begin(const Document *d)
 {
     graph_capture.active=false;
-    if(!d || d->nic<1 || (!model_phase_supported(d) && !d->enabled) ||
+    if(!d || d->nic<1 || (!model_phase_supported(d) && !model_field_supported(d) && !d->enabled) ||
         model_preflight(d,&d->solver).status!=ODE_OK)return false;
     memset(&graph_capture,0,sizeof(graph_capture));
     memset(&scratch.staging,0,sizeof(scratch.staging));
@@ -243,7 +243,8 @@ static void selected_mask(const Document *d,int family,int selected_variable,boo
 
 bool trace_prepare(Document *d,CompiledModel *m,int family,int variable)
 {
-    if(d->nic<1 || family<0 || family>=d->nic || variable<0 || variable>=d->dim)return false;
+    if(d->nic<1 || family<0 || family>=d->nic || variable<0 || variable>=d->dim
+        || (!d->view.phase && !model_curve_visible(d,family,variable)))return false;
     const ViewWindow *v=model_view_const(d);
     viewport=(TraceViewport){v->xmin,v->xmax,v->xscale,model_xdot(&d->view),
         d->view.phase!=0,v->phase_x};
@@ -285,7 +286,8 @@ _Static_assert(sizeof(scratch)-sizeof(TraceSamples)>=2800,"Busy patch exceeds in
 const OdeSettings *trace_extent(void){return &samples.extent;}
 bool trace_select(const Document *d,int family,int variable)
 {
-    if(family<0 || family>=d->nic || variable<0 || variable>=d->dim)return false;
+    if(family<0 || family>=d->nic || variable<0 || variable>=d->dim
+        || (!d->view.phase && !model_curve_visible(d,family,variable)))return false;
     samples.family=family;samples.variable=variable;
     samples.valid=samples.branch[family][0].count+samples.branch[family][1].count>0;
     selected_mask(d,samples.family,samples.variable,false);return samples.valid;
@@ -372,7 +374,7 @@ void trace_cache_render(const Document *d)
                 graph_solution_segment(view,p->y[view->phase_x],p->y[view->phase_y],
                     q->y[view->phase_x],q->y[view->phase_y],
                     graph_palette_color(model_color(d,f,view->phase_y)));
-            } else for(int k=0;k<d->dim;k++)if(d->enabled&(1u<<k))
+            } else for(int k=0;k<d->dim;k++)if(model_curve_visible(d,f,k))
                 graph_solution_segment(view,p->x,p->y[k],q->x,q->y[k],graph_palette_color(model_color(d,f,k)));
         }
     }
@@ -409,7 +411,7 @@ bool trace_cache_time_window(const Document *d,ViewWindow *window)
         const TraceBranch *branch=&samples.branch[f][side];
         for(unsigned j=0;j<branch->count;j++) {
             unsigned i=branch->start+j;const TracePoint *q=&samples.point[i];
-            for(int k=0;k<d->dim;k++)if(d->enabled&(1u<<k)) {
+            for(int k=0;k<d->dim;k++)if(model_curve_visible(d,f,k)) {
                 if(q->x>=next.xmin && q->x<=next.xmax)time_bound(q->y[k],&minimum,&maximum);
                 if(!j || !samples.link[i])continue;
                 const TracePoint *p=&samples.point[i-1];

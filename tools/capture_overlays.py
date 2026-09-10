@@ -24,7 +24,7 @@ cases=[
  ('trace-busy','TRACE preparation in lower data panel',base+'TICKS:8 F1','CALCULATING... /'),
  ('trace-ready','TRACE: X-fixed / Y-follow, cursor INIT',base+'TICKS:8 F1',None),
  ('table-busy','Table: dedicated preparation canvas',base+'TICKS:8 F4','Preparing Table... /'),
- ('drawing-busy','Drawing: dedicated preparation canvas','2 F6 F6 TICKS:8 F6','Drawing... /'),
+ ('drawing-busy','Drawing: retained Graph and bottom busy bar','2 F6 F6 TICKS:8 F6','Drawing... /'),
  ('factory-init','Graph INIT: factory geometry, same as V-WIN',small+'RIGHT UP F2 F1 EXIT F6',None),
  ('factory-window','Graph INIT factory values',small+'RIGHT UP F6 F3',None),
  ('scratch-cancel','G-Solve scratch cancel: original graph retained','2 F6 F6 DOWN DOWN RIGHT F6 TICKS:8 CANCEL:12 F5 F5',None),

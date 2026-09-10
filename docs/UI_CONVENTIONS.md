@@ -1,3 +1,27 @@
+# Current UI conventions — v0.12.0-beta.8
+
+[Implementation and validation](VISIBILITY_PROMPT_AUDIT.md) closes FULL_AUDIT R1/UIR1.
+- Drawing retains Graph; only logical(0,198),384x18 F-key rectangle becomes one
+  application-blue bar: white Drawing... spinner left, EXIT cancels right, no cells.
+  Shared156.25ms delay / max8Hz / cancel-first polling; bar-only native refresh.
+  Finish/rollback restores Graph controls; preserve accepted reports and Recall.
+- Table keeps its dedicated blue header, white EXIT row/body and hidden F-keys.
+  TRACE/G-Solve retain lower-panel CALCULATING feedback.
+- First-order Output is per-trajectory ON/OFF and color: y or IC1 y..IC10 y.
+  LEFT/RIGHT toggle, F3 COLOR, real-color OFF swatch, seven-row paging/wrap.
+  Output INIT sets all ten ON/default colors; inactive preferences survive count
+  changes and SAVE v11. v3–v10 migration initializes new IC bits ON.
+- Graph/TRACE/G-Solve/Table/CSV/STAT hide OFF families; Event data and actual
+  numerical diagnostics remain independent. All-OFF is safe with x-only tables.
+- G-Solve X/Y-CAL numeric EXIT always discards and returns to originating page2,
+  even with empty/partial/valid/error draft. EXE alone validates/commits; F6 blank.
+  Opening/held EXIT cannot cross another level. Generic form edit policy stays.
+- Existing SF0..50, factory Graph INIT, BOX, fixed-X TRACE and semantic colors stay.
+
+Earlier milestone records below are historical where superseded above.
+
+---
+
 # Current UI conventions — v0.12.0-beta.7
 
 [Full audit](FULL_AUDIT.md), [busy-screen ownership](BUSY_SCREEN_AUDIT.md) and

@@ -1,4 +1,4 @@
-# DIFF EQ 사용 설명서 — v0.12.0-beta.7
+# DIFF EQ 사용 설명서 — v0.12.0-beta.8
 
 기본 RK4와 TRACE·G-Solve·10개 초기값·SYS 2D Phase 기능을 보존하면서
 Main/subtype native 타일, 고정 X/Y-only TRACE 및 공통 top-left 경고를 제공합니다. 기존 INIT/BOX/draft와 3단계 workflow는 유지합니다.
@@ -34,7 +34,7 @@ Main/subtype native 타일, 고정 X/Y-only TRACE 및 공통 top-left 경고를 
 | G-Solve 1쪽 | ROOT | MAX | MIN | Y-ICPT | ICPT | 다음 |
 | G-Solve 2쪽 | Y-CAL | X-CAL | — | — | — | 이전 |
 | Trace | INIT | NORMAL (주황/검정) | FAST | FASTER | LEFT | RIGHT |
-| X-CAL / Y-CAL 숫자 입력 | — | — | — | — | — | RUN |
+| X-CAL / Y-CAL 숫자 입력 | — | — | — | — | — | — |
 | Table | TOP | BTM | MID | — | STAT | GRAPH |
 
 **[USER REQUESTED ADAPTATION]** 모든 모드는 Equation → F6 NEXT → IC → F6 NEXT →
@@ -48,7 +48,7 @@ LEFT는 편집 시작·커서 맨 앞, RIGHT는 편집 시작·커서 맨 뒤입
 편집 중 **EXE는 draft 확정 후 다음 행을 선택**하며, 다음 행의 편집까지 열지 않습니다.
 마지막 행 편집에서는 첫 EXE가 확정 후 같은 행을 선택하고, 두 번째 EXE가 F6 동작을 실행합니다.
 편집 중 **EXIT는 draft 확정 후 같은 행 선택**으로 돌아갑니다. 부모 화면에는 EXIT를 한 번 더 누릅니다.
-Equation/IC는 미완성 draft를 허용하고 NEXT에서 검증합니다. 다른 숫자/설정 화면은 기존 확정 시 검증을 유지합니다. X/Y-CAL의 EXE는 아래의 RUN 예외를 따릅니다.
+Equation/IC는 미완성 draft를 허용하고 NEXT에서 검증합니다. 다른 숫자/설정 화면은 기존 확정 시 검증을 유지합니다. X/Y-CAL 숫자 prompt만 EXE 확정 / EXIT 즉시 취소를 따릅니다.
 
 Equation·IC·Parameters·V-Window·차수/변수 개수의 일반 입력을 편집할 때 하단 한 줄은
 `EXE: commit / next   EXIT: commit`입니다. 커서가 blink로 숨겨져도 EDIT 상태이면 유지합니다.
@@ -105,9 +105,13 @@ F6는 submenu 페이지 전환만 수행합니다. VAR는 N-th의 2~9차 도함�
 V-Window 편집의 CLEAR/DEL 등은 표시된 기능을 따릅니다. TRACE의 직접 x= 입력은 제거되었으며 F1은 cursor INIT입니다.
 
 X-CAL/Y-CAL은 **매번 빈 입력·깜빡이는 커서**로 시작합니다. 숫자, 소수점, 음수와 EXP의 과학적 표기를 입력한 뒤
-**EXE 또는 F6 RUN 한 번**으로 검증과 계산을 실행합니다. F1~F5는 비어 있습니다.
-빈 값/잘못된 값은 `Invalid number`와 draft를 유지하며 이전 값을 재사용하지 않습니다.
-유효한 편집 중 EXIT는 확정 후 머물고 다음 EXIT가 취소합니다. 오류 draft도 검증 규칙을 따릅니다.
+**EXE 한 번**으로 검증과 계산을 실행합니다. F1~F6는 비어 있고 F6는 동작하지 않습니다.
+빈 값/잘못된 값에서 EXE는 `Invalid number`와 draft를 유지합니다.
+**EXIT는 값 검증 없이 draft와 현재 operation을 취소하여 G-Solve 2쪽으로 즉시 돌아갑니다.**
+빈 입력, `-`, `1e`, 유효하지만 미확정인 `2.5`, 오류 표시 중에도 동일합니다.
+이전 곡선 선택 화면으로 돌아가지 않으며 Graph/창/마지막 계산은 유지합니다.
+누른 채 유지한 EXIT는 2쪽까지만 이동하고, 떼었다가 다시 누르면 Graph로 돌아갑니다.
+다른 Equation/IC/Parameters/V-WIN 편집의 EXIT 규칙은 그대로입니다.
 식당 최대 191자이며 긴 식은 선택 행 안에서 커서 주변이 보이도록 가로로 이동합니다.
 
 | 입력 | 방법/의미 |
@@ -186,33 +190,33 @@ Parameter F1 INIT는 Method를 유지하고 자동 범위 추종, h=.1, Max Step
 RK4에서는 Step=1, RK45에서는 RelTol=1e-6/AbsTol=1e-9로 복구하며 다른 방식의 숨겨진 설정은 보존합니다.
 1차에서는 SF도 12로 복구하며, 고차/SYS에서는 숨겨진 SF 값을 보존합니다.
 예를 들어 SF=20 → 2nd → INIT → 1st에서도 20입니다. SAVE/RCL도 숨겨진 SF를 보존하며
-새 저장은 v10이며 기존 v3~v9 세션의 읽기 호환성을 유지합니다. Field Style/Color는 모든 모드에서
+새 저장은 v11이며 기존 v3~v10 세션의 읽기 호환성을 유지합니다. Field Style/Color는 모든 모드에서
 보존합니다. Solver 수정은 V-Window를 역으로 변경하지 않습니다.
 Xdot은 `(Xmax-Xmin)/378`이며 Xdot 편집은 Xmax를 변경합니다.
 
-**OUTPUT은 종속변수의 표시 여부와 곡선 색을 설정합니다.** 단일 IC인 1차는 y,
-2차는 y/y', N-th는 각 도함수, SYS는 y1~ym입니다. 이 행들은 기존처럼 LEFT/RIGHT로
-ON/OFF, F3 COLOR로 색을 설정합니다. x 행과 CSV X control은 없습니다.
-**1차 IC가 여러 개이면** `y (all ICs)` 행이 모든 IC의 ON/OFF를 함께 설정하며
-이 행에는 COLOR가 없습니다. 그 아래 `IC1 y`~`IC10 y`는 각 곡선의 **색만** 설정합니다.
-색 행은 ON/OFF 값을 표시하지 않고 LEFT/RIGHT로 표시 여부를 바꾸지 않습니다.
-UP/DOWN은 행 이동이며 첫 행·마지막 행에서 순환합니다. 기존 7행 페이지를 사용하므로
-IC10도 도움말에 가리지 않고 접근할 수 있습니다. F3 COLOR·F1 INIT·DONE과 기존 EXE 동작을 유지합니다.
-한 ON/OFF 값이 모든 IC에 공통으로 적용됩니다. ON은 Graph·TRACE·G-Solve·Table·CSV/STAT에 포함,
-OFF는 이 사용자 출력들에서 숨김입니다. 숨겨진 y' 같은 내부 state도 선택한 solver에서 계속 계산합니다.
-SYS 2D Phase는 Output ON/OFF와 무관하게 두 state를 사용합니다. 다른 모드의 기존 phase projection은 두 축 state가 모두 ON일 때 표시합니다. 원래 독립 G/L 선택이 제공하던 차이와
-이번 통합의 호환성 정책은 [OUTPUT audit](OUTPUT_LIST_AUDIT.md)에 기록했습니다.
+**OUTPUT은 각 출력 곡선의 표시 여부와 색을 설정합니다.** 1차 IC가 하나면 `y`,
+여러 개면 `IC1 y`~`IC10 y`를 표시합니다. 각 행에서 LEFT/RIGHT는 그 IC만 ON/OFF,
+F3 COLOR는 그 IC만 색을 바꿉니다. UP/DOWN은 선택 행 이동/순환이며 7행씩 표시하여 IC10까지 접근합니다.
 
-행 오른쪽의 짧은 수평선이 실제 곡선 색을 보여주며 OFF에서도 색을 유지합니다.
-색은 선택 행에서 **F3 COLOR**로만 엽니다. 방향키로 고르고 EXE 적용, EXIT 취소입니다.
-지원 색상은 Blue, Red, Magenta, Black, Cyan, Bright Green(0x37e6)이며 기존 palette를 유지합니다.
-기본 순서는 Magenta → Cyan → Bright Green → Red → Blue → Black이고 7번째부터 반복합니다.
-1차의 여러 IC는 처음에 이 순서로 배정되며 이후 각 행의 F3는 그 IC의 색만 바꿉니다.
-IC 수를 줄여도 숨겨진 위치의 색을 보존하며 다시 늘리면 복원합니다. 아직 바꾼 적 없는
-위치는 기본 색을 사용합니다. 초기값만 수정하거나 IC INIT를 눌러도 Output 색은 유지합니다.
-OUTPUT INIT는 모든 IC 색을 기본 순서로 되돌립니다. SAVE/RCL은 숨겨진 위치를 포함한
-색을 보존하며 기존 v3~v10 세션을 읽습니다. 고차/SYS는 기존 각 state 색 설정을 유지합니다.
-소비자별 상태와 호환성은 [multiple-IC color audit](MULTI_IC_COLOR_AUDIT.md)에 있습니다.
+예: `IC1 y ON`, `IC2 y OFF`, `IC3 y ON`, `IC4 y OFF`, `IC5 y ON`.
+Graph에는 IC1/3/5만 그리며 TRACE/G-Solve도 이 곡선들만 선택합니다. 하나만 ON이면
+G-Solve의 곡선 선택을 생략하고 ICPT는 ON 곡선이 둘 이상일 때만 가능합니다.
+Table/CSV/STAT은 항상 x를 첫 열로 두고 ON IC만 포함합니다. 여러 IC의 기존
+machine-safe 열 이름은 y1~y10이며 위 예시는 x,y1,y3,y5입니다. 숨긴 열 때문에 번호를 바꾸지 않습니다.
+모두 OFF이면 axes/grid와 설정된 SF는 유지하고 곡선은 없습니다. TRACE는 No visible graph,
+G-Solve는 Not available, Table/CSV/STAT은 x-only입니다. OFF IC도 내부 적분·Event 검출과
+실제 작업량 통계에는 포함되며 해당 Graph Event marker만 숨깁니다.
+
+2차는 y/y', N-th는 각 도함수, SYS는 y1~ym의 기존 종속변수 ON/OFF와 색을 유지합니다.
+SYS2 PHASE는 기존처럼 Output와 별개로 두 state를 사용합니다. x 행은 없습니다.
+OFF 행도 실제 색의 선 미리보기를 유지합니다. 색 선택은 F3에서 방향키, EXE 적용 / EXIT 취소입니다.
+기본 색은 Magenta → Cyan → Bright Green → Red → Blue → Black, 7번째부터 반복합니다.
+IC 수 감소 후 재확장은 숨겨진 slot의 ON/OFF와 색을 복원하며, 아직 편집하지 않은 새 slot은
+ON과 기본 색입니다. IC 값 수정·IC INIT는 Output을 초기화하지 않습니다.
+**Output F1 INIT**는 전체 10개 slot을 ON·기본 palette·첫 선택 행으로 복구합니다.
+SAVE v11/RCL은 비활성 slot과 all-OFF도 보존합니다. 구버전 v3~v10은 모든 IC를 ON으로
+불러오며 기존 색을 보존합니다. 과거 공통 y가 OFF였어도 새 IC bits는 ON으로 초기화합니다.
+[상세 소비자·저장 정책](VISIBILITY_PROMPT_AUDIT.md)을 참고하세요.
 OUTPUT EXE는 다음 행으로 이동하며 마지막 행은 수정했으면 한 번 확정/머묾, 다음 EXE가 DONE입니다.
 수정하지 않은 마지막 행은 곧바로 DONE입니다. F1 INIT는 모든 종속변수 ON과 기본 solution 색,
 첫 선택 행을 복구하며 SF/field 외형은 유지합니다.
@@ -308,10 +312,13 @@ Graph **F6 INIT**, V-WIN **F1 INIT**, ZOOM **F4 ORIG**는 같은 factory 창 초
 초기화하지 않습니다. TIME AUTO 범위만 기존 정책대로 창을 따르고 MAN 범위는 유지합니다.
 예전 Graph entry snapshot은 더 이상 사용하지 않습니다. **TRACE F1 INIT**는 별도 커서 복귀입니다.
 
-오래 걸리는 Table/Graph 준비는 별도 흰 화면으로 전환합니다. 파란 제목 행에
-`Preparing Table... /` 또는 `Drawing... /`, 바로 아래에 `EXIT cancels`를 표시하며
-F1~F6 strip은 숨깁니다. 약156ms 후 나타나고 `/ - \ |` spinner만 최대8Hz로 갱신합니다.
-EXIT를 먼저 확인하고, 취소하면 임시 계산을 버린 뒤 이전 안정 상태로 돌아갑니다.
+오래 걸리는 **Table** 준비는 파란 `Preparing Table... /` 제목, 흰 `EXIT cancels`
+행과 본문이 있는 별도 화면이며 F1~F6 strip을 숨깁니다.
+**Drawing은 현재 Graph를 유지**하고 하단 F-key strip만 하나의 파란 바로 바꿉니다.
+왼쪽 흰 `Drawing... /`, 오른쪽 흰 `EXIT cancels`이며 버튼 구분선은 없습니다.
+둘 다 약156ms 후 나타나고 `/ - \ |`를 최대8Hz로 갱신합니다. Drawing은 bar만 갱신합니다.
+EXIT를 먼저 확인하고 취소 시 임시 계산을 버려 안정된 결과와 원래 F-key로 복구합니다.
+완료 시에도 Graph와 F-key를 복구하며, 최초 Graph 진입은 axes 화면을 한 번 만든 뒤 계산합니다.
 Table의 같은 페이지에서 열만 이동하거나 동일 TOP/BTM/MID를 누르면 재계산·대기 화면이 없습니다.
 TRACE와 G-Solve는 기존 하단 `CALCULATING... /`를 유지합니다. 빠른 작업은 대기 화면을 생략합니다.
 Graph 취소 복원은 기존 제한된 표시 표본을 사용하므로 원래 고밀도 그림과 일부 픽셀 차이는 가능합니다.
@@ -431,7 +438,7 @@ h min/max도 scratch를 포함한 수락 step의 절댓값입니다. Phase FIELD
 새 Graph 계산과 성공한 TRACE 준비는 보고서를 갱신합니다. Graph 실패/취소도 실제 작업량과
 상태를 남깁니다. 취소한 TRACE 준비는 이전 graph·marker·보고서를 함께 보존합니다.
 Table/G-Solve/Phase 분석과 INFO 방문은 보고서를 덮어쓰지 않습니다.
-새 문서·load·recall 후에는 `No solver run yet`이며 Event 설정만 SAVE v10에 저장됩니다.
+새 문서·load·recall 후에는 `No solver run yet`이며 Event 설정만 SAVE v11에 저장됩니다.
 [정확한 수치 정책과 한계](EVENTS.md), [하드웨어 재시험](HARDWARE_RETEST.md)을 참고하십시오.
 
 ## Solver Methods: RK4와 RK45
@@ -542,10 +549,11 @@ hold/repeat는 승인으로 처리하지 않습니다. 성공/실패 안내 뒤�
 현재 세션이 없는 새 실행에서는 YES 이후 `No session.`을 표시하고 파일을 쓰지 않습니다.
 
 계산기 root의 `DIFFEQ0.dat`와 `DIFFEQ1.dat`를 번갈아 씁니다. magic/version/size/checksum 및
-값을 검사하고 최신 slot이 손상되면 다른 정상 slot을 사용합니다. 새 저장은 **v10**이며
+값을 검사하고 최신 slot이 손상되면 다른 정상 slot을 사용합니다. 새 저장은 **v11**이며
 Private Constants, 개별 G/L mask, x export flag는 없습니다. 메모리에 별도의 private constant 배열도 없습니다.
 
-v10은 Event Enabled/Expression/Direction/Action과 Method/RelTol/AbsTol을 current/recall에 저장합니다.
+v11은 per-IC ON/OFF와 기존 색·Event·Method/RelTol/AbsTol을 current/recall에 저장합니다.
+기존 v10 Event 설정과 v9 RK45 설정을 보존하며 v3~v10의 새 IC bits는 모두 ON으로 읽습니다.
 v3~v9는 Event OFF로 읽으며 v9의 RK45 설정은 보존합니다. v3~v8은 RK4와 기본 tolerance로 읽습니다.
 Diagnostics와 Event marker는 저장하지 않으며 load/recall 후 INFO는 No solver run yet입니다.
 v8은 고정 layout reader로 독립 Phase 창, FIELD/NULL 표시 설정과 첫 창 준비 상태를 current/recall에서 보존합니다.
@@ -562,7 +570,7 @@ v3/v4는 Arrow/Pale Blue, v5의 명시적 Segment/색은 유지합니다. v3 sol
 
 옛 고차/SYS 여러 IC는 첫 완전 벡터를, 1차의 서로 다른 x0는 첫 x0와 같은 IC만 복원합니다.
 값을 새 x0로 강제로 옮기지 않습니다. 이 적응이 필요하면 load 안내를 표시하며 **load는 원래 파일을
-변경하지 않습니다**. 이후 명시적 SAVE는 새 v10으로 두 slot을 순환하므로, 여러 번 SAVE하면 옛
+변경하지 않습니다**. 이후 명시적 SAVE는 새 v11으로 두 slot을 순환하므로, 여러 번 SAVE하면 옛
 slot은 교체될 수 있습니다. 원본 보존이 필요하면 기존 파일을 따로 보관하십시오.
 상세 mapping과 예외는 [OUTPUT/migration audit](OUTPUT_LIST_AUDIT.md)에 있습니다.
 

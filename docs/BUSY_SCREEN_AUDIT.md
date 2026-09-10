@@ -1,3 +1,11 @@
+Current beta.8 changes are authoritative in [VISIBILITY_PROMPT_AUDIT](VISIBILITY_PROMPT_AUDIT.md).
+R1/UIR1 are resolved by owner decision, implemented and validated. Drawing now
+keeps Graph with a bottom bar; Output has per-IC ON/OFF and color; SAVE is v11;
+numeric EXIT cancels immediately to G-Solve page2. The beta.7 report below is
+historical evidence, including its former review choices and original controls.
+
+---
+
 # Dedicated preparation screens — beta.7
 
 Table and actual Graph construction share a small busy-screen helper. After the

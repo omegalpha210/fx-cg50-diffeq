@@ -12,16 +12,16 @@ static bool cancel_first(void *context)
 {Cancel *c=context;c->calls++;return c->cancel;}
 static void source_unchanged(void)
 {assert(!memcmp(original,gint_vram,sizeof(original)));}
-static void expected_canvas(const char *label,char spinner)
+static void expected_canvas(UiBusyArea area,const char *label,char spinner)
 {
     char title[40];snprintf(title,sizeof(title),"%s %c",label,spinner);
-    ui_frame(title,"EXIT cancels");
+    if(area==UI_BUSY_DRAW) {
+        int width;dsize("EXIT cancels",NULL,&width,NULL);
+        ui_rect(0,198,384,18,UI_BLUE);
+        ui_text(5,202,C_WHITE,"%s",title);
+        ui_text(384-5-width,202,C_WHITE,"EXIT cancels");
+    } else ui_frame(title,"EXIT cancels");
     assert(!memcmp(gint_vram,host_display_pixels(),sizeof(original)));
-    /* The blue header, white cancellation row and neutral body use the same
-       normal frame geometry as the rest of the app; no F-key rectangles. */
-    assert(gint_vram[(UI_Y+1)*DWIDTH+UI_X+1]==UI_BLUE);
-    for(int y=UI_Y+40;y<DHEIGHT;y++)for(int x=0;x<DWIDTH;x++)
-        assert(gint_vram[y*DWIDTH+x]==C_WHITE);
     memcpy(gint_vram,original,sizeof(original));
 }
 static void check(UiBusyArea area,const char *label)
@@ -36,17 +36,17 @@ static void check(UiBusyArea area,const char *label)
     assert(!ui_busy_cancel(&b) && !b.visible);
     assert(host_display_uploads()==count && !memcmp(previous,host_display_pixels(),sizeof(previous)));
     assert(!ui_busy_cancel(&b) && b.visible && b.frame==1);
-    assert(host_display_uploads()-count==(DHEIGHT+2)/3);source_unchanged();
-    expected_canvas(label,'/');
+    assert(host_display_uploads()-count==(area==UI_BUSY_DRAW ? 6:(DHEIGHT+2)/3));source_unchanged();
+    expected_canvas(area,label,'/');
     for(unsigned i=1;i<4;i++) {
         count=host_display_uploads();memcpy(previous,host_display_pixels(),sizeof(previous));
         assert(!ui_busy_cancel(&b) && b.frame==i);
         assert(host_display_uploads()==count);
         assert(!ui_busy_cancel(&b) && b.frame==i+1);source_unchanged();
-        assert(host_display_uploads()-count==7); /* Only seven 3-row header strips. */
-        for(int y=0;y<DHEIGHT;y++)if(y<UI_Y || y>=UI_Y+21)
+        assert(host_display_uploads()-count==(area==UI_BUSY_DRAW ? 6:7));
+        for(int y=0;y<DHEIGHT;y++)if(area==UI_BUSY_DRAW ? (y<UI_Y+198 || y>=UI_Y+216):(y<UI_Y || y>=UI_Y+21))
             assert(!memcmp(previous+y*DWIDTH,host_display_pixels()+y*DWIDTH,DWIDTH*2));
-        expected_canvas(label,"/-\\|"[i]);
+        expected_canvas(area,label,"/-\\|"[i]);
     }
     /* Cancellation wins even when the next refresh is due. */
     count=host_display_uploads();cancel.cancel=true;

@@ -245,3 +245,12 @@ add_executable(test_full_consumers test_full_consumers.c ../src/graph/trace.c
 target_include_directories(test_full_consumers PRIVATE host)
 target_link_libraries(test_full_consumers core m)
 add_test(NAME full_consumers COMMAND test_full_consumers)
+
+add_executable(test_visibility test_visibility.c ../src/graph/trace.c
+  ../src/graph/renderer.c ../src/graph/phase.c ../src/ui/common.c host/gint_host.c)
+target_include_directories(test_visibility PRIVATE host)
+target_link_libraries(test_visibility core m)
+add_test(NAME trajectory_visibility COMMAND test_visibility)
+add_test(NAME visibility_prompt_ui COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_visibility_ui.py $<TARGET_FILE:host_app>)
+set_tests_properties(trajectory_visibility visibility_prompt_ui PROPERTIES TIMEOUT 90)

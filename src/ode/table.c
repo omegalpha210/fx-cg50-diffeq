@@ -72,7 +72,7 @@ OdeStatus table_index_build(const Document *d,CompiledModel *m,TableIndex *index
         model_output_spacing(d,&d->solver):d->solver.h*d->solver.step;
     index->solutions=model_field_supported(d);bool have=false;
     if(index->solutions) {
-        if(d->enabled&1u)for(int f=0;f<d->nic;f++)index->columns[index->count++]=f;
+        for(int f=0;f<d->nic;f++)if(model_curve_visible(d,f,0))index->columns[index->count++]=f;
     } else for(int v=0;v<d->dim;v++)if(d->enabled&(1u<<v))index->columns[index->count++]=v;
     int families=index->solutions ? d->nic:1;
     for(int f=0;f<families;f++) {

@@ -10,9 +10,9 @@ Solve, graph, and explore ordinary differential equations on your calculator.
 DIFFEQ is a native **fx-CG50 add-in** with colorful solution curves, slope fields,
 TRACE, G-Solve, numerical tables, and phase analysis for two-variable systems.
 
-**Public Beta · v0.12.0-beta.7 · [MIT License](LICENSE)**
+**Public Beta · v0.12.0-beta.8 · [MIT License](LICENSE)**
 
-**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.7)**
+**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.8)**
 · [All releases](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [Report a bug](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
@@ -204,7 +204,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 ## Install on your calculator
 
-1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.7).
+1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.8).
 2. Download **DIFFEQ.g3a**. `SHA256SUMS.txt` is available to check your download.
 3. Connect the fx-CG50 by USB, select USB Flash mode, and open its storage drive.
 4. Copy `DIFFEQ.g3a` to the drive's **root directory**, outside `@MainMem`.
@@ -213,7 +213,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 These steps follow [CASIO's add-in installation guide](https://edu.casio.com/content/dam/casio/global/edu-casio-com/download/files/fx-cg50-series/Inst_Users_Guide.pdf).
 You only need the `.g3a` on the calculator. Keep a backup of existing session files
-when upgrading: this beta writes format v10 and can read same-device v3–v9 files.
+when upgrading: this beta writes format v11 and can read same-device v3–v10 files.
 Older add-ins may reject new saves; adaptations are explained in the
 [upgrade notes](docs/release/RELEASE_NOTES.md).
 
@@ -267,27 +267,36 @@ Results keep their lower-left panel; a hidden marker causes only the minimum Y
 translation, retaining X/scales/Y span and the existing numerical result. A safely
 visible marker leaves the view unchanged; result cycling does not rerun G-Solve.
 
-Long Table/Drawing preparation uses a dedicated white screen with a blue
-**Preparing Table...** or **Drawing...** header, `/ - \ |` spinner and **EXIT cancels**
-row; the softkey strip is hidden. Visibility is delayed about 156 ms, at most 8 Hz;
-only the header updates after the initial canvas. Fast/cached work does not flash.
-Cancellation discards temporary work and restores the stable Graph, or Parameters
-when the initial drawing has no stable graph. TRACE/G-Solve retain their lower-panel
-**CALCULATING...** feedback. Cancelled Drawing does not replace Last calculation.
-No percentage or broad red domain/singularity shading is added.
+Long **Drawing** keeps the existing Graph visible and temporarily replaces its
+bottom six-softkey rectangle with one continuous blue bar: white **Drawing...**
+spinner at left, **EXIT cancels** at right, no button separators. About 156 ms
+delay, at most 8 Hz; only the bar refreshes. Completion/cancellation restores the
+normal controls and preserves accepted results and Last calculation. Initial
+Graph entry establishes axes once; cancelling it returns Parameters.
+**Table** keeps its dedicated blue preparation header, white EXIT row/body and
+hidden softkeys. TRACE/G-Solve retain lower-panel **CALCULATING...** feedback.
 
-**Output: independent first-order IC colors.** With multiple ICs, select IC1 y
-through IC10 y and use F3 COLOR. The separate **y (all ICs)** row controls shared
-visibility; the IC rows edit colors only. INIT restores the established palette.
-Colors persist in SAVE/RCL and by slot when the IC list shrinks and expands.
-Single-IC Output keeps its existing y row. SF remains 12 by default, accepts 0–50,
-rejects larger input and clamps old saved values above 50 without a format change.
+**Output: independent ON/OFF and color for every first-order IC.** Select `y`
+for one IC or `IC1 y`–`IC10 y` for multiple ICs. LEFT/RIGHT toggles the selected
+trajectory; F3 COLOR edits its color. OFF retains the actual color swatch.
+Graph/TRACE/G-Solve/Table/CSV/STAT exclude OFF trajectories, while numerical work
+and Event hit data remain intact; hidden trajectories' Graph markers are hidden.
+All-OFF is safe, with unavailable TRACE/G-Solve and x-only tables/exports.
+Output INIT restores all ON/default colors. SAVE v11 retains active/inactive
+preferences through count changes; v3–v10 migration initializes all ICs ON and
+preserves existing colors. SF stays 0–50, default 12.
 
-Beta.7 also fixes G-Solve results at valid Event STOP endpoints and makes RK45
-Table show its actual dx. The systematic audit covers all equation modes and
-orders 1–9, both solvers, 1/2/5/10 ICs, consumers, state transitions and storage.
-[Full audit and review decisions](docs/FULL_AUDIT.md) ·
-[16 production review frames](docs/ui-review/audit-overview.png).
+**X-CAL/Y-CAL numeric input: EXE confirms; EXIT cancels.** Empty, partial,
+valid-uncommitted and error drafts all cancel without validation to the originating
+G-Solve page 2. Held EXIT cannot leave a second level; a second fresh EXIT returns
+Graph. Only EXE validates/commits this temporary prompt; its F6 is blank/inert.
+Other form editors retain their existing controls.
+
+Both former review decisions are closed. **59/59 host/UBSan groups**, strict
+28-unit SH build with zero warnings and 13 package checks are repeated on the
+exact public source. Numerical algorithms remain unchanged.
+[Implementation and validation](docs/VISIBILITY_PROMPT_AUDIT.md) ·
+[12 production renderer frames](docs/ui-review/visibility-overview.png).
  Equation/IC F1 INIT resets only its
 own inputs. Incomplete drafts remain editable until NEXT validates all fields
 and focuses the first error. IC numeric values update only after complete validation;

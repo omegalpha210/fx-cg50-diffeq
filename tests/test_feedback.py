@@ -140,11 +140,11 @@ manual='2 F6 F6 NEG 2 EXE 2 EXE DOWN 0 DOT 0 5 EXE F6 '
 out=run(manual+'RIGHT F2 F4 EXIT EXIT')
 assert all(s in tail(out) for s in ['TEXT 144 35 -2\n','TEXT 144 57 2\n','TEXT 144 101 0.05\n'])
 assert plot(run(manual+'RIGHT F2 F4'))==plot(run(manual))
-# Scalar prompts: empty draft, only RUN, EXE/F6 same path, blink has no solves.
+# Scalar prompts: empty draft, EXE commits and EXIT cancels, blink has no solves.
 for operation,result in [('F1','Y-CAL'),('F2','X-CAL')]:
     prompt=graph+'F5 F6 '+operation+' EXE '
-    assert bar(run(prompt))==['','','','','','RUN']
-    for submit in ['EXE','F6']:
+    assert bar(run(prompt))==['','','','','','']
+    for submit in ['EXE']:
         invalid=run(prompt+submit)
         assert 'Invalid number' in tail(invalid) and result+' 1/' not in invalid
         assert result+' 1/' in run(prompt+'1 '+submit)
@@ -153,5 +153,5 @@ for operation,result in [('F1','Y-CAL'),('F2','X-CAL')]:
     baseline=run(prompt+'1')
     blink=run(prompt+'1 '+'BLINK '*100)
     assert re.findall(r'solves=(\d+)',baseline)[-1]==re.findall(r'solves=(\d+)',blink)[-1]
-    assert bar(run(prompt+'F1 F2 F3 F4 F5'))==['','','','','','RUN']
+    assert bar(run(prompt+'F1 F2 F3 F4 F5'))==['','','','','','']
 print('New feedback UI: EXE next/primary, EXIT, inline FUNC/VAR, Output/color/INIT, Main shortcuts, persistent Zoom and scalar RUN passed.')

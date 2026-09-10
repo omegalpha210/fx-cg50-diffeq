@@ -79,12 +79,13 @@ static bool trace_value(const UiInlineEdit *edit,double *value)
     ExprError error=expr_compile(edit->text,(ExprScope){0,false,false,false},&program);
     return error.status==EXPR_OK && expr_eval(&program,0,NULL,0,value)==EXPR_OK && isfinite(*value);
 }
+static void show_gsolve_notice(App *a,const char *mode,const char *message);
 void ui_trace(App *a,GraphResult result)
 {
     Document *d=&a->doc;int count=0,selected=0,prepared=-1,stride=1,origin_selected=0;
     if(d->view.phase){for(int i=0;i<d->nic;i++)if(graph_family_enabled(d,i))count++;}
     else count=gsolve_curve_count(d);
-    if(count<1)return;
+    if(count<1){show_gsolve_notice(a,"TRACE","No visible graph");return;}
     TracePoint point={.x=d->ic[0].x},origin={0};
     UiBlink blink;ui_blink_start(&blink);ui_trace_input(true);trace_overlay_begin();
     bool valid=false,initialized=false,anchored=false;OdeStatus notice=ODE_OK;
@@ -187,16 +188,15 @@ static bool gsolve_input(App *a,GsolveCurve curve,const char *label,double *valu
         ui_rect(0,179,384,19,C_WHITE);ui_text(8,184,UI_BLUE,"%s=",label);
         ui_inline_draw_cursor(&edit,31,184,200,UI_BLUE,C_WHITE,edit.active && blink.highlighted);
         if(error)ui_text(242,184,C_RED,"Invalid number");
-        ui_softkeys("","","","","","RUN");dupdate();
+        ui_softkeys("","","","","","");dupdate();
         key_event_t event=ui_blink_key(&blink);int key=event.key;
-        if(key==KEY_EXE || key==KEY_F6 || (key==KEY_EXIT && edit.active)) {
+        if(key==KEY_EXIT){graph_overlay_restore();ui_blink_stop(&blink);return false;}
+        if(key==KEY_EXE && event.type!=KEYEV_HOLD) {
             double number;
             if(!trace_value(&edit,&number)){error=true;continue;}
             *value=number;error=false;edit.active=false;
-            if(key==KEY_EXIT)continue;
             graph_overlay_restore();ui_blink_stop(&blink);return true;
         }
-        if(key==KEY_EXIT){graph_overlay_restore();ui_blink_stop(&blink);return false;}
         if((key>=KEY_F1 && key<=KEY_F5) || key==KEY_OPTN)continue;
         bool numeric=ui_digit(key)>=0 || key==KEY_DOT || key==KEY_NEG || key==KEY_SUB
             || key==KEY_ADD || key==KEY_EXP || key==KEY_DEL || key==KEY_ACON
@@ -318,7 +318,7 @@ static bool restore_plot(App *a,GraphResult last)
 {
     Document *d=&a->doc;
     if(!graph_redraw_cached(d,&a->model,d->solver.xmin,d->solver.xmax)) {
-        if(d->enabled || d->view.phase)return false;
+        if(gsolve_curve_count(d)>0 || d->view.phase)return false;
         graph_backdrop(d,&a->model);graph_labels(d,&a->model);
     }
     graph_status(last);return true;

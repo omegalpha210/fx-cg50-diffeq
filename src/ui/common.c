@@ -374,7 +374,34 @@ static void busy_upload(int left,int top,int width,int height)
     r61524_display_rect(gint_vram,UI_X+left,UI_X+left+width-1,UI_Y+top,UI_Y+top+height-1);
 }
 static bool busy_screen(const UiBusy *busy)
-{return busy->area==UI_BUSY_TABLE || busy->area==UI_BUSY_DRAW;}
+{return busy->area==UI_BUSY_TABLE;}
+static void busy_draw_paint(const char *text)
+{
+    unsigned capacity;uint16_t *saved=graph_busy_pixels(&capacity,true);
+    int rows=(int)(capacity/UI_W);if(rows<1)return;
+    int width;dsize("EXIT cancels",NULL,&width,NULL);
+    struct dwindow old=dwindow;
+    /* Exactly the six softkeys' bounding rectangle, including separators.
+       The LCD keeps the prior graph while VRAM owns unfinished construction. */
+    for(int y=198;y<216;y+=rows) {
+        int height=216-y<rows ? 216-y:rows;
+        for(int r=0;r<height;r++)memcpy(saved+r*UI_W,
+            gint_vram+(UI_Y+y+r)*DWIDTH+UI_X,UI_W*2);
+        dwindow_set((struct dwindow){UI_X,UI_Y+y,UI_X+UI_W,UI_Y+y+height});
+        ui_rect(0,198,UI_W,18,UI_BLUE);
+        if(y<202+dfont_default()->data_height && y+height>202) {
+            ui_text(5,202,C_WHITE,"%s",text);
+            ui_text(UI_W-5-width,202,C_WHITE,"EXIT cancels");
+        }
+        busy_upload(0,y,UI_W,height);
+        for(int r=0;r<height;r++)memcpy(gint_vram+(UI_Y+y+r)*DWIDTH+UI_X,
+            saved+r*UI_W,UI_W*2);
+    }
+    dwindow_set(old);
+#ifndef FXCG50
+    host_display_frame();
+#endif
+}
 static void busy_screen_paint(UiBusy *busy,const char *text)
 {
     unsigned capacity;uint16_t *saved=graph_busy_pixels(&capacity,true);
@@ -418,6 +445,9 @@ bool ui_busy_cancel(void *context)
     uint32_t delta=now>=busy->last ? now-busy->last:now+86400u*128u-busy->last;
     if(elapsed>=20 && (!busy->visible || delta>=16)) {
         char text[40];snprintf(text,sizeof(text),"%s %c",busy->label,"/-\\|"[busy->frame++%4]);
+        if(busy->area==UI_BUSY_DRAW) {
+            busy_draw_paint(text);busy->visible=true;busy->last=now;return false;
+        }
         if(busy_screen(busy)) {
             busy_screen_paint(busy,text);busy->visible=true;busy->last=now;return false;
         }
@@ -444,13 +474,13 @@ bool ui_busy_cancel(void *context)
 }
 void ui_busy_end(UiBusy *busy)
 {
-    if(busy->visible && !busy_screen(busy)) {int top,width;busy_rect(busy,&top,&width);
+    if(busy->visible && !busy_screen(busy) && busy->area!=UI_BUSY_DRAW) {int top,width;busy_rect(busy,&top,&width);
         busy_upload(5,top,width,dfont_default()->data_height+1);
 #ifndef FXCG50
         host_display_frame();
 #endif
     }
-    /* Full preparation screens are replaced by their owner after commit or
+    /* Table's preparation screen and Drawing's bar are replaced after commit or
        rollback. Never upload a cancelled in-progress Graph framebuffer here. */
     busy->visible=false;
 }

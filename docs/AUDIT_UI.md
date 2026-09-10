@@ -1,3 +1,11 @@
+Current beta.8 changes are authoritative in [VISIBILITY_PROMPT_AUDIT](VISIBILITY_PROMPT_AUDIT.md).
+R1/UIR1 are resolved by owner decision, implemented and validated. Drawing now
+keeps Graph with a bottom bar; Output has per-IC ON/OFF and color; SAVE is v11;
+numeric EXIT cancels immediately to G-Solve page2. The beta.7 report below is
+historical evidence, including its former review choices and original controls.
+
+---
+
 # UI and state audit — beta.7
 
 The explicit Table/Drawing, SF and IC-color fixes passed 53 host/UBSan groups,
@@ -184,7 +192,7 @@ must remain at most104px, leaving at least4px before the colon. Actual app tests
 verify that the shortened caption is the one displayed and that curve-only rows
 still carry no ON/OFF values.
 
-### UIR1 — P2 / REVIEW REQUIRED: escaping invalid G-Solve numeric EDIT
+### UIR1 — P2 / closed in beta.8 (historical reproduction): escaping invalid G-Solve numeric EDIT
 
 The existing Y-CAL/X-CAL numeric prompt begins empty. EXIT in EDIT attempts to
 validate/commit and stays in the prompt on invalid input; a valid commit followed

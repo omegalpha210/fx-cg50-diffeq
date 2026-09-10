@@ -82,7 +82,7 @@ int main(void)
     assert(gsolve_curve_count(&d)==2);
     assert(gsolve_curve_at(&d,1,&curve) && curve.family==1 && curve.variable==0);
     d.view.phase=1;assert(gsolve_curve_count(&d)==0);
-    d.view.phase=0;d.enabled=0;assert(gsolve_curve_count(&d)==0);
+    d.view.phase=0;d.ic_enabled=0;assert(gsolve_curve_count(&d)==0);
 
     model_defaults(&d,EQ_SECOND,2);d.solver.h=.025;
     ModelError error=model_compile(&d,&m);
