@@ -1,3 +1,29 @@
+# Priority retest — v0.12.0-beta.9
+
+**HARDWARE TEST REQUIRED — 10 new power/failure cases plus all34 beta.8 cases below
+remain pending.** Record calculator OS, release SHA256, exact keys/settings, elapsed
+wall time and whether the old session/report/draft survives.
+
+P1. For each30s/1min/3min duration, compare dim timing/level directly with SYSTEM;
+repeat at saved brightness1 and5. No app frame or cursor blink restarts inactivity.
+P2. Single key, SHIFT alone, release and held arrow restore brightness/reset timing.
+P3. At10-minute and60-minute APO, suspend on Main, editor, confirmation and Graph.
+P4. Wake with ON held, then release: no editor clearing, extra navigation or stale
+queued action; current draft and selected curve remain usable.
+P5. Let a sufficiently long Drawing/Table/CSV/TRACE/G-Solve operation hit APO;
+accepted plot/window/report remain, cancellation finishes before suspend/file exit.
+P6. SHIFT+AC in the same operations; no half-drawn upload or stale operation on wake.
+P7. Dim → MENU → change duration/APO/brightness in SYSTEM → reselect app; new settings
+apply and SYSTEM's stored brightness is unchanged by the earlier temporary dim.
+P8. Midnight crossing, repeated sleep/wake and MENU cycles; no missing modifier,
+frozen timer, unusable keyboard, corrupt display or unexpected restart.
+P9. Back up sessions, then test real full/unavailable storage: SAVE failure preserves
+previous usable session; CSV failure removes only the incomplete export.
+P10. Ten-IC Output and long variable/function lists: header position is readable,
+last-row UP/DOWN wrap and existing INIT/EXE/EXIT/color behavior remain consistent.
+
+---
+
 # Priority retest — v0.12.0-beta.8
 
 **HARDWARE TEST REQUIRED / HARDWARE RETEST REQUIRED — all34 cases pending.**

@@ -1,4 +1,5 @@
 #include "app.h"
+#include "power.h"
 #include <gint/display.h>
 #include <gint/keyboard.h>
 #ifdef FXCG50
@@ -23,5 +24,8 @@ int main(void)
     transform.enabled|=KEYDEV_TR_DELAYED_MODS;
     keydev_set_transform(keydev_std(),transform);
     #endif
-    return app_run();
+    power_init();
+    int result=app_run();
+    power_shutdown();
+    return result;
 }

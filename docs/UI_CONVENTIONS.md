@@ -1,3 +1,15 @@
+# Current UI conventions — v0.12.0-beta.9
+
+Beta.8 controls remain authoritative. Long SELECT/Output lists (>7 items) add a
+right-aligned current-item/total header, `1 of 10`; short lists omit it. Stage
+labels remain exclusive to Equation/IC/Parameters. Power activity comes from
+physical keys, not redraws. Resume drains the wake key until release and retains
+editing state. Cancellation restores stable state before MENU or power-off.
+No duplicate power preferences, new automatic save, or extra generic EXE hints.
+[Power and failure audit](POWER_SAFETY_AUDIT.md).
+
+---
+
 # Current UI conventions — v0.12.0-beta.8
 
 [Implementation and validation](VISIBILITY_PROMPT_AUDIT.md) closes FULL_AUDIT R1/UIR1.

@@ -24,6 +24,8 @@ typedef enum {UI_STAGE_BACK,UI_STAGE_NEXT,UI_STAGE_VWINDOW,UI_STAGE_OUTPUT,UI_ST
 typedef struct {int timer;volatile int timeout;bool highlighted;} UiBlink;
 void ui_frame(const char *title,const char *subtitle);
 void ui_progress(unsigned stage);
+/* Long SELECT lists only; never replaces Equation/IC/Parameters stage labels. */
+void ui_list_position(int selected,int count);
 void ui_help(int x,int y,const char *text,bool main_menu);
 bool ui_select_move(int key,int *selected,int count);
 void ui_text(int x,int y,int color,const char *format,...);

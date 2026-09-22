@@ -60,4 +60,10 @@ assert re.findall(r'TEXT 16 49 ([^\n]+)',tail(run(all_off+'F4')))==['x']
 changed='1 4 F6 F6 F4 RIGHT F6 EXIT EXIT EXIT EXIT 3 F6 '
 assert 'Replace equation and ICs with defaults?' in tail(run(changed))
 assert 'Order (1-9)' in tail(run(changed+'EXIT'))
+# Long output lists expose position without changing wrap, INIT, or EXE policy.
+ten='1 4 F6 DOWN S:MUL '+(' COMMA '.join(' '.join(str(i)) for i in range(1,11)))+' S:DIV EXE F6 F4 '
+for keys,position in [('',1),('UP',10),('UP DOWN',1),('DOWN '*7,8),('UP F1',1)]:
+    result=tail(run(ten+keys))
+    assert re.search(r'TEXT \d+ 9 '+str(position)+r' of 10',result)
+assert not re.search(r'TEXT \d+ 9 \d+ of ',tail(run(five+'F4')))
 print('Approved UI decisions: sparse IC mapping, all-OFF safety, single-curve skip, X/Y-CAL empty/partial/valid/error EXIT, exact page/report/pixel preservation, HOLD boundary and EXE-only validation PASS.')

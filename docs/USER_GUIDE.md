@@ -1,3 +1,18 @@
+# SYSTEM power settings — beta.9
+
+SYSTEM의 Auto Power Off(10/60분), Backlight Duration(30초/1분/3분), 밝기를 앱
+진입·MENU 복귀·전원 복귀 시 읽습니다. 키 입력 없이 설정 시간이 지나면 어두워지고,
+입력하면 원래 밝기로 돌아옵니다. 자동 꺼짐 또는 SHIFT+AC는 계산을 취소·복구한 뒤
+안전한 입력 대기 지점에서 실행합니다. 재개할 때 ON 키를 놓으면 현재 화면/편집을
+계속합니다. SYSTEM 설정값 자체를 변경하거나 자동 SAVE를 추가하지 않습니다.
+정확한 밝기와 실제 꺼짐·재개는 **HARDWARE TEST REQUIRED**입니다.
+
+긴 Output/함수/변수 선택 목록의 오른쪽 헤더에 `1 of 10`처럼 현재 위치가 표시됩니다.
+SAVE 전 기존 파일을 읽는 중 I/O 오류가 생기면 덮어쓰지 않고 저장 실패를 표시합니다.
+[자세한 오류 발생 조건·검증·제한](POWER_SAFETY_AUDIT.md).
+
+---
+
 # DIFF EQ 사용 설명서 — v0.12.0-beta.8
 
 기본 RK4와 TRACE·G-Solve·10개 초기값·SYS 2D Phase 기능을 보존하면서

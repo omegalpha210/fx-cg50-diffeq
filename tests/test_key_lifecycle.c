@@ -1,4 +1,5 @@
 #include "ui.h"
+#include "power.h"
 #include <gint/timer.h>
 #include <gint/rtc.h>
 #include <gint/drivers/keydev.h>
@@ -10,6 +11,9 @@ static int direct_next,direct_length;
 static int length,next,menu_count,timers,starts,stops,held=1;
 static volatile int *timer_flag;
 static keydev_transform_t transform;
+static bool power_requested;
+static bool idle_wait;
+static int power_resumed;
 keydev_t *keydev_std(void) {return NULL;}
 keydev_transform_t keydev_transform(keydev_t *d) {(void)d;return transform;}
 void keydev_set_transform(keydev_t *d,keydev_transform_t t) {(void)d;transform=t;}
@@ -21,12 +25,22 @@ key_event_t getkey_opt(int options,volatile int *timeout)
     assert(timeout);
     if(next<length) {
         /* Compute poll must NOT let gint consume MENU before safe return. */
+        if(!idle_wait)assert(!(options&(GETKEY_MENU|GETKEY_POWEROFF)));
         if(events[next].key==KEY_MENU)assert(!(options&GETKEY_MENU));
         return events[next++];
     }
     *timeout=1;return (key_event_t){.type=KEYEV_NONE};
 }
 void gint_osmenu(void) {menu_count++;}
+/* This original fixture isolates common.c; power's real native lifecycle is
+   exercised separately with OS-world/RTC/keyboard adapters. */
+bool power_poll(bool idle)
+{if(!power_requested)return false;if(idle){power_requested=false;power_resumed++;}return true;}
+bool power_key(key_event_t e)
+{if(e.key!=KEY_ACON || !e.shift)return false;power_requested=true;return true;}
+key_event_t power_wait_key(volatile int *timeout)
+{idle_wait=true;key_event_t e=timeout ? getkey_opt(GETKEY_DEFAULT,timeout):getkey();idle_wait=false;return e;}
+void power_osmenu(void) {gint_osmenu();dupdate();}
 int timer_configure(int timer,uint64_t delay,gint_call_t callback)
 {
     assert(timer==TIMER_ANY && delay==250000 && timers==0);
@@ -55,6 +69,10 @@ int main(void)
     assert(ui_cancel(NULL) && menu_count==0);
     assert(ui_getkey().key==KEY_5 && menu_count==1);
     assert(ui_getkey().key==KEY_5 && menu_count==1);
+    length=2;next=0;events[0]=event(KEY_RIGHT);events[1]=event(KEY_ACON);events[1].shift=1;
+    assert(ui_cancel(NULL) && power_requested && power_resumed==0);
+    assert(ui_getkey().key==KEY_5 && !power_requested && power_resumed==1);
+    /* Resume removes our pre-off queued RIGHT only after calculation returned. */
     direct[0]=event(KEY_EXIT);direct[0].type=KEYEV_HOLD;direct[1]=direct[0];
     direct[2]=event(KEY_ADD);direct[2].alpha=1;direct[3]=event(KEY_EXE);direct_length=4;
     first=ui_getkey();assert(first.key==KEY_ADD && first.alpha && direct_next==3);
@@ -99,6 +117,12 @@ int main(void)
     next=0;length=2;events[0]=event(KEY_F6);events[1]=event(KEY_EXIT);
     assert(ui_trace_cancel(NULL) && ui_trace_key(&trace_blink).key==KEY_EXIT);
     ui_trace_input(false);assert(transform.repeater==NULL);
+    ui_trace_input(true);length=2;next=0;events[0]=event(KEY_LEFT);
+    events[1]=event(KEY_ACON);events[1].shift=1;
+    assert(ui_trace_cancel(NULL) && power_requested && power_resumed==1);
+    length=next=0;trace_blink.timer=-1;
+    assert(ui_trace_key(&trace_blink).key==KEY_5 && power_resumed==2);
+    ui_trace_input(false);
     length=next=0;host_tick_step(8);UiBusy busy;ui_busy_start(&busy);
     for(int i=0;i<3;i++)assert(!ui_busy_cancel(&busy));
     assert(busy.visible && partial_uploads==1);ui_busy_end(&busy);assert(partial_uploads==2);host_tick_step(0);

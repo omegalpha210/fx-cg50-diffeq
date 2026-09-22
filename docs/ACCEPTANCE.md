@@ -1,3 +1,17 @@
+# Current validation — v0.12.0-beta.9
+
+**63/63 host/UBSan PASS (32.23s)**; all previous59 groups retained. Clean29-C-unit
+SH compile/link, zero warnings/errors,13/13 G3A checks. Four new groups cover native
+power policy, malformed-input stress, storage I/O faults and IC malloc failure.
+A reproduced SAVE preflight read-error overwrite was fixed and retested.
+Four long-list frames reviewed; existing visibility captures refreshed.
+Optional ASan is unavailable: an independent empty-main control hangs in the
+installed runtime before main. No ASan/device PASS is claimed. Required public
+candidate and exact-tag checks are recorded in Release VALIDATION.md.
+[Detailed current audit](POWER_SAFETY_AUDIT.md). **HARDWARE TEST REQUIRED**.
+
+---
+
 # Current validation — v0.12.0-beta.8
 
 Final development **59/59 host/UBSan PASS, 39.72s**, all prior57 groups retained.

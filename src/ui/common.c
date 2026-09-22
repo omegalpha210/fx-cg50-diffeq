@@ -1,5 +1,6 @@
 #include "ui.h"
 #include "trace.h"
+#include "power.h"
 #include <gint/rtc.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -47,11 +48,13 @@ void ui_trace_input(bool active)
 bool ui_trace_cancel(void *unused)
 {
     (void)unused;
+    if(power_poll(false))return true;
 #ifdef FXCG50
     for(;;) {
         volatile int timeout=1;
-        key_event_t event=getkey_opt(GETKEY_DEFAULT & ~GETKEY_MENU,&timeout);
+        key_event_t event=getkey_opt(GETKEY_DEFAULT & ~(GETKEY_MENU|GETKEY_POWEROFF),&timeout);
         if(event.type==KEYEV_NONE)break;
+        if(power_key(event))return true;
         trace_accept(event);
     }
     if(trace_pending.type==KEYEV_HOLD && !keydown(trace_pending.key))trace_pending=(key_event_t){0};
@@ -63,30 +66,32 @@ bool ui_trace_cancel(void *unused)
 }
 key_event_t ui_trace_key(UiBlink *blink)
 {
+    if(power_poll(true)){pending_count=0;trace_pending=(key_event_t){0};}
     ui_trace_cancel(NULL);
     if(trace_pending.type==KEYEV_NONE)trace_accept(ui_blink_key(blink));
     ui_trace_cancel(NULL);
     key_event_t event=trace_pending;trace_pending=(key_event_t){0};
 #ifdef FXCG50
-    if(event.key==KEY_MENU) {gint_osmenu();dupdate();}
+    if(event.key==KEY_MENU)power_osmenu();
 #endif
     return event;
 }
 static key_event_t take_key(void)
 {
+    if(power_poll(true)){pending_count=0;trace_pending=(key_event_t){0};}
     while(pending_count) {
         key_event_t event=pending[0];
         memmove(pending,pending+1,(--pending_count)*sizeof(*pending));
         if(event.key==KEY_MENU && !event.shift && !event.alpha) {
-            /* MENU observed by the compute poll was deliberately not handled
-               by getkey_opt. All other MENU keys use getkey's normal path. */
+            /* MENU observed by the compute poll waits for stable UI state;
+               ordinary idle MENU is handled by the shared power wait. */
 #ifdef FXCG50
-            gint_osmenu();dupdate();continue;
+            power_osmenu();continue;
 #endif
         }
         return event;
     }
-    return getkey();
+    return power_wait_key(NULL);
 }
 key_event_t ui_getkey(void)
 {
@@ -120,6 +125,13 @@ void ui_progress(unsigned stage)
     if(stage<1 || stage>3)return;
     char text[4]={(char)('0'+stage),'/', '3',0};int width;
     dsize(text,NULL,&width,NULL);ui_text(UI_W-8-width,5,C_WHITE,"%s",text);
+}
+void ui_list_position(int selected,int count)
+{
+    if(count<=7 || selected<0 || selected>=count)return;
+    char text[24];snprintf(text,sizeof(text),"%d of %d",selected+1,count);
+    int width;dsize(text,NULL,&width,NULL);
+    ui_text(UI_W-8-width,5,C_WHITE,"%s",text);
 }
 bool ui_select_move(int key,int *selected,int count)
 {
@@ -290,6 +302,7 @@ int ui_choose(const char *title,const char *const *items,int count,int selected)
     if(selected<0 || selected>=count) selected=0;
     for(;;) {
         ui_frame(title,NULL);
+        ui_list_position(selected,count);
         int page=selected/7;
         for(int row=0;row<7 && page*7+row<count;row++) {
             char number[16];snprintf(number,sizeof(number),"%d",page*7+row+1);
@@ -308,14 +321,16 @@ int ui_choose(const char *title,const char *const *items,int count,int selected)
 }
 static bool poll_input(bool cancel)
 {
+    if(power_poll(false) && cancel)return true;
     while(pending_count<UI_PENDING_CAPACITY) {
 #ifdef FXCG50
         volatile int timeout=1;
-        key_event_t event=getkey_opt(GETKEY_DEFAULT & ~GETKEY_MENU,&timeout);
+        key_event_t event=getkey_opt(GETKEY_DEFAULT & ~(GETKEY_MENU|GETKEY_POWEROFF),&timeout);
 #else
         key_event_t event=pollevent();
 #endif
         if(event.type==KEYEV_NONE)break;
+        if(power_key(event)) {if(cancel)return true;continue;}
         if(event.type==KEYEV_HOLD && event.key==KEY_EXIT)continue;
         bool stop=event.type==KEYEV_DOWN && (event.key==KEY_EXIT || event.key==KEY_ACON);
         if(cancel && stop)return true;
@@ -344,7 +359,7 @@ key_event_t ui_blink_key(UiBlink *blink)
     if(pending_count)return ui_getkey();
     if(blink->timer>=0) {
         blink->timeout=0;
-        do {event=getkey_opt(GETKEY_DEFAULT,&blink->timeout);}
+        do {event=power_wait_key(&blink->timeout);}
         while(event.type==KEYEV_HOLD && event.key==KEY_EXIT);
     } else event=ui_getkey();
 #else

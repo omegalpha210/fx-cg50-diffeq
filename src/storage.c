@@ -144,11 +144,21 @@ static bool filename(char *out,unsigned capacity,const char *directory,const cha
     return n>=0 && (unsigned)n<capacity;
 }
 
+/* Main-thread OS workers are serialized. Distinguish a transient I/O failure
+   from a missing/corrupt slot before SAVE chooses a file to overwrite. */
+static bool native_read_error;
+static off_t native_seek(int fd,off_t offset,int whence)
+{
+    off_t result=lseek(fd,offset,whence);
+    if(result<0)native_read_error=true;
+    return result;
+}
 static bool native_read_all(int fd,void *data,size_t size)
 {
     unsigned char *bytes=data;
     while(size) {
         ssize_t n=read(fd,bytes,size);
+        if(n<0)native_read_error=true;
         if(n<=0)return false;
         bytes+=n;size-=(size_t)n;
     }
@@ -213,12 +223,13 @@ static bool native_write_all(int fd,const void *data,size_t size)
 static int slot_probe_native(void *opaque)
 {
     SlotProbe *probe=opaque;
+    native_read_error=false;
     int fd=open(probe->path,O_RDONLY,0);
-    if(fd<0)return 0;
-    off_t length=lseek(fd,0,SEEK_END);
-    bool ok=lseek(fd,0,SEEK_SET)==0 && native_read_all(fd,&probe->header,sizeof(probe->header))
+    if(fd<0)return errno==ENOENT ? 0:-1;
+    off_t length=native_seek(fd,0,SEEK_END);
+    bool ok=native_seek(fd,0,SEEK_SET)==0 && native_read_all(fd,&probe->header,sizeof(probe->header))
         && valid_header(&probe->header) && length==(off_t)probe->header.size
-        && lseek(fd,0,SEEK_SET)==0;
+        && native_seek(fd,0,SEEK_SET)==0;
     uint32_t hash=2166136261u;
     unsigned char chunk[256];
     size_t offset=0,end=ok ? checksum_offset(probe->header.version):0;
@@ -232,8 +243,8 @@ static int slot_probe_native(void *opaque)
         }
     }
     if(ok)ok=native_read_all(fd,&probe->checksum,sizeof(probe->checksum));
-    if(close(fd)!=0)ok=false;
-    return ok && hash==probe->checksum;
+    if(close(fd)!=0)native_read_error=true;
+    return native_read_error ? -1:ok && hash==probe->checksum;
 }
 
 static bool skip_hashed(int fd,size_t size,uint32_t *hash)
@@ -376,11 +387,12 @@ static bool read_document(int fd,Document *d,uint32_t version,bool present,uint3
 static int record_read_native(void *opaque)
 {
     RecordRead *request=opaque;
+    native_read_error=false;
     int fd=open(request->path,O_RDONLY,0);
-    if(fd<0)return 0;
+    if(fd<0)return -1;
     bool ok=valid_header(&request->expected)
-        && lseek(fd,0,SEEK_END)==(off_t)request->expected.size
-        && lseek(fd,0,SEEK_SET)==0;
+        && native_seek(fd,0,SEEK_END)==(off_t)request->expected.size
+        && native_seek(fd,0,SEEK_SET)==0;
     uint32_t hash=2166136261u,checksum=0;
     unsigned char prefix[64];RecordHeader actual={0};
     size_t prefix_size=offsetof(RecordLayout,current);
@@ -392,8 +404,8 @@ static int record_read_native(void *opaque)
     if(ok)ok=read_document(fd,request->current,actual.version,true,&hash,request->warnings)
         && read_document(fd,request->recall,actual.version,actual.has_recall!=0,&hash,request->warnings)
         && native_read_all(fd,&checksum,sizeof(checksum)) && hash==checksum;
-    if(close(fd)!=0)ok=false;
-    return ok;
+    if(close(fd)!=0)native_read_error=true;
+    return native_read_error ? -1:ok;
 }
 
 static bool native_write_zeros(int fd,size_t size,uint32_t *hash)
@@ -524,38 +536,41 @@ static int run_file_remove(const char *path)
 #endif
 }
 
-static bool probe_slot(const char *directory,int slot,SlotProbe *probe)
+static int probe_slot(const char *directory,int slot,SlotProbe *probe)
 {
     char name[24];snprintf(name,sizeof(name),"DIFFEQ%d.dat",slot);
     memset(probe,0,sizeof(*probe));
     probe->slot=slot;
-    if(!filename(probe->path,sizeof(probe->path),directory,name)
-        || !run_slot_probe(probe))return false;
-    RecordHeader *header=&probe->header;
-    return valid_header(header);
+    if(!filename(probe->path,sizeof(probe->path),directory,name))return -1;
+    return run_slot_probe(probe);
 }
 
-static bool load_slot_documents(App *app,const SlotProbe *probe)
+static int load_slot_documents(App *app,const SlotProbe *probe)
 {
     app->load.warnings=0;
     RecordRead request={probe->path,probe->header,&app->load.current,&app->load.recall,&app->load.warnings};
-    if(!run_record_read(&request)
-        || model_validate(&app->load.current)!=ODE_OK
+    int result=run_record_read(&request);if(result!=1)return result;
+    if(model_validate(&app->load.current)!=ODE_OK
         || (probe->header.has_recall && model_validate(&app->load.recall)!=ODE_OK))return false;
     return true;
 }
 
-static bool newest_valid_slot(App *app,const char *directory,SlotProbe *selected)
+static bool newest_valid_slot(App *app,const char *directory,SlotProbe *selected,bool *io_error)
 {
-    SlotProbe slots[2];bool valid[2];
-    for(int slot=0;slot<2;slot++)valid[slot]=probe_slot(directory,slot,&slots[slot]);
+    SlotProbe slots[2];bool valid[2];*io_error=false;
+    for(int slot=0;slot<2;slot++) {
+        int result=probe_slot(directory,slot,&slots[slot]);
+        valid[slot]=result==1;if(result<0)*io_error=true;
+    }
     for(int attempt=0;attempt<2;attempt++) {
         int candidate=-1;
         for(int slot=0;slot<2;slot++)if(valid[slot]
             && (candidate<0 || slots[slot].header.generation>=slots[candidate].header.generation))
             candidate=slot;
         if(candidate<0)return false;
-        if(load_slot_documents(app,&slots[candidate])){*selected=slots[candidate];return true;}
+        int result=load_slot_documents(app,&slots[candidate]);
+        if(result==1){*selected=slots[candidate];return true;}
+        if(result<0)*io_error=true;
         valid[candidate]=false;
     }
     return false;
@@ -563,8 +578,8 @@ static bool newest_valid_slot(App *app,const char *directory,SlotProbe *selected
 
 bool storage_load(App *app,const char *directory)
 {
-    SlotProbe selected;
-    if(!newest_valid_slot(app,directory,&selected))return false;
+    SlotProbe selected;bool io_error;
+    if(!newest_valid_slot(app,directory,&selected,&io_error))return false;
     app->migration_warnings=app->load.warnings;
     app->doc=app->load.current;
     app->recall=app->load.recall;
@@ -576,7 +591,9 @@ bool storage_save(App *app,const char *directory)
 {
     if(model_validate(&app->doc)!=ODE_OK
         || (app->has_recall && model_validate(&app->recall)!=ODE_OK))return false;
-    SlotProbe latest;bool found=newest_valid_slot(app,directory,&latest);
+    SlotProbe latest;bool io_error;
+    bool found=newest_valid_slot(app,directory,&latest,&io_error);
+    if(io_error)return false;
     uint32_t generation=found ? latest.header.generation:0;
     if(generation==UINT32_MAX)return false;
     int slot=found && latest.slot==0 ? 1:0;
@@ -587,9 +604,9 @@ bool storage_save(App *app,const char *directory)
     RecordWrite request={path,header,&app->doc,&app->recall};
     if(!run_record_write(&request))return false;
     SlotProbe verified;
-    return probe_slot(directory,slot,&verified)
+    return probe_slot(directory,slot,&verified)==1
         && verified.header.generation==header.generation
-        && load_slot_documents(app,&verified);
+        && load_slot_documents(app,&verified)==1;
 }
 
 #define CSV_MAX_ROWS 998u /* One of the 999 CSV lines is the ignored label row. */

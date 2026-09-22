@@ -10,11 +10,20 @@
 DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식의 수치해를
 컬러 그래프·기울기장·TRACE·G-Solve·표로 살펴보고, 2변수 시스템의 위상을 분석할 수 있습니다.
 
-**공개 베타 · v0.12.0-beta.8 · [MIT 라이선스](LICENSE)**
+**공개 베타 · v0.12.0-beta.9 · [MIT 라이선스](LICENSE)**
 
-**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.8)**
+**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.9)**
 · [전체 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [버그 신고](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
+
+
+**새 기능: SYSTEM 절전 설정 연동.** Auto Power Off, Backlight Duration, 밝기를 읽어
+무입력 시 어둡게 하고, 계산 취소·복구 후 안전한 지점에서 전원을 끕니다.
+MENU 복귀 시 설정을 갱신하고, ON을 놓으면 현재 편집/화면을 계속합니다.
+SAVE 직전 읽기 오류가 정상 저장본을 덮어쓰는 문제를 수정했고 긴 목록에 위치를 표시합니다.
+**63/63 host/UBSan**, SH29개 C, package13/13 통과. 실제 꺼짐/재개·정확한 밝기는
+**HARDWARE TEST REQUIRED**이며, 개발 호스트의 선택적 ASan은 실행 환경 문제로 검증하지 못했습니다.
+[오류 조건·검증·한계](docs/POWER_SAFETY_AUDIT.md).
 
 ![y'=1-y^2의 두 해 곡선과 옅은 파란색 화살표 기울기장](docs/images/graph-slope-field.png)
 
@@ -191,7 +200,7 @@ Parameters **F3 V-WIN**에서 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax
 
 ## 계산기에 설치하기
 
-1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.8)를 엽니다.
+1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.9)를 엽니다.
 2. **DIFFEQ.g3a**를 받습니다. 다운로드 확인용 `SHA256SUMS.txt`도 제공됩니다.
 3. fx-CG50을 USB로 연결하고 USB Flash 모드를 선택한 뒤 컴퓨터에서 계산기 드라이브를 엽니다.
 4. `DIFFEQ.g3a`를 드라이브 **최상위**에 복사합니다. `@MainMem` 폴더 안에 넣지 않습니다.
@@ -272,7 +281,7 @@ EXIT는 검증 없이 G-Solve 2쪽으로 돌아갑니다. HOLD는 추가 단계�
 떼었다가 다시 누른 EXIT만 Graph로 돌아갑니다. EXE만 검증/확정하며 prompt의 F6는 비어 있습니다.
 다른 입력 화면은 기존 조작을 유지합니다.
 
-이전 두 검토 보류 사항을 닫았습니다. **59/59 host/UBSan**, SH28개 C 파일 warning0,
+이전 두 검토 보류 사항을 닫았습니다. **63/63 host/UBSan**, SH29개 C 파일 warning0,
 package13/13을 정확한 공개 소스에서 반복 검증합니다. 수치 알고리즘은 그대로입니다.
 [구현·검증](docs/VISIBILITY_PROMPT_AUDIT.md) ·
 [실제 renderer 12개 화면](docs/ui-review/visibility-overview.png).

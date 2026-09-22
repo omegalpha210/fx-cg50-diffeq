@@ -373,6 +373,7 @@ void ui_output(Document *d)
     int count=scalar ? (d->nic ? d->nic:1):d->dim;
     for(;;) {
         ui_frame("Output selection",NULL);
+        ui_list_position(selected,count);
         int page=selected/7;
         for(int row=0;row<7 && page*7+row<count;row++) {
             int index=page*7+row,variable=families ? 0:index;char label[20];

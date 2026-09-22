@@ -1,3 +1,15 @@
+# Current closure — v0.12.0-beta.9
+
+SYSTEM power settings are integrated. A new fault-injection audit reproduced and
+fixed SAVE overwriting a good slot after a transient preflight read error.
+Long lists gain current-position headers.63/63 host/UBSan, strict29-unit SH and
+13 package checks pass; no new reboot was reproduced in host execution.
+[Current detailed audit and error matrix](POWER_SAFETY_AUDIT.md) separates native
+policy checks, unchanged numerical coverage, optional ASan environment limitation
+and pending physical power/LCD/storage tests. Earlier R1/UIR1 decisions stay closed.
+
+---
+
 # Current closure — v0.12.0-beta.8
 
 **R1 and UIR1: Resolved by user decision / Implemented / Validated.**

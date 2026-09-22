@@ -1,3 +1,14 @@
+# Current memory — v0.12.0-beta.9
+
+Strict SH: text221920/data768/BSS72240B; G3A251368B. Relative to beta.8:
+text/G3A+1900B, BSS+48B, data unchanged. Largest single frame remains2664B
+(app_run). Power adds small static state/filter pointers; storage adds a worker
+I/O flag. No new heap/framebuffer/trajectory copy/timer; existing IC draft cap1920B.
+These numbers are not cumulative stack high-water or physical free-heap proof.
+[Detailed evidence and hardware limits](POWER_SAFETY_AUDIT.md).
+
+---
+
 # Current memory — v0.12.0-beta.8
 
 | SH bytes | beta.7 | beta.8 | Delta |

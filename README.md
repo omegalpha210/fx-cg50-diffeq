@@ -10,11 +10,20 @@ Solve, graph, and explore ordinary differential equations on your calculator.
 DIFFEQ is a native **fx-CG50 add-in** with colorful solution curves, slope fields,
 TRACE, G-Solve, numerical tables, and phase analysis for two-variable systems.
 
-**Public Beta · v0.12.0-beta.8 · [MIT License](LICENSE)**
+**Public Beta · v0.12.0-beta.9 · [MIT License](LICENSE)**
 
-**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.8)**
+**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.9)**
 · [All releases](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [Report a bug](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
+
+
+**New: SYSTEM power settings.** DIFFEQ reads Auto Power Off, Backlight Duration and
+saved brightness, dims after inactivity and suspends at a safe point after any
+calculation rollback. MENU return refreshes the settings; wake waits for ON release.
+A reproduced SAVE read-error overwrite is fixed, and long lists show item position.
+**63/63 host/UBSan**, strict29-unit SH,13 package checks. Physical power timing and
+exact dim brightness remain **HARDWARE TEST REQUIRED**; optional ASan is unavailable
+on the development host. [Detailed safety/error audit](docs/POWER_SAFETY_AUDIT.md).
 
 ![Two DIFFEQ solution curves for y'=1-y^2 with a pale blue arrow slope field](docs/images/graph-slope-field.png)
 
@@ -204,7 +213,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 ## Install on your calculator
 
-1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.8).
+1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.9).
 2. Download **DIFFEQ.g3a**. `SHA256SUMS.txt` is available to check your download.
 3. Connect the fx-CG50 by USB, select USB Flash mode, and open its storage drive.
 4. Copy `DIFFEQ.g3a` to the drive's **root directory**, outside `@MainMem`.
@@ -292,8 +301,8 @@ G-Solve page 2. Held EXIT cannot leave a second level; a second fresh EXIT retur
 Graph. Only EXE validates/commits this temporary prompt; its F6 is blank/inert.
 Other form editors retain their existing controls.
 
-Both former review decisions are closed. **59/59 host/UBSan groups**, strict
-28-unit SH build with zero warnings and 13 package checks are repeated on the
+Both former review decisions are closed. **63/63 host/UBSan groups**, strict
+29-unit SH build with zero warnings and 13 package checks are repeated on the
 exact public source. Numerical algorithms remain unchanged.
 [Implementation and validation](docs/VISIBILITY_PROMPT_AUDIT.md) ·
 [12 production renderer frames](docs/ui-review/visibility-overview.png).
