@@ -4,11 +4,11 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 import sys
 sys.dont_write_bytecode = True
-from capture_paths import CapturePaths
+from capture_paths import CapturePaths, caption_font
 
 paths = CapturePaths(__file__, "ui")
 root = paths.root
@@ -95,7 +95,7 @@ cases += [
 assert len({name for name,_,_ in cases})==len(cases)
 sheet=Image.new('RGB',(816,8+264*((len(cases)+1)//2)),'#e8eef5')
 draw=ImageDraw.Draw(sheet)
-font=ImageFont.load_default()
+font=caption_font()
 for i,(name,label,keys) in enumerate(cases):
     with tempfile.TemporaryDirectory(dir=paths.temporary_root) as directory:
         env=dict(os.environ,DIFFEQ_HOST_KEYS=keys,DIFFEQ_HOST_OUT=directory)

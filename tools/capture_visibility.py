@@ -5,10 +5,11 @@ from pathlib import Path
 from PIL import Image,ImageDraw
 import sys
 sys.dont_write_bytecode = True
-from capture_paths import CapturePaths
+from capture_paths import CapturePaths, caption_font
 
 paths = CapturePaths(__file__, "visibility")
 root = paths.root
+font = caption_font()
 out = paths.output
 def values(count):return ' COMMA '.join(' '.join(str(i)) for i in range(1,count+1))
 def params(count):
@@ -53,7 +54,7 @@ for i,(name,title,keys,match) in enumerate(cases):
         picture=Image.open(frames[index]).convert('RGB');picture.save(out/f'visibility-{name}.png',optimize=True)
         if name in ['drawing','output-five','output-ten-last','prompt']:
             picture.resize((1188,672),Image.Resampling.NEAREST).save(out/f'visibility-{name}-3x.png',optimize=True)
-        x=8+i%2*404;y=8+i//2*264;draw.text((x,y),title,fill='#193857');sheet.paste(picture,(x,y+25))
+        x=8+i%2*404;y=8+i//2*264;draw.text((x,y),title,fill='#193857',font=font);sheet.paste(picture,(x,y+25))
 sheet.save(out/'visibility-overview.png',optimize=True)
 print('12 production UI/LCD-adapter frames +4 integer3x previews; HARDWARE TEST REQUIRED.')
 

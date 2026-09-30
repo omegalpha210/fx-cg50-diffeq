@@ -5,10 +5,11 @@ from pathlib import Path
 from PIL import Image,ImageDraw
 import sys
 sys.dont_write_bytecode = True
-from capture_paths import CapturePaths
+from capture_paths import CapturePaths, caption_font
 
 paths = CapturePaths(__file__, "overlays")
 root = paths.root
+font = caption_font()
 out = paths.output
 base='2 F6 F6 F6 '
 small='2 F6 F6 F3 NEG 6 EXE 6 EXE 1 EXE DOWN NEG 0 DOT 0 1 EXE 1 EXE 0 DOT 2 EXE F6 F6 '
@@ -55,7 +56,7 @@ for i,(name,title,keys,match) in enumerate(cases):
   image=Image.open(frames[index]).convert('RGB');image.save(out/f'overlay-{name}.png',optimize=True)
   if name in ['min-select','root-result','trace-busy','table-busy','drawing-busy']:
    image.resize((1188,672),Image.Resampling.NEAREST).save(out/f'overlay-{name}-3x.png',optimize=True)
-  x=8+i%2*404;y=8+i//2*264;draw.text((x,y),title,fill='#193857');sheet.paste(image,(x,y+25))
+  x=8+i%2*404;y=8+i//2*264;draw.text((x,y),title,fill='#193857',font=font);sheet.paste(image,(x,y+25))
 sheet.save(out/'overlay-overview.png',optimize=True)
 print('20 production renderer views +5 integer enlargements. RTC/poll fixtures are host-only; HARDWARE TEST REQUIRED.')
 

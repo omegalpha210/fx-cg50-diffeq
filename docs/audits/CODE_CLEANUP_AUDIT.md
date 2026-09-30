@@ -86,6 +86,14 @@ sheet was regenerated from the existing beta.9 handler (`1 of 9`); no UI behavio
 was changed. All 11 capture suites run; promotion only copies allowlisted current
 images and never overwrites archived sheets.
 
+Caption regeneration also exposed an environment difference: Pillow 9.3 uses a
+classic bitmap default, while installed Pillow 12.3 uses a FreeType default.
+A shared caption_font helper now selects the existing classic bitmap explicitly.
+No font binary or production font changes. Both versions reproduce native/scale
+and contact-sheet pixels; PNG compression bytes may differ by Pillow/zlib version.
+The original gallery stays unchanged. This fixes tool reproducibility without a
+UI redesign or a new dependency installation.
+
 ## Build and file hygiene
 
 Fresh configurations use build/host and build/target, not moved CMake caches.

@@ -4,11 +4,11 @@ import os,re
 from pathlib import Path
 import subprocess
 import tempfile
-from PIL import Image,ImageDraw,ImageFont
+from PIL import Image,ImageDraw
 
 import sys
 sys.dont_write_bytecode = True
-from capture_paths import CapturePaths
+from capture_paths import CapturePaths, caption_font
 
 paths = CapturePaths(__file__, "interaction")
 root = paths.root
@@ -55,7 +55,7 @@ cases=[
  ('phase-box','PHASE BOX / separate window',phase+'F2 F5 '+('LEFT '*12)+('UP '*8)+'EXE '+('RIGHT '*24)+('DOWN '*16)),
  ('phase-init','PHASE INIT / view retained',phase+'F2 F1 EXIT F6'),
 ]
-font=ImageFont.load_default();sheet=Image.new('RGB',(816,264*((len(cases)+1)//2)+8),'#e8eef5')
+font=caption_font();sheet=Image.new('RGB',(816,264*((len(cases)+1)//2)+8),'#e8eef5')
 draw=ImageDraw.Draw(sheet)
 for i,(name,title,keys) in enumerate(cases):
  with tempfile.TemporaryDirectory(dir=paths.temporary_root) as directory:

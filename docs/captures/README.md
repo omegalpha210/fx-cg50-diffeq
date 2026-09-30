@@ -48,6 +48,13 @@ also refreshes the8 authored menu previews from the actual C renderer. Reproduci
 intermediate frames and3x variants stay in build. Tests assert drawing/key behavior
 directly; no docs PNG acts as a numerical or visual-regression golden.
 
+Contact-sheet captions use Pillow's classic bitmap font explicitly. The installed
+Pillow9.3 and12.3 APIs were checked against all95 printable ASCII glyphs; their
+caption pixels and bounds match. Production framebuffer pixels use the separate
+credited gint atlas. PNG compression can differ between Pillow/zlib versions, so
+cross-version image comparison uses dimensions and decoded RGB pixels; a release
+binary's SHA256 still identifies its exact published bytes.
+
 Earlier compact sheets remain in [archive/captures](../archive/captures/README.md)
 with their milestone evidence. They are frozen and are not overwritten by a
 current gallery refresh.

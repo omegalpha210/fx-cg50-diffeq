@@ -4,11 +4,11 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
-from PIL import Image,ImageDraw,ImageFont
+from PIL import Image,ImageDraw
 
 import sys
 sys.dont_write_bytecode = True
-from capture_paths import CapturePaths
+from capture_paths import CapturePaths, caption_font
 
 paths = CapturePaths(__file__, "consistency")
 root = paths.root
@@ -44,7 +44,7 @@ cases=[
  ('phase-time-ref','Nonautonomous Phase / legend','4 2 F6 DOWN NEG A:SUB 1 ADD XOT EXE F6 F6 F6 F4 F2 F5 F2'),
  ('time-event-trace','EVT / TRACE',event+'F1 F6'),
 ]
-font=ImageFont.load_default();sheet=Image.new('RGB',(816,264*((len(cases)+1)//2)+8),'#e8eef5')
+font=caption_font();sheet=Image.new('RGB',(816,264*((len(cases)+1)//2)+8),'#e8eef5')
 draw=ImageDraw.Draw(sheet)
 for i,(name,title,keys) in enumerate(cases):
  with tempfile.TemporaryDirectory(dir=paths.temporary_root) as directory:

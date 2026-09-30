@@ -8,10 +8,11 @@ from PIL import Image, ImageDraw
 
 import sys
 sys.dont_write_bytecode = True
-from capture_paths import CapturePaths
+from capture_paths import CapturePaths, caption_font
 
 paths = CapturePaths(__file__, "tiles")
 root = paths.root
+font = caption_font()
 out = paths.output
 icons = paths.output/'menu'
 out.mkdir(parents=True, exist_ok=True)
@@ -55,7 +56,7 @@ for i, (name, title, keys) in enumerate(cases):
         if i < 6:
             frame.resize((1188,672), Image.Resampling.NEAREST).save(out/f'tiles-{name}-3x.png', optimize=True)
         x=8+(i%2)*404; y=8+(i//2)*264
-        draw.text((x,y), title, fill='#193857');sheet.paste(frame,(x,y+25))
+        draw.text((x,y), title, fill='#193857',font=font);sheet.paste(frame,(x,y+25))
 sheet.save(out/'tiles-overview.png', optimize=True)
 names = ['first','second','higher','system','separable','linear','bernoulli','others']
 with tempfile.TemporaryDirectory(dir=paths.temporary_root) as folder:

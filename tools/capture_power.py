@@ -5,10 +5,11 @@ from pathlib import Path
 from PIL import Image,ImageDraw
 import sys
 sys.dont_write_bytecode = True
-from capture_paths import CapturePaths
+from capture_paths import CapturePaths, caption_font
 
 paths = CapturePaths(__file__, "power")
 root = paths.root
+font = caption_font()
 out = paths.output
 ten='1 4 F6 DOWN S:MUL '+(' COMMA '.join(' '.join(str(i)) for i in range(1,11)))+' S:DIV EXE F6 F4 '
 cases=[('output-first','Output: position1 of10',ten),
@@ -24,7 +25,7 @@ for i,(name,title,keys) in enumerate(cases):
         assert 'of 10' in p.stdout
         frame=Image.open(sorted(Path(folder).glob('*.ppm'))[-1]).convert('RGB')
         frame.save(out/f'power-{name}.png',optimize=True)
-        x=8+i%2*404;y=8+i//2*264;draw.text((x,y),title,fill='#193857');sheet.paste(frame,(x,y+25))
+        x=8+i%2*404;y=8+i//2*264;draw.text((x,y),title,fill='#193857',font=font);sheet.paste(frame,(x,y+25))
 sheet.save(out/'power-overview.png',optimize=True)
 print('4 production list frames; power/LCD behavior still HARDWARE TEST REQUIRED.')
 

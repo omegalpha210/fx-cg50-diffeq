@@ -51,7 +51,12 @@ Pillow is needed only for optional rendering/generation. Capture scripts use the
 actual app handlers and font, not a CPU/OS emulator. Their scratch directories are
 managed beneath `build/tmp/captures`; default runs do not modify documentation.
 [Gallery provenance](docs/captures/README.md) lists all suites. Archived contact
-sheets are immutable milestone evidence. `host_font.py --check` compares the
+sheets are immutable milestone evidence. Contact-sheet captions explicitly use
+the existing classic Pillow bitmap font: the installed9.3 and12.3 implementations
+produce the same glyph/frame pixels. Compressed PNG bytes may differ across
+Pillow/zlib versions; compare decoded dimensions/RGB pixels across versions, while
+release SHA256 records the exact binary artifact. No new font asset is added.
+`host_font.py --check` compares the
 credited atlas conversion byte for byte, from any working directory. Package icon
 PNGs and compact menu geometry remain canonical inputs; changing their generators
 is separate from regenerating disposable build intermediates.

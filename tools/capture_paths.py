@@ -4,6 +4,21 @@ from pathlib import Path
 import shutil
 
 
+def caption_font():
+    """Use Pillow's classic bitmap caption font across supported versions.
+
+    Pillow 9.3 returned this font from load_default(); Pillow 12.3 returns a
+    FreeType font there and exposes the original as load_default_imagefont().
+    Captions are outside the production framebuffer, whose gint atlas stays
+    unchanged. Both installed implementations render identical bitmap pixels.
+    """
+    from PIL import ImageFont
+    bitmap_loader = getattr(ImageFont, "load_default_imagefont", None)
+    if bitmap_loader is not None:
+        return bitmap_loader()
+    return ImageFont.load_default()
+
+
 class CapturePaths:
     """Shared destinations, without changing each suite's rendering scenarios."""
 
