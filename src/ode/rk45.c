@@ -4,7 +4,7 @@
 #include <string.h>
 /* Dormand-Prince 5(4), cross-checked against SciPy v1.16.2 RK45 and
    Boost.Odeint boost-1.89.0 runge_kutta_dopri5. Mathematical coefficients only;
-   independent implementation. Full provenance: docs/RK45_NUMERICS.md. */
+   independent implementation. Full provenance: docs/audits/RK45_NUMERICS.md. */
 static const double c[7]={0,1./5,3./10,4./5,8./9,1,1};
 static const double tableau[7][6]={
     {0}, {1./5}, {3./40,9./40}, {44./45,-56./15,32./9},

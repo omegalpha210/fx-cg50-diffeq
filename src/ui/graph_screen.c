@@ -79,13 +79,13 @@ static bool trace_value(const UiInlineEdit *edit,double *value)
     ExprError error=expr_compile(edit->text,(ExprScope){0,false,false,false},&program);
     return error.status==EXPR_OK && expr_eval(&program,0,NULL,0,value)==EXPR_OK && isfinite(*value);
 }
-static void show_gsolve_notice(App *a,const char *mode,const char *message);
+static void show_gsolve_notice(const char *mode,const char *message);
 void ui_trace(App *a,GraphResult result)
 {
     Document *d=&a->doc;int count=0,selected=0,prepared=-1,stride=1,origin_selected=0;
     if(d->view.phase){for(int i=0;i<d->nic;i++)if(graph_family_enabled(d,i))count++;}
     else count=gsolve_curve_count(d);
-    if(count<1){show_gsolve_notice(a,"TRACE","No visible graph");return;}
+    if(count<1){show_gsolve_notice("TRACE","No visible graph");return;}
     TracePoint point={.x=d->ic[0].x},origin={0};
     UiBlink blink;ui_blink_start(&blink);ui_trace_input(true);trace_overlay_begin();
     bool valid=false,initialized=false,anchored=false;OdeStatus notice=ODE_OK;
@@ -245,9 +245,9 @@ static void show_results(App *a,GsolveCurve curve,const GsolveCurve *other,
     }
     graph_overlay_restore();graph_labels(&a->doc,&a->model);graph_status(canonical);
 }
-static void show_gsolve_notice(App *a,const char *mode,const char *message)
+static void show_gsolve_notice(const char *mode,const char *message)
 {
-    (void)a;graph_overlay_begin(GRAPH_RESULT_TOP);
+    graph_overlay_begin(GRAPH_RESULT_TOP);
     for(;;) {
         ui_rect(0,GRAPH_RESULT_TOP,384,19,C_WHITE);ui_text(7,184,UI_BLUE,"%s: %s",mode,message);
         ui_softkeys("","","","","","BACK");dupdate();
@@ -273,13 +273,13 @@ static void gsolve_run(App *a,int operation,GraphResult canonical)
         OdeStatus prepared=graph_plot_prepare(&a->doc,&a->model,ui_busy_cancel,&busy);
         ui_busy_end(&busy);
         if(prepared!=ODE_OK) {
-            if(prepared!=ODE_CANCELLED)show_gsolve_notice(a,name,ode_status_text(prepared));
+            if(prepared!=ODE_CANCELLED)show_gsolve_notice(name,ode_status_text(prepared));
             return;
         }
     }
     if(operation==4) {
         if(count<2) {
-            show_gsolve_notice(a,name,"Not available");return;
+            show_gsolve_notice(name,"Not available");return;
         }
         if(count==2){gsolve_curve_at(&a->doc,0,&curve);gsolve_curve_at(&a->doc,1,&other);}
         else if(!choose_curve(a,&curve,NULL)
@@ -289,7 +289,7 @@ static void gsolve_run(App *a,int operation,GraphResult canonical)
         ui_busy_end(&busy);show_results(a,curve,&other,name,result,canonical);return;
     }
     if(!choose_curve(a,&curve,NULL)) {
-        if(count<1)show_gsolve_notice(a,name,"Not available");
+        if(count<1)show_gsolve_notice(name,"Not available");
         return;
     }
     if(operation==5 && !gsolve_input(a,curve,"X",&target))return;
@@ -405,9 +405,56 @@ static bool zoom_box(App *a,GraphResult result)
         if(key==KEY_DOWN)y=y<=193 ? y+4:197;
     }
 }
+typedef enum {BASE,ZOOM,VIEW,ANALYSIS} GraphMenu;
+static void render_graph_menu(GraphMenu menu,bool system,bool phase)
+{
+    if(menu==ZOOM)ui_softkeys("IN","OUT","AUTO","ORIG","BOX","");
+    else if(menu==VIEW)ui_softkeys("TIME","PHASE","TABLE","","","");
+    else if(menu==ANALYSIS)ui_softkeys("FIELD","NULL","EQPT","INFO","","");
+    else ui_softkeys("TRACE","ZOOM","V-WIN",system ? "VIEW":"TABLE",phase ? "ANLYS":"G-SLV","INIT");
+}
+static void render_equilibrium_selection(const Document *d,const CompiledModel *model,int selected)
+{
+    const PhaseResults *r=graph_phase_results();
+    if(selected>=0 && (unsigned)selected<r->count)graph_phase_markers(d,selected);
+    graph_labels(d,model);
+    ui_rect(0,163,384,35,C_WHITE);
+    if(selected>=0 && (unsigned)selected<r->count) {
+        const PhaseRoot *p=&r->root[selected];
+        ui_text(6,165,UI_BLUE,"EQPT %d/%u%s y1=%.6g y2=%.6g",selected+1,r->count,
+            r->truncated ? "+":"",p->y[0],p->y[1]);
+        ui_text(6,182,UI_BLUE,"Linearized: %s",phase_type_name(p->type));
+    } else ui_text(6,181,UI_BLUE,"EQPT: Not found%s",r->has_invalid ? " (valid regions)":"");
+}
+/* Pan happens before menu-specific input. Return the proposed geometry change;
+   ui_graph still owns preflight, drawing, and rollback of that transaction. */
+static bool handle_zoom_input(App *a,GraphResult result,int key,ViewWindow *view,
+    bool changed,GraphMenu *menu)
+{
+    if(key==KEY_F5) {
+        changed=zoom_box(a,result);
+        if(changed)*menu=BASE;
+    }
+    if(key==KEY_F4) {
+        ui_vwindow_reset(&a->doc);
+        changed=true;
+    }
+    if(key==KEY_F1 || key==KEY_F2)changed=graph_zoom(view,key==KEY_F1 ? .67:1.5,0,0);
+    if(key==KEY_F3) {
+        OdeStatus s=graph_auto_window(&a->doc,&a->model);changed=s==ODE_OK;
+        if(!changed) {
+            graph_overlay_begin(0);
+            char hint[96];snprintf(hint,sizeof(hint),"AUTO: %s - EXE",s==ODE_BAD_INPUT ? "No samples in X range":ode_status_text(s));
+            graph_message(hint,false);dupdate();
+            while((key=ui_getkey().key)!=KEY_EXE && key!=KEY_EXIT) {}
+            graph_overlay_restore();
+        }
+    }
+    return changed;
+}
 UiGraphAction ui_graph(App *a,bool first)
 {
-    enum {BASE,ZOOM,VIEW,ANALYSIS} menu=BASE;
+    GraphMenu menu=BASE;
     bool redraw=true,pending=false,eq_shown=false,stable=false,recall_pending=first,notice_phase=false;
     int selected=-1;OdeStatus notice=ODE_OK;
     Document *d=&a->doc;GraphChange before=change_begin(d);
@@ -444,22 +491,8 @@ UiGraphAction ui_graph(App *a,bool first)
             pending=false;phase=system && d->view.phase;
 
         }
-        if(menu==ZOOM)ui_softkeys("IN","OUT","AUTO","ORIG","BOX","");
-        else if(menu==VIEW)ui_softkeys("TIME","PHASE","TABLE","","","");
-        else if(menu==ANALYSIS)ui_softkeys("FIELD","NULL","EQPT","INFO","","");
-        else ui_softkeys("TRACE","ZOOM","V-WIN",system ? "VIEW":"TABLE",phase ? "ANLYS":"G-SLV","INIT");
-        if(menu==ANALYSIS && eq_shown) {
-            const PhaseResults *r=graph_phase_results();
-            if(selected>=0 && (unsigned)selected<r->count)graph_phase_markers(d,selected);
-            graph_labels(d,&a->model);
-            ui_rect(0,163,384,35,C_WHITE);
-            if(selected>=0 && (unsigned)selected<r->count) {
-                const PhaseRoot *p=&r->root[selected];
-                ui_text(6,165,UI_BLUE,"EQPT %d/%u%s y1=%.6g y2=%.6g",selected+1,r->count,
-                    r->truncated ? "+":"",p->y[0],p->y[1]);
-                ui_text(6,182,UI_BLUE,"Linearized: %s",phase_type_name(p->type));
-            } else ui_text(6,181,UI_BLUE,"EQPT: Not found%s",r->has_invalid ? " (valid regions)":"");
-        }
+        render_graph_menu(menu,system,phase);
+        if(menu==ANALYSIS && eq_shown)render_equilibrium_selection(d,&a->model,selected);
         /* Also cover preflight returns and repaint after active Phase markers. */
         graph_status(result);
         if(notice!=ODE_OK) {
@@ -520,25 +553,7 @@ UiGraphAction ui_graph(App *a,bool first)
         before=change_begin(d);ViewWindow *v=model_view(d);
         bool changed=pan_key(v,key);
         if(menu==ZOOM) {
-            if(key==KEY_F5) {
-                changed=zoom_box(a,result);
-                if(changed)menu=BASE;
-            }
-            if(key==KEY_F4) {
-                ui_vwindow_reset(d);
-                changed=true;
-            }
-            if(key==KEY_F1 || key==KEY_F2)changed=graph_zoom(v,key==KEY_F1 ? .67:1.5,0,0);
-            if(key==KEY_F3) {
-                OdeStatus s=graph_auto_window(d,&a->model);changed=s==ODE_OK;
-                if(!changed) {
-                    graph_overlay_begin(0);
-                    char hint[96];snprintf(hint,sizeof(hint),"AUTO: %s - EXE",s==ODE_BAD_INPUT ? "No samples in X range":ode_status_text(s));
-                    graph_message(hint,false);dupdate();
-                    while((key=ui_getkey().key)!=KEY_EXE && key!=KEY_EXIT) {}
-                    graph_overlay_restore();
-                }
-            }
+            changed=handle_zoom_input(a,result,key,v,changed,&menu);
         } else {
             if(key==KEY_ADD || key==KEY_SUB)changed=graph_zoom(v,key==KEY_ADD ? .67:1.5,0,0);
             if(key==KEY_F3)return UI_GRAPH_VWINDOW;

@@ -1,12 +1,23 @@
-# v0.12.0-beta.8 preflight
+# Source snapshot and release preflight
 
-Baseline audit → three approved changes → targeted/existing/full regression →
-strict clean SH and package → renderer review/docs → development commit → clean
-public snapshot → exact candidate and tag gates → prerelease → asset re-download.
+1. Preserve local edits, protected manuals/dist, the installed SDK, public main
+   ancestry and every existing tag. Inventory before mutation.
+2. Validate source changes: all 66 host/UBSan groups, including frozen numerical
+   and 18 UI contracts; strict clean 29-C-unit SH compile/link, zero warnings,
+   13 independent G3A checks. Retain stack/section measurements.
+3. Prepare an explicit public-safe snapshot with `tools/public_snapshot.py`.
+   Review exact additions/removals; scan source, reachable public-history blobs
+   and binary for private paths/credentials/artifacts. Keep MIT and dependency
+   notice bytes. Check relative links and current renderer provenance.
+4. Run the same gates from that exact clean public candidate, then from the exact
+   immutable annotated tag. Use the next available beta if the binary changes.
+   No force-push, tag movement or development-history import.
+5. Assemble DIFFEQ.g3a, SHA256SUMS.txt, VALIDATION.md and complete dependency
+   notices. Publish main/tag normally and create a beta prerelease. Re-download
+   every asset, compare bytes/SHA256/GitHub digest, remote tree and old tag refs.
 
-Required gates:59 host/UBSan groups,28 strict SH C units,zero warnings,13 package
-checks. Compare source to development, validate README links/GitHub rendering,
-scan candidate/public history/binary, preserve original MIT/notices and public
-parent1a5a49d. Tags are immutable. Verify downloaded bytes/SHA256/GitHub digests,
-remote source tree and all prior tags. R1/UIR1 are closed; physical validation
-remains pending. Exact evidence is release VALIDATION.md.
+The independent `verify_g3a.py` is retained separately from fxgxa. Relinking may
+change embedded timestamp and hash. Optional ASan is unverified on the audited
+host runtime. Native hardware results remain HARDWARE TEST REQUIRED until actually
+performed. Stop publication for unresolved required gate, auth, history, security
+or license failures.

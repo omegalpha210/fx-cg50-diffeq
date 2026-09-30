@@ -3,7 +3,13 @@
 import os,re,subprocess,tempfile
 from pathlib import Path
 from PIL import Image,ImageDraw
-root=Path(__file__).resolve().parents[1];out=root/'docs/ui-review';out.mkdir(exist_ok=True)
+import sys
+sys.dont_write_bytecode = True
+from capture_paths import CapturePaths
+
+paths = CapturePaths(__file__, "overlays")
+root = paths.root
+out = paths.output
 base='2 F6 F6 F6 '
 small='2 F6 F6 F3 NEG 6 EXE 6 EXE 1 EXE DOWN NEG 0 DOT 0 1 EXE 1 EXE 0 DOT 2 EXE F6 F6 '
 multi='3 3 F6 F6 F6 F6 '
@@ -32,8 +38,8 @@ cases=[
 ]
 sheet=Image.new('RGB',(816,264*((len(cases)+1)//2)+8),'#e8eef5');draw=ImageDraw.Draw(sheet)
 for i,(name,title,keys,match) in enumerate(cases):
- with tempfile.TemporaryDirectory() as folder:
-  p=subprocess.run([str(root/'build-host/host_app')],cwd=folder,
+ with tempfile.TemporaryDirectory(dir=paths.temporary_root) as folder:
+  p=subprocess.run([str(paths.app)],cwd=folder,
    env=dict(os.environ,DIFFEQ_HOST_KEYS=keys,DIFFEQ_HOST_OUT=folder,DIFFEQ_HOST_MAX_FRAMES='2000',DIFFEQ_HOST_TICK_LIMIT='128'),
    capture_output=True,text=True,check=True,timeout=30)
   assert 'SCRIPT COMPLETE' in p.stdout and 'runtime error:' not in p.stderr
@@ -52,3 +58,5 @@ for i,(name,title,keys,match) in enumerate(cases):
   x=8+i%2*404;y=8+i//2*264;draw.text((x,y),title,fill='#193857');sheet.paste(image,(x,y+25))
 sheet.save(out/'overlay-overview.png',optimize=True)
 print('20 production renderer views +5 integer enlargements. RTC/poll fixtures are host-only; HARDWARE TEST REQUIRED.')
+
+paths.finish()

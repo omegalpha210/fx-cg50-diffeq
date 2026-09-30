@@ -1,0 +1,92 @@
+{
+  "main": {
+    "keys": "",
+    "lines": 24,
+    "sha256": "0adfef1feb5165699a20faa68829f323e30c4c25cf2cc42d38ec62295ff1ac3c"
+  },
+  "equation": {
+    "keys": "1 4 LEFT",
+    "lines": 78,
+    "sha256": "1e918a9378397f7b55a5a996f77fe3e5855c89e2b3028664c3583215f23809c7"
+  },
+  "ic": {
+    "keys": "1 4 F6 DOWN",
+    "lines": 98,
+    "sha256": "13eeed11ecccec8d868264520a99f33ee028f07bb55ccbc30482b2097c38c619"
+  },
+  "parameters": {
+    "keys": "1 4 F6 F6",
+    "lines": 114,
+    "sha256": "db15d76828b775e9aa2944f5c049100ec14e1768c710ebe78a5e6f037e513628"
+  },
+  "vwindow": {
+    "keys": "1 4 F6 F6 F3",
+    "lines": 146,
+    "sha256": "e5b181981d88bacbf904ad2398eba8f325b46c9ef13d50dab291f3ed71ee3a4b"
+  },
+  "graph": {
+    "keys": "1 4 F6 F6 F6",
+    "lines": 142,
+    "sha256": "ce3b00c335b55542f1c54fe415bb38c18e15b788988094a6097fb3d9c3217b58"
+  },
+  "trace": {
+    "keys": "1 4 F6 F6 F6 F1 RIGHT RIGHT",
+    "lines": 172,
+    "sha256": "0a90cea32e342befb36a9d91a98731bf4b692149a9dfc9ae9423c0db16226760"
+  },
+  "gsolve": {
+    "keys": "2 F6 F6 F6 F5 F1 EXE",
+    "lines": 158,
+    "sha256": "9b14383c8488e4053bc9dd9f362dee6f365da00750c5712eeb98db4155b951db"
+  },
+  "gsolve-page2": {
+    "keys": "1 4 F6 F6 F6 F5 F6",
+    "lines": 160,
+    "sha256": "0d6dc9ce8118b31649cf141da1c12e17cd876ad37d47b0b69e631d6406b7674a"
+  },
+  "numeric-exit": {
+    "keys": "1 4 F6 F6 F6 F5 F6 F1 NEG EXIT R:EXIT",
+    "lines": 191,
+    "sha256": "10ca6668aaf3760567ae6e3dcd9e42694eb18b81f82abffdc71519babd62506e"
+  },
+  "box": {
+    "keys": "1 4 F6 F6 F6 F2 F5 RIGHT RIGHT EXE RIGHT RIGHT UP UP EXE",
+    "lines": 263,
+    "sha256": "c977cdf12614cb5cc05fe5d48610e9a4ffeb032ecd006aa43798e39aa573b90a"
+  },
+  "table": {
+    "keys": "1 4 F6 F6 F6 F4",
+    "lines": 170,
+    "sha256": "837b4ed59e9bac155c2a34bd4d64fc1a2939a42c54942c90fa4cd02d29b17590"
+  },
+  "output": {
+    "keys": "1 4 F6 DOWN S:MUL 1 COMMA 2 COMMA 3 S:DIV EXE F6 F4 RIGHT DOWN F3 RIGHT EXE",
+    "lines": 421,
+    "sha256": "e519ac6e01d23b65346d9d6ace0d65f1d4288a8692b507395fdf1ebaaf1e2e02"
+  },
+  "event": {
+    "keys": "1 4 F6 F6 F2 F1 RIGHT DOWN A:SUB SUB 1 0 EXE DOWN RIGHT F6 EXIT F6",
+    "lines": 486,
+    "sha256": "7ede372e9b40326e1795cef5cfda288159677b1237468531253553e08acfef8e"
+  },
+  "phase": {
+    "keys": "4 2 F6 F6 F6 F6 F4 F2 F5 F2",
+    "lines": 199,
+    "sha256": "d9274775bdfdea3457f5a63c4b67dd5fea90d7c4296ee0079b37cb3440e720e5"
+  },
+  "drawing-cancel": {
+    "keys": "1 4 F6 F6 F6 TICKS:8 RIGHT EXIT",
+    "lines": 229,
+    "sha256": "e2217efa8cf6370d95bfeb1b46ad2f6c7017a31baa9291c8f7a971812eeba725"
+  },
+  "table-cancel": {
+    "keys": "1 4 F6 F6 F6 TICKS:8 F4 EXIT",
+    "lines": 210,
+    "sha256": "3f318c4ab8ba91ec3722e524d9a6ddc3a45a9709f9d17e76889754e88663c7df"
+  },
+  "domain": {
+    "keys": "1 4 S:SQUARE 1 SUB XOT RIGHTP F6 F6 F6",
+    "lines": 234,
+    "sha256": "6b34902f2bfe36d93d4825dd12ac2ed72c43501a710b0f5987ce843a7208262a"
+  }
+}

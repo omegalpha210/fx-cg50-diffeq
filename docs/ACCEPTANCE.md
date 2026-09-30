@@ -8,7 +8,7 @@ Four long-list frames reviewed; existing visibility captures refreshed.
 Optional ASan is unavailable: an independent empty-main control hangs in the
 installed runtime before main. No ASan/device PASS is claimed. Required public
 candidate and exact-tag checks are recorded in Release VALIDATION.md.
-[Detailed current audit](POWER_SAFETY_AUDIT.md). **HARDWARE TEST REQUIRED**.
+[Detailed current audit](audits/POWER_SAFETY_AUDIT.md). **HARDWARE TEST REQUIRED**.
 
 ---
 
@@ -22,7 +22,7 @@ existing busy, output, storage, numerical and cancellation groups were retained.
 Twelve current renderer frames/four3x previews and existing captures reviewed.
 R1/UIR1 are resolved/implemented/validated. Exact public candidate and tag repeat
 required gates; their measured provenance is Release VALIDATION.md.
-[Full beta.8 evidence](VISIBILITY_PROMPT_AUDIT.md). All34 current hardware cases
+[Full beta.8 evidence](audits/VISIBILITY_PROMPT_AUDIT.md). All34 current hardware cases
 remain HARDWARE TEST REQUIRED, with no emulator/device PASS claimed.
 
 Earlier milestone records below are historical where superseded above.
@@ -53,9 +53,9 @@ Earlier milestone records below are historical where superseded above.
 - The systematic audit covers all seven ODE mode classes, RK4/RK45, dimensions
   1/9, IC1/2/5/10, both directions, invalid domains, Event MARK/STOP, Phase and
   the A–K representative UI workflows. The findings and exact evidence are in
-  [FULL_AUDIT](FULL_AUDIT.md), [mathematics](AUDIT_MATH.md),
-  [consumers](AUDIT_CONSUMERS.md), [UI](AUDIT_UI.md) and
-  [persistence](AUDIT_PERSISTENCE.md). This is an equivalence-class audit, not a
+  [FULL_AUDIT](audits/FULL_AUDIT.md), [mathematics](audits/AUDIT_MATH.md),
+  [consumers](archive/AUDIT_CONSUMERS.md), [UI](archive/AUDIT_UI.md) and
+  [persistence](archive/AUDIT_PERSISTENCE.md). This is an equivalence-class audit, not a
   claim of exhaustive combinations or proof of every mathematical input.
 - Objective corrections include valid Event terminal G-Solve results with
   strict false-positive/domain guards, RK45 Table spacing feedback, and retaining
@@ -63,7 +63,7 @@ Earlier milestone records below are historical where superseded above.
   geometry/report/cache together; dry preflight rejection preserves the old
   transaction and labels TIME errors as Graph. Review-required choices and
   intentional limits are documented separately from fixed defects.
-- [Current renderer review](ui-review/audit-overview.png) includes slow Table /
+- [Current renderer review](archive/captures/audit-overview.png) includes slow Table /
   Drawing, SF50/51, one/five/ten IC Output, configured curve colors and maximum
   rows. Host LCD shadow captures show intended transfer contents; they do not
   establish physical calculator timing or display quality.
@@ -97,7 +97,7 @@ Drawing `Partial: Cancelled` policy is superseded by beta.7 transaction rollback
 - Numerical/parser/RK4/RK45/Event/Phase-analysis/Table/storage/migration sources
   are unchanged. General Graph pan/extension, fixed-X TRACE, tile menus, BOX,
   Output and Equation/IC validation retain their regression coverage.
-- [Overlay architecture and limits](OVERLAY_AUDIT.md), [20 production frames](ui-review/overlay-overview.png)
+- [Overlay architecture and limits](archive/OVERLAY_AUDIT.md), [20 production frames](archive/captures/overlay-overview.png)
   and five additional3x previews reviewed; existing galleries refreshed. Host RTC/
   cancel fixtures do not claim physical latency or device LCD transfer results.
 - Public safe snapshot, exact-candidate/tag tests/builds/package checks, unchanged
@@ -114,7 +114,7 @@ Earlier milestone records below are historical.
 
 # Native tiles / fixed TRACE acceptance — v0.12.0-beta.5
 
-Baseline development 83de313 / public 4deabae. [Full audit](TILES_TRACE_AUDIT.md).
+Baseline development 83de313 / public 4deabae. [Full audit](archive/TILES_TRACE_AUDIT.md).
 
 - Final development **47/47 host/UBSan groups PASS**, 31.03s; all previous 44
   remain enabled. Additional PHASE warning/legend collision assertions also pass.
@@ -134,7 +134,7 @@ Baseline development 83de313 / public 4deabae. [Full audit](TILES_TRACE_AUDIT.md
 - Common top-left warning: opaque measured width +normal font11px data height,
   2px padding, neutral Event STOP, readable right status and second-row legends.
   Cached redraw clears stale messages; valid-side TRACE/G-Solve tests pass.
-- [18 production views](ui-review/tiles-overview.png), six native/3x menu states,
+- [18 production views](captures/tiles-overview.png), six native/3x menu states,
   eight icon PNGs, refreshed previous review galleries and public README captures.
 
 **HARDWARE TEST REQUIRED / HARDWARE RETEST REQUIRED:** all16 current priority
@@ -148,7 +148,7 @@ Earlier milestone records below are historical.
 
 # Graph interaction acceptance — v0.12.0-beta.4
 
-Baseline development15fb84f/publicf95cf5f. [Full audit](INTERACTION_AUDIT.md).
+Baseline development15fb84f/publicf95cf5f. [Full audit](archive/INTERACTION_AUDIT.md).
 
 - **44/44 host/UBSan PASS**,22.90s final development run; all previous42 retained.
 - 3px Main divider; INIT on all Graph Settings rows; SYS2-only TIME/PHASE with
@@ -166,8 +166,8 @@ Baseline development15fb84f/publicf95cf5f. [Full audit](INTERACTION_AUDIT.md).
   protocol unchanged. model.c changes only extract existing factory defaults.
 - Clean27-unit SH compile/link, zero warnings,13/13 package checks;241980-byte G3A.
 - text212548,data752,BSS72304,maxframe2648. RTC driver explains data+48; no new
-  framebuffer/trajectory allocation. [Memory details](MEMORY_AUDIT.md).
-- [28 current production frames](ui-review/interaction-overview.png), refreshed
+  framebuffer/trajectory allocation. [Memory details](audits/MEMORY_AUDIT.md).
+- [28 current production frames](archive/captures/interaction-overview.png), refreshed
   existing captures and README gallery; host captures are not device photographs.
 
 **HARDWARE RETEST REQUIRED:** all46 priority cases in HARDWARE_RETEST remain pending.
@@ -193,7 +193,7 @@ gint font reproduction, implementation and current rules: [UI_CONVENTIONS](UI_CO
   Graph changes are painting/layering only; no new state or trajectory allocation.
 - Clean27-unit SH compile/link, zero warnings,13/13 package checks,236200-byte G3A.
 - text206816,data704,BSS71952,max ui_graph2568; data/BSS0, maxframe−4 versus beta.2.
-- 24-screen [visual audit](ui-review/consistency-overview.png), refreshed workflow
+- 24-screen [visual audit](archive/captures/consistency-overview.png), refreshed workflow
   and existing gallery; installed-font ink masks/paint counts/widths and handler tests.
 
 **HARDWARE TEST REQUIRED:** all36 new items in [HARDWARE_RETEST](HARDWARE_RETEST.md).
@@ -269,7 +269,7 @@ fxSDK/gint/SH tools reused, RK4/RK45 arithmetic and all prior features preserved
 - Existing Parameters captures refreshed; two new production-rendered Event/Info
   images. Host captures are not calculator photographs or an SH emulator.
 
-[Event algorithms, benchmark and limits](EVENTS.md), [memory](MEMORY_AUDIT.md),
+[Event algorithms, benchmark and limits](EVENTS.md), [memory](audits/MEMORY_AUDIT.md),
 [29 physical retests](HARDWARE_RETEST.md). Exact public-source validation, artifact
 hash and timing are recorded in the Release's VALIDATION.md/SHA256SUMS.txt.
 **HARDWARE TEST REQUIRED:** every new Event/Diagnostics device path, target numeric
@@ -301,7 +301,7 @@ runtime budgets are integrated across all equation types and consumers.
   tolerance fields. Unaffected screenshots/gallery structure are retained.
 
 Full coefficients, output policy, benchmark table, limitations and memory
-accounting: [RK45_NUMERICS](RK45_NUMERICS.md). RK45 is not a stiff solver; local
+accounting: [RK45_NUMERICS](audits/RK45_NUMERICS.md). RK45 is not a stiff solver; local
 error control cannot certify a mathematical pole location or global accuracy.
 FSAL, events, parameter sweeps, bifurcation/Poincaré, implicit/CAS are deferred.
 **HARDWARE TEST REQUIRED:** RK45 numerical behavior with the target math library,
@@ -370,9 +370,9 @@ BSS increases **1,824 bytes**. Existing sample/overlay storage is reused. Larges
 new numerical frame is `phase_equilibria`, **2,144 bytes** in the linked build;
 `phase_nullclines` is 1,192 bytes. Whole-program largest frame is `ui_graph`,
 2,572 bytes (baseline 2,468). Individual frames exclude nested calls and OS stack.
-Detailed numerical tolerances and bounds: [PHASE_NUMERICS.md](PHASE_NUMERICS.md).
+Detailed numerical tolerances and bounds: [PHASE_NUMERICS.md](audits/PHASE_NUMERICS.md).
 
-Three [own-renderer Phase screens](images/PHASE.md) show SYS input, field/trajectory
+Three [own-renderer Phase screens](captures/PHASE.md) show SYS input, field/trajectory
 and nullclines/EQPT/classification. They are reproducible and visually inspected;
 no manual screenshot or hardware photograph is used.
 
@@ -382,3 +382,17 @@ high-water, native SAVE/RCL migration and all existing workflows. Host PASS is
 not calculator PASS. RK45/adaptive integration, bifurcations, Poincaré sections,
 events, parameter sweeps, symbolic solving, 3D and general N-state stability are
 intentionally deferred; no optional diagnostics feature was added.
+
+
+## Source/workspace cleanup acceptance (beta.10)
+
+The actual beta.9 baseline was retained. All **66/66 host/UBSan** groups pass:
+63 existing groups plus frozen numerical/UI contracts and cleanup tool safety.
+The 273-record numerical output is byte-identical; 18 actual-app pixel/text/plot/report
+workflows match exactly. All 11 capture generators run without adding root residue.
+Two canonical clean SH builds compile 29 C units with zero warnings, link and
+pass all 13 independent package checks. G3A 250,144 B; SH text 220,696 B,
+data 768 B, BSS 72,240 B, max single frame 2,664 B. SDK and protected assets/manuals
+remain unchanged. Exact public candidate/tag gates and the published checksum are
+recorded in Release VALIDATION. No new hardware or optional ASan PASS is claimed.
+[Cleanup action evidence](audits/CODE_CLEANUP_AUDIT.md) · [Current structure](../PROJECT_STRUCTURE.md).

@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.12.0-beta.10 — Source and workspace cleanup, preserved behavior
+
+- Remove four proven unused functions; separate Graph rendering and Zoom input.
+- Fixed build/host, build/target and reviewed capture promotion; guarded cache/snapshot tools.
+- Organized current docs, meaningful archives and 29 retained PNGs; 211 covered intermediate captures removed.
+- Original solver/parser/storage algorithms, SAVE v11/v3–v10 compatibility and UI controls retained.
+- 66 host/UBSan groups (all 63 retained), exact 273-record numerical and 18-workflow UI comparisons.
+- Strict 29-unit SH, zero warnings, 13 package checks; text/G3A −1,224 B, RAM/maximum frame unchanged.
+- [Detailed actions and validation](docs/audits/CODE_CLEANUP_AUDIT.md).
+
+## v0.12.0-beta.9 — SYSTEM power settings and failure safety
+
+- Respect SYSTEM APO/backlight duration/brightness; main-thread suspend, rollback and wake-key draining.
+- SAVE preflight I/O failure aborts without overwriting good slots; v11 bytes unchanged.
+- Long selector/output headers show position. 63 host/UBSan groups; hardware timing remains pending.
+- [Power/error audit](docs/audits/POWER_SAFETY_AUDIT.md).
+
 ## v0.12.0-beta.8 — Drawing bar and approved output/navigation decisions
 
 - Graph-preserving bottom Drawing bar; Table preparation unchanged.
@@ -7,7 +24,7 @@
 - SAVE v11 mask persistence and explicit all-ON v3–v10 migration.
 - EXE-only numeric validation; unconditional EXIT to G-Solve page2.
 - Two closed review decisions,59 regression groups and34 pending hardware cases.
-- [Implementation and evidence](docs/VISIBILITY_PROMPT_AUDIT.md).
+- [Implementation and evidence](docs/audits/VISIBILITY_PROMPT_AUDIT.md).
 
 ## v0.12.0-beta.7 — Preparation screens and full audit
 
@@ -15,7 +32,7 @@
 - Independent colors for up to ten first-order ICs using the existing save matrix.
 - G-Solve Event endpoint, Table dx, Recall ownership and partial redraw corrections.
 - Systematic mode/solver/consumer/UI/persistence coverage; 57 host/UBSan groups.
-- [Complete evidence, review choices and limits](docs/FULL_AUDIT.md).
+- [Complete evidence, review choices and limits](docs/audits/FULL_AUDIT.md).
 
 ## v0.9.0-beta.2 — Graph exploration and visual documentation
 

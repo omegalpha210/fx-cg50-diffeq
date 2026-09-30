@@ -19,9 +19,9 @@ zero warnings and 13/13 package checks repeated on exact candidate/tag source.
 BSS72192B, data768B, maximum single application frame2664B. No new heap/framebuffer.
 Exact source, text/G3A totals and binary SHA256 are recorded in release VALIDATION.md.
 
-[Complete audit](../VISIBILITY_PROMPT_AUDIT.md),
-[12 production renderer frames](../ui-review/visibility-overview.png),
-[user guide](../USER_GUIDE.md), [memory](../MEMORY_AUDIT.md).
+[Complete audit](../audits/VISIBILITY_PROMPT_AUDIT.md),
+[12 production renderer frames](../captures/visibility-overview.png),
+[user guide](../USER_GUIDE.md), [memory](../audits/MEMORY_AUDIT.md).
 **HARDWARE TEST REQUIRED:** all34 [priority cases](../HARDWARE_RETEST.md) remain pending.
 MIT/notices, public ancestry and prior tags are preserved; no manuals, private
 paths/logs, toolchains or development history are published.

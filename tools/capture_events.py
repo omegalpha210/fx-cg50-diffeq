@@ -6,8 +6,13 @@ import subprocess
 import tempfile
 from PIL import Image
 
-root = Path(__file__).resolve().parents[1]
-output = root / 'docs/images'
+import sys
+sys.dont_write_bytecode = True
+from capture_paths import CapturePaths
+
+paths = CapturePaths(__file__, "events")
+root = paths.root
+output = paths.output
 output.mkdir(parents=True, exist_ok=True)
 # y'=y, y(0)=1, RK45, E=y-10 / RISING / STOP.
 parameters = '1 4 A:SUB EXE F6 DOWN 1 EXE F6 DOWN DOWN RIGHT '
@@ -15,8 +20,8 @@ event = parameters + 'F2 F1 RIGHT DOWN A:SUB SUB 1 0 EXE RIGHT DOWN RIGHT '
 cases = [('event-settings', event, 'Event Settings'),
          ('solver-diagnostics', event + 'F6 EXIT F6 EXIT F2 F2 ' + 'DOWN '*7, 'Solver Info')]
 for name, keys, title in cases:
-    with tempfile.TemporaryDirectory() as directory:
-        run = subprocess.run([str(root/'build-host/host_app')], cwd=directory,
+    with tempfile.TemporaryDirectory(dir=paths.temporary_root) as directory:
+        run = subprocess.run([str(paths.app)], cwd=directory,
             env=dict(os.environ, DIFFEQ_HOST_KEYS=keys, DIFFEQ_HOST_OUT=directory),
             capture_output=True, text=True, timeout=30, check=True)
         assert 'SCRIPT COMPLETE' in run.stdout and 'runtime error:' not in run.stderr
@@ -27,3 +32,5 @@ for name, keys, title in cases:
         assert image.size==(396,224)
         image.save(output/(name+'.png'), optimize=True)
         print(f'Saved {name}.png: real host framebuffer, 396x224; HARDWARE TEST REQUIRED.')
+
+paths.finish()

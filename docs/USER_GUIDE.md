@@ -9,7 +9,7 @@ SYSTEM의 Auto Power Off(10/60분), Backlight Duration(30초/1분/3분), 밝기�
 
 긴 Output/함수/변수 선택 목록의 오른쪽 헤더에 `1 of 10`처럼 현재 위치가 표시됩니다.
 SAVE 전 기존 파일을 읽는 중 I/O 오류가 생기면 덮어쓰지 않고 저장 실패를 표시합니다.
-[자세한 오류 발생 조건·검증·제한](POWER_SAFETY_AUDIT.md).
+[자세한 오류 발생 조건·검증·제한](audits/POWER_SAFETY_AUDIT.md).
 
 ---
 
@@ -191,7 +191,7 @@ Table은 x를 고정한 채 좌우로 y1~y10 열을 이동합니다. 기존 총 
 **2차는 x0/y0/y'0**, **N-th는 x0와 n개 state 초기값**, **SYS는 x0와 m개 state 초기값**을
 입력합니다. 이 여러 숫자는 **한 해를 정의하는 하나의 완전한 초기 벡터**입니다. 독립적인 여러
 IC set을 뜻하지 않습니다. 고차/SYS의 새 UI는 한 벡터만 받으며, 상태별 scalar에 목록을 넣지 않습니다.
-전체 원본 매뉴얼의 근거와 일반 Output matrix의 해석 한계는 [IC audit](IC_BEHAVIOR_AUDIT.md)에 있습니다.
+전체 원본 매뉴얼의 근거와 일반 Output matrix의 해석 한계는 [IC audit](archive/IC_BEHAVIOR_AUDIT.md)에 있습니다.
 모든 IC 화면에 F1 INIT가 있고 F2~F5는 비어 있습니다. F6 NEXT와 EXIT를 사용합니다.
 
 **Solver Parameters**의 x min/max는 적분 구간입니다. 처음에는 `ceil(V-Window Xmin)`과
@@ -231,7 +231,7 @@ ON과 기본 색입니다. IC 값 수정·IC INIT는 Output을 초기화하지 �
 **Output F1 INIT**는 전체 10개 slot을 ON·기본 palette·첫 선택 행으로 복구합니다.
 SAVE v11/RCL은 비활성 slot과 all-OFF도 보존합니다. 구버전 v3~v10은 모든 IC를 ON으로
 불러오며 기존 색을 보존합니다. 과거 공통 y가 OFF였어도 새 IC bits는 ON으로 초기화합니다.
-[상세 소비자·저장 정책](VISIBILITY_PROMPT_AUDIT.md)을 참고하세요.
+[상세 소비자·저장 정책](audits/VISIBILITY_PROMPT_AUDIT.md)을 참고하세요.
 OUTPUT EXE는 다음 행으로 이동하며 마지막 행은 수정했으면 한 번 확정/머묾, 다음 EXE가 DONE입니다.
 수정하지 않은 마지막 행은 곧바로 DONE입니다. F1 INIT는 모든 종속변수 ON과 기본 solution 색,
 첫 선택 행을 복구하며 SF/field 외형은 유지합니다.
@@ -380,7 +380,7 @@ RHS bytecode에서 실제 x instruction을 검사합니다. non-autonomous SYS�
 FIELD/NULL은 먼저 화면을 바꾸지 않고 검증한 뒤 같은 bounded 연산으로 화면을 완성합니다.
 마지막 atomic paint 중 들어온 키는 다음 입력에서 처리합니다. 실제 긴 식의 반응 시간은
 **HARDWARE TEST REQUIRED**입니다. 유한 grid는 좁은 구조와 미검출 불연속을 모두 증명할 수 없습니다.
-알고리즘·허용오차·예산은 [Phase numerical notes](PHASE_NUMERICS.md)에 있습니다.
+알고리즘·허용오차·예산은 [Phase numerical notes](audits/PHASE_NUMERICS.md)에 있습니다.
 
 Phase TRACE는 x, y1, y2를 표시하며 NORMAL/FAST/FASTER, LEFT/RIGHT, F5/F6 endpoint와 EXIT를
 유지합니다. SYS single trajectory에서 UP/DOWN은 불필요한 곡선 전환을 하지 않습니다.
@@ -402,7 +402,7 @@ Y-CAL은 요청한 x까지 해당 IC에서 적분할 수 있을 때만 값을 �
 새 초기조건 없이 재시작하지 않습니다. 반대 방향과 별도 IC는 계속 사용할 수 있지만 별도 IC는 별도 곡선입니다.
 합성 valid/gap/valid 테스트는 신뢰 가능한 양쪽 값이 주어졌을 때의 소비 경로를 검증하며,
 일반 ODE가 특이점을 통과했다는 뜻이 아닙니다. 결과 없음은 계산되지 않은 영역의 해 부재를 보장하지 않습니다.
-자세한 경계는 [Numerical validity audit](NUMERICAL_VALIDITY_AUDIT.md)에 있습니다.
+자세한 경계는 [Numerical validity audit](archive/NUMERICAL_VALIDITY_AUDIT.md)에 있습니다.
 
 ## Event Detection / Solver Info
 
@@ -476,7 +476,7 @@ RK45 Step은 숨기며 Graph/Table 출력은 TIME Xdot과 범위/1024 중 큰 �
 기존 258점 캐시의 화면용 선형 보간이며 tolerance 정확도를 보장하지 않습니다.
 RK45는 explicit adaptive 방식이며 **stiff ODE 전용 solver가 아닙니다**.
 강성·특이점·엄격한 tolerance에서는 Step underflow/Work limit에 도달할 수 있습니다.
-허용오차는 전역 정확도 보증이 아닙니다. [계수·안전장치·정량 결과](RK45_NUMERICS.md)를 참고하세요.
+허용오차는 전역 정확도 보증이 아닙니다. [계수·안전장치·정량 결과](audits/RK45_NUMERICS.md)를 참고하세요.
 
 ## RK4 h·Step·Max Steps와 계산 시작 전 검사
 
@@ -587,7 +587,7 @@ v3/v4는 Arrow/Pale Blue, v5의 명시적 Segment/색은 유지합니다. v3 sol
 값을 새 x0로 강제로 옮기지 않습니다. 이 적응이 필요하면 load 안내를 표시하며 **load는 원래 파일을
 변경하지 않습니다**. 이후 명시적 SAVE는 새 v11으로 두 slot을 순환하므로, 여러 번 SAVE하면 옛
 slot은 교체될 수 있습니다. 원본 보존이 필요하면 기존 파일을 따로 보관하십시오.
-상세 mapping과 예외는 [OUTPUT/migration audit](OUTPUT_LIST_AUDIT.md)에 있습니다.
+상세 mapping과 예외는 [OUTPUT/migration audit](archive/OUTPUT_LIST_AUDIT.md)에 있습니다.
 
 지원하지 않는 버전/손상 slot은 안전하게 건너뜁니다. raw ABI 형식이므로 host 테스트 `.dat`는
 계산기로 이식할 수 없습니다. 실제 기기의 old-session 복구, 전원 차단 내구성과 MENU 복귀는
@@ -614,7 +614,7 @@ TRACE/G-Solve 선택 곡선은 기존2px와 blink, Black↔Blue를 유지합니�
 계산 종료는 유효한 곡선/Table과 함께 END/partial 이유를 표시하며, 긴 INFO·저장 결과는 기존
 정보창을 사용합니다. SAVE/load/resize/convert 확인은 모두 **F5 NO/EXIT**, **F6 YES/EXE**이고
 확인창을 연 키의 HOLD는 무시합니다. 현재 전체 F-key 표와 규칙은 [UI conventions](UI_CONVENTIONS.md),
-[24개 renderer 화면](ui-review/consistency-overview.png)을 참고하십시오. 실기 화면은 아직 재검증 전입니다.
+[24개 renderer 화면](archive/captures/consistency-overview.png)을 참고하십시오. 실기 화면은 아직 재검증 전입니다.
 
 
 ## Graph interaction / BOX (beta.4)
@@ -650,5 +650,5 @@ Equation/IC의 빈칸·부분 식은 EXE/EXIT/행 이동으로 draft에 보관�
 runtime UI 상태이고 SAVE v10에 추가하지 않았습니다. Equation의 raw text도 계산 전 검증하며
 유효하지 않은 compiled 식을 solver에 넘기지 않습니다. Parameters→GRAPH의 기존 검증은 유지합니다.
 
-[전체 감사·제약](INTERACTION_AUDIT.md), [28개 renderer 화면](ui-review/interaction-overview.png).
+[전체 감사·제약](archive/INTERACTION_AUDIT.md), [28개 renderer 화면](archive/captures/interaction-overview.png).
 **HARDWARE RETEST REQUIRED:** LCD·키 반복·busy 응답·BOX·실기 저장 재검증 전입니다.

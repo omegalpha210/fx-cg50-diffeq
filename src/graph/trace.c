@@ -294,8 +294,6 @@ bool trace_select(const Document *d,int family,int variable)
 }
 bool trace_has_invalid(void)
 {return samples.branch[samples.family][0].invalid || samples.branch[samples.family][1].invalid;}
-bool trace_direction_invalid(int direction)
-{return samples.branch[samples.family][direction>0 ? 1:0].invalid;}
 static bool in_view(const TracePoint *p)
 {
     double x=viewport.phase ? p->y[viewport.axis]:p->x;

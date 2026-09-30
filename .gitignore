@@ -47,3 +47,6 @@ DIFFSTAT*.csv
 *.swo
 *~
 *.tmp
+
+# Internal historical build evidence (never in the public snapshot)
+/docs/archive/build-logs/*.log

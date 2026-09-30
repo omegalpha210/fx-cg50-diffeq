@@ -210,16 +210,6 @@ void ui_short(char *out,unsigned capacity,const char *text,int width)
     }
     if(n+3<capacity) strcat(out,"...");
 }
-void ui_row(int row,const char *label,const char *value,bool selected)
-{
-    int y=42+row*24;
-    ui_rect(4,y-3,376,23,selected ? UI_PALE : C_WHITE);
-    if(selected) ui_rect(4,y-3,3,23,UI_TEAL);
-    ui_text(12,y+2,selected ? UI_BLUE:UI_INK,"%s",label);
-    char short_value[192];ui_short(short_value,sizeof(short_value),value,242);
-    ui_text(126,y+2,UI_INK,"%s",short_value);
-    ui_line(8,y+20,376,y+20,UI_LINE);
-}
 void ui_field(int row,const char *label,const char *value,bool selected)
 {ui_field_at(31+row*22,label,value,selected);}
 void ui_field_at(int y,const char *label,const char *value,bool selected)

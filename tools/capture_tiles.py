@@ -6,9 +6,14 @@ import subprocess
 import tempfile
 from PIL import Image, ImageDraw
 
-root = Path(__file__).resolve().parents[1]
-out = root/'docs/ui-review'
-icons = root/'assets/menu'
+import sys
+sys.dont_write_bytecode = True
+from capture_paths import CapturePaths
+
+paths = CapturePaths(__file__, "tiles")
+root = paths.root
+out = paths.output
+icons = paths.output/'menu'
 out.mkdir(parents=True, exist_ok=True)
 icons.mkdir(parents=True, exist_ok=True)
 graph = ('1 4 1 F6 DOWN S:MUL 0 COMMA 5 S:DIV F6 '
@@ -40,8 +45,8 @@ cases = [
 sheet = Image.new('RGB', (816, 264*((len(cases)+1)//2)+8), '#e8eef5')
 draw = ImageDraw.Draw(sheet)
 for i, (name, title, keys) in enumerate(cases):
-    with tempfile.TemporaryDirectory() as folder:
-        run = subprocess.run([str(root/'build-host/host_app')], cwd=folder,
+    with tempfile.TemporaryDirectory(dir=paths.temporary_root) as folder:
+        run = subprocess.run([str(paths.app)], cwd=folder,
             env=dict(os.environ, DIFFEQ_HOST_KEYS=keys, DIFFEQ_HOST_OUT=folder,
                      DIFFEQ_HOST_MAX_FRAMES='10000'), capture_output=True, text=True, timeout=30, check=True)
         assert 'SCRIPT COMPLETE' in run.stdout and 'runtime error:' not in run.stderr
@@ -53,11 +58,13 @@ for i, (name, title, keys) in enumerate(cases):
         draw.text((x,y), title, fill='#193857');sheet.paste(frame,(x,y+25))
 sheet.save(out/'tiles-overview.png', optimize=True)
 names = ['first','second','higher','system','separable','linear','bernoulli','others']
-with tempfile.TemporaryDirectory() as folder:
-    run = subprocess.run([str(root/'build-host/test_menu')], cwd=folder,
+with tempfile.TemporaryDirectory(dir=paths.temporary_root) as folder:
+    run = subprocess.run([str(paths.menu_test)], cwd=folder,
         env=dict(os.environ, DIFFEQ_HOST_OUT=folder), capture_output=True, text=True, timeout=30, check=True)
     frames = sorted(Path(folder).glob('*.ppm'))
     assert len(frames)==8 and 'runtime error:' not in run.stderr
     for name, path in zip(names, frames):
         Image.open(path).crop((6,4,114,38)).save(icons/f'{name}.png', optimize=True)
 print('18 app-rendered views, six additional 3x menu previews, and eight exact 108x34 firmware icon PNGs. HARDWARE TEST REQUIRED.')
+
+paths.finish()

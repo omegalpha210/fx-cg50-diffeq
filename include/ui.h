@@ -32,7 +32,6 @@ void ui_text(int x,int y,int color,const char *format,...);
 void ui_rect(int x,int y,int w,int h,int color);
 void ui_line(int x1,int y1,int x2,int y2,int color);
 void ui_softkeys(const char *a,const char *b,const char *c,const char *d,const char *e,const char *f);
-void ui_row(int row,const char *label,const char *value,bool selected);
 void ui_field(int row,const char *label,const char *value,bool selected);
 void ui_field_at(int y,const char *label,const char *value,bool selected);
 /* Caller-owned overlays take priority. Ordinary forms use logical EDIT state,
@@ -79,8 +78,6 @@ bool ui_inline_input(key_event_t event);
 int ui_inline_key(UiInlineEdit *edit,key_event_t event);
 void ui_inline_draw(const UiInlineEdit *edit,int x,int y,int width,int foreground,int background);
 void ui_inline_draw_cursor(const UiInlineEdit *edit,int x,int y,int width,int foreground,int background,bool cursor);
-bool ui_edit(const char *title,char *text,unsigned capacity,int position);
-bool ui_number(const char *title,double *value);
 UiStageAction ui_parameters(Document *d,UiStageState *state);
 void ui_event(Document *d);
 void ui_solver_info(void);

@@ -195,7 +195,7 @@ It illustrates accepted endpoint bracketing and direction masks. This project
 implements its own bounded secant/bisection with solver target landing; it does
 not copy SciPy code, use its dense interpolant/Brent solver or add a dependency.
 Existing RK coefficients and accuracy limits remain documented in
-[RK45_NUMERICS](RK45_NUMERICS.md).
+[RK45_NUMERICS](audits/RK45_NUMERICS.md).
 
 Multiple Event definitions, FSAL, sweeps, Poincaré/bifurcation, stiff/implicit
 solvers, new ODE methods, CAS, Laplace and special functions are deferred.

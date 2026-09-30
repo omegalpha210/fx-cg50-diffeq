@@ -1,0 +1,348 @@
+Action	Old path	New path / retained evidence	Classification	Reason
+MOVED	docs/ARCHITECTURE.md	docs/development/ARCHITECTURE.md	D	current source/design documentation
+MOVED	docs/AUDIT_CONSUMERS.md	docs/archive/AUDIT_CONSUMERS.md	G/F	historical milestone/design/compatibility evidence
+MOVED	docs/AUDIT_MATH.md	docs/audits/AUDIT_MATH.md	D	current validation/numerical/safety evidence
+MOVED	docs/AUDIT_PERSISTENCE.md	docs/archive/AUDIT_PERSISTENCE.md	G/F	historical milestone/design/compatibility evidence
+MOVED	docs/AUDIT_UI.md	docs/archive/AUDIT_UI.md	G/F	historical milestone/design/compatibility evidence
+MOVED	docs/BUSY_SCREEN_AUDIT.md	docs/archive/BUSY_SCREEN_AUDIT.md	G/F	historical milestone/design/compatibility evidence
+MOVED	docs/CRASH_AUDIT.md	docs/archive/CRASH_AUDIT.md	G/F	historical milestone/design/compatibility evidence
+MOVED	docs/DIFFEQ_REFERENCE.md	docs/development/DIFFEQ_REFERENCE.md	D	current source/design documentation
+MOVED	docs/FEATURE_PLAN.md	docs/development/FEATURE_PLAN.md	D	current source/design documentation
+MOVED	docs/FULL_AUDIT.md	docs/audits/FULL_AUDIT.md	D	current validation/numerical/safety evidence
+MOVED	docs/HARDWARE_FIXES.md	docs/archive/HARDWARE_FIXES.md	G/F	historical milestone/design/compatibility evidence
+MOVED	docs/HARDWARE_TESTS.md	docs/audits/HARDWARE_TESTS.md	D	current validation/numerical/safety evidence
+MOVED	docs/IC_BEHAVIOR_AUDIT.md	docs/archive/IC_BEHAVIOR_AUDIT.md	G/F	historical milestone/design/compatibility evidence
+MOVED	docs/INTERACTION_AUDIT.md	docs/archive/INTERACTION_AUDIT.md	G/F	historical milestone/design/compatibility evidence
+MOVED	docs/MEMORY_AUDIT.md	docs/audits/MEMORY_AUDIT.md	D	current validation/numerical/safety evidence
+MOVED	docs/MULTI_IC_COLOR_AUDIT.md	docs/archive/MULTI_IC_COLOR_AUDIT.md	G/F	historical milestone/design/compatibility evidence
+MOVED	docs/NAVIGATION_CALL_AUDIT.md	docs/development/NAVIGATION_CALL_AUDIT.md	D	current source/design documentation
+MOVED	docs/NUMERICAL_METHODS.md	docs/archive/NUMERICAL_METHODS.md	G/F	historical milestone/design/compatibility evidence
+MOVED	docs/NUMERICAL_VALIDITY_AUDIT.md	docs/archive/NUMERICAL_VALIDITY_AUDIT.md	G/F	historical milestone/design/compatibility evidence
+MOVED	docs/OUTPUT_LIST_AUDIT.md	docs/archive/OUTPUT_LIST_AUDIT.md	G/F	historical milestone/design/compatibility evidence
+MOVED	docs/OVERLAY_AUDIT.md	docs/archive/OVERLAY_AUDIT.md	G/F	historical milestone/design/compatibility evidence
+MOVED	docs/PHASE_NUMERICS.md	docs/audits/PHASE_NUMERICS.md	D	current validation/numerical/safety evidence
+MOVED	docs/POWER_SAFETY_AUDIT.md	docs/audits/POWER_SAFETY_AUDIT.md	D	current validation/numerical/safety evidence
+MOVED	docs/RK45_NUMERICS.md	docs/audits/RK45_NUMERICS.md	D	current validation/numerical/safety evidence
+MOVED	docs/SOLVER_SAFETY_AUDIT.md	docs/audits/SOLVER_SAFETY_AUDIT.md	D	current validation/numerical/safety evidence
+MOVED	docs/STAT_EXPORT_AUDIT.md	docs/audits/STAT_EXPORT_AUDIT.md	D	current validation/numerical/safety evidence
+MOVED	docs/TILES_TRACE_AUDIT.md	docs/archive/TILES_TRACE_AUDIT.md	G/F	historical milestone/design/compatibility evidence
+MOVED	docs/TRACE_EVENT_AUDIT.md	docs/audits/TRACE_EVENT_AUDIT.md	D	current validation/numerical/safety evidence
+MOVED	docs/UI_REFERENCE_AUDIT.md	docs/development/UI_REFERENCE_AUDIT.md	D	current source/design documentation
+MOVED	docs/VISIBILITY_PROMPT_AUDIT.md	docs/audits/VISIBILITY_PROMPT_AUDIT.md	D	current validation/numerical/safety evidence
+MOVED	docs/WORKFLOW_SPEC.md	docs/development/WORKFLOW_SPEC.md	D	current source/design documentation
+MOVED	docs/ui-review/audit-overview.png	docs/archive/captures/audit-overview.png	G/H	frozen historical renderer contact sheet
+MOVED	docs/ui-review/consistency-overview.png	docs/archive/captures/consistency-overview.png	G/H	frozen historical renderer contact sheet
+MOVED	docs/ui-review/host-overview.png	docs/captures/host-overview.png	D/H	current renderer contact sheet
+MOVED	docs/ui-review/interaction-overview.png	docs/archive/captures/interaction-overview.png	G/H	frozen historical renderer contact sheet
+MOVED	docs/ui-review/overlay-overview.png	docs/archive/captures/overlay-overview.png	G/H	frozen historical renderer contact sheet
+MOVED	docs/ui-review/polish-overview.png	docs/archive/captures/polish-overview.png	G/H	frozen historical renderer contact sheet
+MOVED	docs/ui-review/power-overview.png	docs/captures/power-overview.png	D/H	current renderer contact sheet
+MOVED	docs/ui-review/tiles-overview.png	docs/captures/tiles-overview.png	D/H	current renderer contact sheet
+MOVED	docs/ui-review/trace-ic-overview.png	docs/archive/captures/trace-ic-overview.png	G/H	frozen historical renderer contact sheet
+MOVED	docs/ui-review/ux-field-overview.png	docs/archive/captures/ux-field-overview.png	G/H	frozen historical renderer contact sheet
+MOVED	docs/ui-review/visibility-overview.png	docs/captures/visibility-overview.png	D/H	current renderer contact sheet
+MOVED	docs/ui-review/workflow-overview.png	docs/captures/workflow-overview.png	D/H	current renderer contact sheet
+MOVED	docs/screenshots/host-overview.png	docs/archive/captures/initial-ui-overview.png	G/H	frozen initial six-frame UI review
+MOVED	docs/images/PHASE.md	docs/captures/PHASE.md	D/H	current README Phase/Event gallery and provenance
+MOVED	docs/images/event-settings.png	docs/captures/event-settings.png	D/H	current README Phase/Event gallery and provenance
+MOVED	docs/images/phase-equilibrium.png	docs/captures/phase-equilibrium.png	D/H	current README Phase/Event gallery and provenance
+MOVED	docs/images/phase-field.png	docs/captures/phase-field.png	D/H	current README Phase/Event gallery and provenance
+MOVED	docs/images/phase-system-input.png	docs/captures/phase-system-input.png	D/H	current README Phase/Event gallery and provenance
+MOVED	docs/images/solver-diagnostics.png	docs/captures/solver-diagnostics.png	D/H	current README Phase/Event gallery and provenance
+MOVED	docs/ui-review/tiles-main-first.png	docs/captures/tiles-main-first.png	D/H	current public README tile gallery
+MOVED	docs/ui-review/tiles-subtype-first.png	docs/captures/tiles-subtype-first.png	D/H	current public README tile gallery
+KEPT — CURRENT	public beta.9:docs/images/diffeq-icon.png	docs/captures/diffeq-icon.png	D/H	current public README gallery preserved
+KEPT — CURRENT	public beta.9:docs/images/equation-entry.png	docs/captures/equation-entry.png	D/H	current public README gallery preserved
+KEPT — CURRENT	public beta.9:docs/images/initial-conditions.png	docs/captures/initial-conditions.png	D/H	current public README gallery preserved
+KEPT — CURRENT	public beta.9:docs/images/solver-parameters.png	docs/captures/solver-parameters.png	D/H	current public README gallery preserved
+KEPT — CURRENT	public beta.9:docs/images/graph-solution.png	docs/captures/graph-solution.png	D/H	current public README gallery preserved
+KEPT — CURRENT	public beta.9:docs/images/graph-slope-field.png	docs/captures/graph-slope-field.png	D/H	current public README gallery preserved
+KEPT — CURRENT	public beta.9:docs/images/graph-trace.png	docs/captures/graph-trace.png	D/H	current public README gallery preserved
+KEPT — CURRENT	public beta.9:docs/images/graph-gsolve.png	docs/captures/graph-gsolve.png	D/H	current public README gallery preserved
+KEPT — CURRENT	public beta.9:docs/images/table-view.png	docs/captures/table-view.png	D/H	current public README gallery preserved
+KEPT — CURRENT	public beta.9:tools/capture_readme.py	tools/capture_readme.py	C	preserved public gallery scenarios, updated output/build paths only
+REMOVED	docs/screenshots/family.png	docs/archive/captures/initial-ui-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/screenshots/home.png	docs/archive/captures/initial-ui-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/screenshots/editor.png	docs/archive/captures/initial-ui-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/screenshots/system.png	docs/archive/captures/initial-ui-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/screenshots/phase.png	docs/archive/captures/initial-ui-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/screenshots/table.png	docs/archive/captures/initial-ui-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/func-select.png	docs/captures/host-overview.png,docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/consistency-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-min-result.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-colors-graph.png	docs/archive/captures/audit-overview.png,docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-main.png	docs/captures/host-overview.png,docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png,docs/captures/workflow-overview.png,docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-zoom.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-icpt-first.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-point1.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-root-select.png	docs/archive/captures/consistency-overview.png,docs/archive/captures/overlay-overview.png,docs/archive/captures/overlay-overview.png,docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/polish-output-full.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/polish-vwindow-edit.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-colors-trace.png	docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-sf51-error.png	docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-settings.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png,docs/captures/workflow-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/polish-sf-system.png	docs/captures/host-overview.png,docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/audit-overview.png,docs/archive/captures/polish-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-evt.png	docs/archive/captures/interaction-overview.png,docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-time.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-main-save-3x.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-table-busy.png	docs/archive/captures/audit-overview.png,docs/archive/captures/overlay-overview.png,docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-min-select-3x.png	docs/archive/captures/consistency-overview.png,docs/archive/captures/overlay-overview.png,docs/archive/captures/overlay-overview.png,docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-error-equation.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-output-ten-first.png	docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/field-palette.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-output-five-colors-3x.png	docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-prompt-3x.png	docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-output-five.png	docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/polish-prev.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/overlay-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-rectangle.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/zoom-pan.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/ic-ten.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/trace-ic-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/table-ten.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/trace-ic-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-trace-ready.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/polish-parameter-edit.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-rk45-error.png	docs/archive/captures/consistency-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-equation-select.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-max-select.png	docs/archive/captures/consistency-overview.png,docs/archive/captures/overlay-overview.png,docs/archive/captures/overlay-overview.png,docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/save-confirm.png	docs/captures/host-overview.png,docs/archive/captures/consistency-overview.png,docs/captures/workflow-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-output-five-3x.png	docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/table-scroll.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/table-limit.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-init.png	docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png,docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/power-output-first.png	docs/captures/power-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/zoom.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-normal.png	docs/archive/captures/audit-overview.png,docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-trace-origin.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-trace-lower.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/polish-list-edit.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-table-busy-3x.png	docs/archive/captures/audit-overview.png,docs/archive/captures/overlay-overview.png,docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/main.png	docs/captures/host-overview.png,docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png,docs/captures/workflow-overview.png,docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/color-chooser.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/output-first.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/system9.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-range-man.png	docs/archive/captures/consistency-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-subtype-others.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/output-enabled.png	docs/captures/host-overview.png,docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/captures/workflow-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/polish-ic-full.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/table-many.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-phase-box.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/trace-speed-faster.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/trace-ic-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-icpt-second.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-selection.png	docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-blank-equation.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-output-five-colors.png	docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/var.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/field-arrow-up.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/field-arrow-zero.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-drawing-busy.png	docs/archive/captures/audit-overview.png,docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/sf-parameter.png	docs/captures/host-overview.png,docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-phase-legends.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-colors-gsolve.png	docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-phase-init.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-input-error.png	docs/archive/captures/consistency-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-domain-trace.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-output-on.png	docs/archive/captures/consistency-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/polish-field-swatch.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-trace-upper.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-main.png	docs/captures/host-overview.png,docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png,docs/captures/workflow-overview.png,docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-trace-init.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-time-event-trace.png	docs/archive/captures/consistency-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-time-event.png	docs/archive/captures/consistency-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/ic-second.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-factory-window.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-pole.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-drawing-busy.png	docs/archive/captures/audit-overview.png,docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-event.png	docs/archive/captures/interaction-overview.png,docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-main-recall-3x.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-drawing.png	docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-output-ten-first.png	docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/polish-sf-nth.png	docs/captures/host-overview.png,docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/audit-overview.png,docs/archive/captures/polish-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-output-ten-last.png	docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-time.png	docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png,docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/polish-equation-edit.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/consistency-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-subset.png	docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/ic9.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-domain-gsolve.png	docs/archive/captures/interaction-overview.png,docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/field-arrow-down.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/polish-ic-edit.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-ic.png	docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-domain-gsolve.png	docs/archive/captures/interaction-overview.png,docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-sys9-output.png	docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-blank-ic.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-equation-select.png	docs/captures/host-overview.png,docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/consistency-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-trace-curve.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/ic-count-limit.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/trace-ic-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-table.png	docs/archive/captures/audit-overview.png,docs/archive/captures/overlay-overview.png,docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-plain.png	docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png,docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-max-result.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-trace.png	docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/trace.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-main-save.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-trace-busy.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/power-output-last.png	docs/captures/power-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-main-first-3x.png	docs/captures/host-overview.png,docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png,docs/captures/workflow-overview.png,docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/table-solutions.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-trace.png	docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/field-arrow-max.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/graph.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-output-off.png	docs/archive/captures/consistency-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/trace-y-lower.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/trace-ic-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/table-bottom.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-output-ten-last.png	docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-icpt.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-drawing-cancel.png	docs/captures/host-overview.png,docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/audit-overview.png,docs/archive/captures/polish-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-output-single.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-equation-edit.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/power-functions-last.png	docs/captures/power-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-icpt-result.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/trace-speed-fast.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/trace-ic-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/equation.png	docs/captures/host-overview.png,docs/captures/workflow-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/settings-toggle.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/trace-ic-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-prompt.png	docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-min-select.png	docs/archive/captures/consistency-overview.png,docs/archive/captures/overlay-overview.png,docs/archive/captures/overlay-overview.png,docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/table-top.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/trace-fast.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-rk4-auto.png	docs/archive/captures/consistency-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/trace-follow.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-palette.png	docs/archive/captures/consistency-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-table-busy-3x.png	docs/archive/captures/audit-overview.png,docs/archive/captures/overlay-overview.png,docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-save.png	docs/captures/host-overview.png,docs/archive/captures/consistency-overview.png,docs/captures/workflow-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/output.png	docs/captures/host-overview.png,docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/captures/workflow-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-domain-select.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/func-exit.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-root-result.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-return.png	docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/gsolve.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/ic-list-error.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-phase-time-ref.png	docs/archive/captures/consistency-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/graph-settings.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/power-functions-first.png	docs/captures/power-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-domain-trace.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-event-error.png	docs/archive/captures/consistency-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-invalid.png	docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-domain.png	docs/archive/captures/interaction-overview.png,docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-output-ten-last-3x.png	docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-settings.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png,docs/captures/workflow-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-scratch-cancel.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-rk45-table.png	docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/polish-sf-second.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-main-system.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-root-result-3x.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-gsolve.png	docs/archive/captures/consistency-overview.png,docs/archive/captures/overlay-overview.png,docs/archive/captures/overlay-overview.png,docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-drawing-3x.png	docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/scalar-prompt.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-rk45-auto.png	docs/captures/host-overview.png,docs/archive/captures/consistency-overview.png,docs/captures/workflow-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-nth9-edit.png	docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-table-busy.png	docs/archive/captures/audit-overview.png,docs/archive/captures/overlay-overview.png,docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-trace-window.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/ic-length-limit.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/trace-ic-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/field-settings.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png,docs/captures/workflow-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-phase-event.png	docs/archive/captures/consistency-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-phase.png	docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/func.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-error-ic.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-sf50.png	docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-phase.png	docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/trace-y-upper.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/trace-ic-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/initial-conditions.png	docs/captures/host-overview.png,docs/captures/workflow-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-sinh.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-subtype-others-3x.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-result.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/trace-faster.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-main-system-3x.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-phase-trace.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/vwindow.png	docs/captures/host-overview.png,docs/captures/workflow-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-trace.png	docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/table.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-drawing-busy-3x.png	docs/archive/captures/audit-overview.png,docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/polish-sf-first.png	docs/captures/host-overview.png,docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/preflight.png	docs/captures/host-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-subtype-first-3x.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-domain.png	docs/archive/captures/interaction-overview.png,docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/visibility-output-ten-last-3x.png	docs/captures/visibility-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-trace-busy-3x.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-equation-edit.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/consistency-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-box.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/parameter.png	docs/captures/host-overview.png,docs/archive/captures/consistency-overview.png,docs/captures/workflow-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/tiles-main-recall.png	docs/captures/tiles-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-ic.png	docs/archive/captures/consistency-overview.png,docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/interaction-busy.png	docs/archive/captures/interaction-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-domain.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/polish-equation-select.png	docs/captures/host-overview.png,docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/consistency-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/audit-output-five.png	docs/archive/captures/audit-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-factory-init.png	docs/captures/host-overview.png,docs/archive/captures/ux-field-overview.png,docs/archive/captures/overlay-overview.png,docs/archive/captures/polish-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-domain-exit.png	docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/overlay-drawing-busy-3x.png	docs/archive/captures/audit-overview.png,docs/archive/captures/overlay-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/ui-review/consistency-gsolve-result.png	docs/archive/captures/consistency-overview.png	H/J	exact pixels retained in contact sheet
+REMOVED	docs/screenshots/README.md	docs/archive/captures/README.md	G/J	obsolete directory metadata replaced by current provenance index
+REMOVED	docs/ui-review/README.md	docs/captures/README.md	G/J	obsolete directory metadata replaced by current provenance index
+REMOVED	docs/build-logs/environment.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/feedback-container.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+MOVED	docs/build-logs/feedback-full-native.txt	docs/archive/build-logs/feedback-full-native.txt	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+MOVED	docs/build-logs/feedback-layout.txt	docs/archive/build-logs/feedback-layout.txt	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+MOVED	docs/build-logs/feedback-memory.txt	docs/archive/build-logs/feedback-memory.txt	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/feedback-metadata.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/feedback-size.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+MOVED	docs/build-logs/feedback-tests.txt	docs/archive/build-logs/feedback-tests.txt	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/hardware-followup-validation.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/hello-metadata.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/input-gsolve-validation.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+MOVED	docs/build-logs/numerical-results.txt	docs/archive/build-logs/numerical-results.txt	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/polish-baseline-memory.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/polish-baseline-native.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/polish-baseline-package.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/polish-baseline-tests.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/polish-final-fxgxa.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/polish-final-memory.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/polish-final-native.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/polish-final-package.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/polish-final-stack.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/polish-final-tests.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/polish-hint-widths.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/release-container.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/release-elf.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+MOVED	docs/build-logs/release-memory.txt	docs/archive/build-logs/release-memory.txt	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/release-metadata.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+MOVED	docs/build-logs/release-tests.txt	docs/archive/build-logs/release-tests.txt	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/resume-validation.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/safety-baseline-memory.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/safety-baseline-native.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/safety-baseline-package.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/safety-baseline-tests.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/safety-final-fxgxa.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/safety-final-memory.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/safety-final-native.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/safety-final-package.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/safety-final-tests.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/safety-regressions.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/simplify-baseline-memory.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/simplify-baseline-native.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/simplify-baseline-package.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/simplify-baseline-stack.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/simplify-baseline-tests.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/simplify-final-fxgxa.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/simplify-final-memory.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/simplify-final-native.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/simplify-final-package.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/simplify-final-stack.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/simplify-final-tests.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/simplify-milestone-tests.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+MOVED	docs/build-logs/solver-benchmark.txt	docs/archive/build-logs/solver-benchmark.txt	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/table-storage-validation.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/trace-ic-font-metrics.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/ui-reference-validation.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/ux-field-baseline-memory.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/ux-field-baseline-package.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/ux-field-baseline-stack.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/ux-field-baseline-tests.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/ux-field-final-fxgxa.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/ux-field-final-memory.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/ux-field-final-native.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/ux-field-final-package.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/ux-field-final-stack.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/ux-field-final-tests.log	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/validity-release-container.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+MOVED	docs/build-logs/validity-release-layout.txt	docs/archive/build-logs/validity-release-layout.txt	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+MOVED	docs/build-logs/validity-release-memory.txt	docs/archive/build-logs/validity-release-memory.txt	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/validity-release-metadata.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+MOVED	docs/build-logs/validity-release-native.txt	docs/archive/build-logs/validity-release-native.txt	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+MOVED	docs/build-logs/validity-release-tests.txt	docs/archive/build-logs/validity-release-tests.txt	G/H	referenced measurements retained; regenerateable raw output excluded from source tree
+REMOVED	docs/build-logs/workflow-validation.txt	private historical evidence; existing Git history	G/H	referenced measurements retained; regenerateable raw output excluded from source tree

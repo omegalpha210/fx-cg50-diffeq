@@ -2,7 +2,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 source tools/env.sh
-DIFFEQ_LOGS="$PWD/docs/build-logs"
+DIFFEQ_LOGS="$PWD/.local/toolchain-logs"
+mkdir -p "$DIFFEQ_LOGS"
 DIFFEQ_SYSROOT="$(fxsdk path sysroot)"
 # Build via the whitespace-free alias; all files physically remain in workspace.
 if [[ "${1:-}" != --libraries ]]; then

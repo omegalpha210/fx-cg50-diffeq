@@ -1,5 +1,4 @@
 #include "ui.h"
-#include <math.h>
 #include <stdio.h>
 #include <string.h>
 static const char *select_token(int kind)
@@ -137,49 +136,4 @@ void ui_inline_draw_cursor(const UiInlineEdit *edit,int x,int y,int width,int fo
     ui_rect(x-3,y-3,width+5,18,background);ui_text(x,y,foreground,"%s",visible);
     w=0;if(edit->cursor>start)dnsize(visible,edit->cursor-start,NULL,&w,NULL);
     if(cursor)ui_line(x+w,y-1,x+w,y+12,foreground);
-}
-bool ui_edit(const char *title,char *text,unsigned capacity,int position)
-{
-    unsigned limit=capacity<EXPR_TEXT ? capacity:EXPR_TEXT;
-    UiInlineEdit edit;ui_inline_begin(&edit,text,false);
-    edit.cursor=position<0 ? (int)strlen(edit.text):position;
-    if(edit.cursor>(int)strlen(edit.text))edit.cursor=(int)strlen(edit.text);
-    for(;;) {
-        ui_frame(title,"Left/Right: cursor   DEL: backspace");
-        ui_rect(6,46,372,96,UI_PALE);
-        for(int row=0;row<5;row++) {
-            int offset=row*40;
-            if(offset>(int)strlen(edit.text)) break;
-            char line[41];snprintf(line,sizeof(line),"%.40s",edit.text+offset);
-            ui_text(12,54+row*16,UI_INK,"%s",line);
-        }
-        int row=edit.cursor/40,w=0;
-        if(edit.cursor%40)dnsize(edit.text+row*40,edit.cursor%40,NULL,&w,NULL);
-        ui_line(12+w,53+row*16,12+w,65+row*16,UI_TEAL);
-        ui_text(8,151,UI_MUTED,"Use * for products; functions need ( ).");
-        ui_text(8,169,UI_MUTED,"Radians.  %d / %u characters",(int)strlen(edit.text),limit-1);
-        ui_softkeys("VAR","FUNC","","CLEAR","DEL","OK");dupdate();
-        key_event_t event=ui_getkey();
-        if(event.key==KEY_UP)edit.cursor=edit.cursor>=40 ? edit.cursor-40:0;
-        else if(event.key==KEY_DOWN) {
-            edit.cursor+=40;if(edit.cursor>(int)strlen(edit.text))edit.cursor=(int)strlen(edit.text);
-        } else {
-            int action=ui_inline_key(&edit,event);
-            if(action<0)return false;
-            if(action>0){snprintf(text,capacity,"%s",edit.text);return true;}
-        }
-        if(strlen(edit.text)>=limit)ui_message("Input limit","Expression is full (191 characters).");
-    }
-}
-bool ui_number(const char *title,double *value)
-{
-    char text[EXPR_TEXT];snprintf(text,sizeof(text),"%.12g",*value);
-    for(;;) {
-        if(!ui_edit(title,text,sizeof(text),-1)) return false;
-        ExprProgram p;ExprError e=expr_compile(text,(ExprScope){0,false,false,false},&p);
-        double result=0;ExprStatus status=e.status;
-        if(status==EXPR_OK) status=expr_eval(&p,0,NULL,0,&result);
-        if(status==EXPR_OK && isfinite(result)) {*value=result;return true;}
-        ui_message("Invalid number",expr_status_text(status));
-    }
 }

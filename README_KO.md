@@ -1,7 +1,7 @@
 [English](README.md) | 한국어
 
 <p align="center">
-  <img src="docs/images/diffeq-icon.png" width="184" height="128" alt="해 곡선과 기울기장을 그린 DIFFEQ 자체 아이콘">
+  <img src="docs/captures/diffeq-icon.png" width="184" height="128" alt="해 곡선과 기울기장을 그린 DIFFEQ 자체 아이콘">
 </p>
 
 # DIFFEQ for CASIO fx-CG50
@@ -10,22 +10,22 @@
 DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식의 수치해를
 컬러 그래프·기울기장·TRACE·G-Solve·표로 살펴보고, 2변수 시스템의 위상을 분석할 수 있습니다.
 
-**공개 베타 · v0.12.0-beta.9 · [MIT 라이선스](LICENSE)**
+**공개 베타 · v0.12.0-beta.10 · [MIT 라이선스](LICENSE)**
 
-**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.9)**
+**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.10)**
 · [전체 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [버그 신고](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
 
-**새 기능: SYSTEM 절전 설정 연동.** Auto Power Off, Backlight Duration, 밝기를 읽어
-무입력 시 어둡게 하고, 계산 취소·복구 후 안전한 지점에서 전원을 끕니다.
-MENU 복귀 시 설정을 갱신하고, ON을 놓으면 현재 편집/화면을 계속합니다.
-SAVE 직전 읽기 오류가 정상 저장본을 덮어쓰는 문제를 수정했고 긴 목록에 위치를 표시합니다.
-**63/63 host/UBSan**, SH29개 C, package13/13 통과. 실제 꺼짐/재개·정확한 밝기는
-**HARDWARE TEST REQUIRED**이며, 개발 호스트의 선택적 ASan은 실행 환경 문제로 검증하지 못했습니다.
-[오류 조건·검증·한계](docs/POWER_SAFETY_AUDIT.md).
+**이번 베타는 기능을 보존하면서 코드·빌드·문서 구조를 정리했습니다.**
+Graph의 표시와 입력 책임을 분리하고, 사용되지 않는 함수 4개를 제거했습니다.
+빌드와 임시 캡처는 고정 경로를 사용합니다. 수치 결과와 UI 흐름 18개가 정리 전과
+일치하며 SAVE v11·v3–v10 migration은 그대로입니다.
+**66/66 host/UBSan**, SH 29개 C·warning 0·package 13/13 통과.
+[정리 근거](docs/audits/CODE_CLEANUP_AUDIT.md) · [프로젝트 구조](PROJECT_STRUCTURE.md).
+이전 beta.9의 SYSTEM 절전 연동도 유지하며 기기 검증은 **HARDWARE TEST REQUIRED**입니다.
 
-![y'=1-y^2의 두 해 곡선과 옅은 파란색 화살표 기울기장](docs/images/graph-slope-field.png)
+![y'=1-y^2의 두 해 곡선과 옅은 파란색 화살표 기울기장](docs/captures/graph-slope-field.png)
 
 *이 페이지의 화면은 실제 DIFFEQ 앱 렌더러를 호스트 테스트 환경에서 실행해 생성했습니다.
 계산기 사진이나 CPU 에뮬레이터 캡처가 아닙니다. 프로젝트 소유자가 실제 fx-CG50에서
@@ -37,7 +37,7 @@ SAVE 직전 읽기 오류가 정상 저장본을 덮어쓰는 문제를 수정�
 
 | Main: 2열 × 3행 | 1차 유형: 2열 × 2행 |
 |---|---|
-| ![1st를 선택한 DIFF EQ 타일 메뉴와 낮은 RECALL·SAVE 행](docs/ui-review/tiles-main-first.png) | ![Separable을 선택한 네 개의 1차 유형 타일](docs/ui-review/tiles-subtype-first.png) |
+| ![1st를 선택한 DIFF EQ 타일 메뉴와 낮은 RECALL·SAVE 행](docs/captures/tiles-main-first.png) | ![Separable을 선택한 네 개의 1차 유형 타일](docs/captures/tiles-subtype-first.png) |
 
 방향키로 행·열을 따라 선택하고 숫자 단축키 또는 **EXE/F6 OPEN**으로 엽니다.
 Main의 위 네 타일과 subtype 타일은 같은 184×58 크기이며 RECALL/SAVE는 낮은 텍스트 행입니다.
@@ -49,12 +49,12 @@ Main의 위 네 타일과 subtype 타일은 같은 184×58 크기이며 RECALL/S
 
 | 1. 식 입력 | 2. 초기조건 지정 |
 |---|---|
-| ![일반 1차 식 편집기에 입력한 1-y^2](docs/images/equation-entry.png) | ![x0=0, y0={0,0.5} 초기조건](docs/images/initial-conditions.png) |
+| ![일반 1차 식 편집기에 입력한 1-y^2](docs/captures/equation-entry.png) | ![x0=0, y0={0,0.5} 초기조건](docs/captures/initial-conditions.png) |
 | 방정식 종류를 선택하고 우변을 입력합니다. | 1차에서는 y0 목록의 값마다 별도 해를 그립니다. |
 
 | 3. 계산 설정 | 4. 그래프 탐색 |
 |---|---|
-| ![RK45, h0=0.1, RelTol=1e-6, AbsTol=1e-9인 Parameters](docs/images/solver-parameters.png) | ![기울기장을 끈 상태의 magenta와 cyan 해 곡선](docs/images/graph-solution.png) |
+| ![RK45, h0=0.1, RelTol=1e-6, AbsTol=1e-9인 Parameters](docs/captures/solver-parameters.png) | ![기울기장을 끈 상태의 magenta와 cyan 해 곡선](docs/captures/graph-solution.png) |
 | 적분 구간, h와 기울기장 밀도를 설정합니다. | GRAPH를 눌러 계산한 뒤 이동·확대·TRACE·표를 사용합니다. |
 
 단계 이동은 **F6 NEXT**, 계산은 **F6 GRAPH**입니다. 일반 필드를 편집하지 않고
@@ -64,22 +64,22 @@ Main의 위 네 타일과 subtype 타일은 같은 184×58 크기이며 RECALL/S
 
 | TRACE | G-Solve |
 |---|---|
-| ![x와 y 좌표, NORMAL FAST FASTER 버튼이 있는 TRACE 커서](docs/images/graph-trace.png) | ![첫 번째 해의 y절편 x=0, y=0을 찾은 G-Solve](docs/images/graph-gsolve.png) |
+| ![x와 y 좌표, NORMAL FAST FASTER 버튼이 있는 TRACE 커서](docs/captures/graph-trace.png) | ![첫 번째 해의 y절편 x=0, y=0을 찾은 G-Solve](docs/captures/graph-gsolve.png) |
 | 해를 따라 이동하고 곡선을 전환합니다. | 근·극값·절편·두 곡선의 교점을 찾습니다. |
 
 | 수치 표 | 기울기장 |
 |---|---|
-| ![0을 중심으로 x와 두 해를 표시하는 TOP BTM MID STAT 표](docs/images/table-view.png) | ![y'=1-y^2의 화살표 기울기장과 두 해](docs/images/graph-slope-field.png) |
+| ![0을 중심으로 x와 두 해를 표시하는 TOP BTM MID STAT 표](docs/captures/table-view.png) | ![y'=1-y^2의 화살표 기울기장과 두 해](docs/captures/graph-slope-field.png) |
 | x 열을 유지하며 해를 넘겨 보고 STAT용 CSV로 내보냅니다. | Parameters에서 밀도, SET에서 스타일과 색을 바꿉니다. |
 
 ## 2변수 시스템의 Phase Portrait
 
 | 2변수 시스템 입력 | 위상 궤적 탐색 |
 |---|---|
-| ![조화진동자 y1'=y2, y2'=-y1을 입력한 시스템 편집기](docs/images/phase-system-input.png) | ![정규화한 방향 화살표와 조화진동자의 위상 궤적](docs/images/phase-field.png) |
+| ![조화진동자 y1'=y2, y2'=-y1을 입력한 시스템 편집기](docs/captures/phase-system-input.png) | ![정규화한 방향 화살표와 조화진동자의 위상 궤적](docs/captures/phase-field.png) |
 | SYS → 2를 선택합니다. 화면의 초기값은 (y1,y2)=(1,0)입니다. | 계산 후 F4 VIEW → F2 PHASE로 이동합니다. |
 
-![수치 nullcline, 원점 부근 평형점과 Center / Neutral candidate 선형화 분류](docs/images/phase-equilibrium.png)
+![수치 nullcline, 원점 부근 평형점과 Center / Neutral candidate 선형화 분류](docs/captures/phase-equilibrium.png)
 
 **F5 ANLYS**에서 **F1 FIELD**, **F2 NULL**, **F3 EQPT**, **F4 INFO**를 사용합니다.
 벡터장·nullcline을 켜거나 끄고, 평형점을 찾은 뒤 수치 Jacobian과 고윳값을 확인합니다.
@@ -95,7 +95,7 @@ N1(빨강)은 `f1=0`, N2(파랑)는 `f2=0`입니다. **F4 VIEW → F1 TIME**으�
 두 그래프는 **최대 258점의 궤적 캐시**를 공유합니다. 호환되는 캐시 투영과 PHASE 이동·확대는
 재적분을 피하지만 TIME AUTO 범위 변경은 solver를 다시 실행할 수 있습니다.
 촘촘한 특징은 보관된 표본 해상도를 넘어설 수 있습니다. Phase TRACE는
-이 캐시를 사용하고 계산된 시간 구간 안에서 이동합니다. [수치 방법과 한도](docs/PHASE_NUMERICS.md)를 참고하세요.
+이 캐시를 사용하고 계산된 시간 구간 안에서 이동합니다. [수치 방법과 한도](docs/audits/PHASE_NUMERICS.md)를 참고하세요.
 **HARDWARE TEST REQUIRED:** 새 RK45 계산/취소 및 stack high-water, 새 Phase 화면과 조작은 호스트에서 시험했으며 실제 기기 검증이 필요합니다.
 
 ## Solver Methods
@@ -117,7 +117,7 @@ Table/G-Solve는 요청 x에 직접 도착하도록 적분합니다. TIME/Phase 
 출력 격자는 TIME Xdot을 기준으로 내부 adaptive step과 별도로 정합니다.
 **RK45는 explicit adaptive 방식이며 stiff ODE 전용 solver가 아닙니다.**
 강성이나 엄격한 tolerance에서는 Work limit/Step underflow에 도달할 수 있습니다.
-[계수·안전장치·벤치마크·메모리](docs/RK45_NUMERICS.md)를 참고하세요.
+[계수·안전장치·벤치마크·메모리](docs/audits/RK45_NUMERICS.md)를 참고하세요.
 
 ## Event Detection / Solver Diagnostics
 
@@ -133,7 +133,7 @@ Parameters **F1 INIT**는 Method·Event·V-Window를 유지하며 solver 설정�
 
 | Event Settings | Solver Diagnostics (RK45) |
 |---|---|
-| ![Event ON, y-10, RISING, STOP 설정](docs/images/event-settings.png) | ![RK45 허용오차, 수락·거절·시도 횟수와 실제 RHS 호출 수](docs/images/solver-diagnostics.png) |
+| ![Event ON, y-10, RISING, STOP 설정](docs/captures/event-settings.png) | ![RK45 허용오차, 수락·거절·시도 횟수와 실제 RHS 호출 수](docs/captures/solver-diagnostics.png) |
 
 기본 Event는 OFF입니다. accepted step 하나 안의 여러 crossing은 놓칠 수 있으며 root 정확도는
 수치해 오차의 영향을 받습니다. [알고리즘·벤치마크·한계](docs/EVENTS.md) · [사용 설명서](docs/USER_GUIDE.md)
@@ -170,7 +170,7 @@ PHASE는 가로 상태 범위(SYS2의 y1)를 고정하고 y2만 추종합니다.
 
 모든 numerical/domain 경고는 plot 좌측 최상단의 같은 위치에 빨간 normal 글자와
 글자 크기에 맞춘 작은 불투명 흰 배경으로 표시합니다. 유효 구간 TRACE/G-Solve는 계속 사용하며
-정상 Event STOP은 중립색입니다. [경고·TRACE 실제 렌더러 화면](docs/ui-review/tiles-overview.png)
+정상 Event STOP은 중립색입니다. [경고·TRACE 실제 렌더러 화면](docs/captures/tiles-overview.png)
 
 Graph Settings는 **F1 INIT**로 Grid·Axis Label·기울기장 스타일/색을 초기화합니다.
 Style은 LEFT/RIGHT로 바꾸고 F1 INIT는 Style을 포함한 모든 행에서 작동합니다. F2는 비어 있습니다.
@@ -200,7 +200,7 @@ Parameters **F3 V-WIN**에서 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax
 
 ## 계산기에 설치하기
 
-1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.9)를 엽니다.
+1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.10)를 엽니다.
 2. **DIFFEQ.g3a**를 받습니다. 다운로드 확인용 `SHA256SUMS.txt`도 제공됩니다.
 3. fx-CG50을 USB로 연결하고 USB Flash 모드를 선택한 뒤 컴퓨터에서 계산기 드라이브를 엽니다.
 4. `DIFFEQ.g3a`를 드라이브 **최상위**에 복사합니다. `@MainMem` 폴더 안에 넣지 않습니다.
@@ -281,25 +281,25 @@ EXIT는 검증 없이 G-Solve 2쪽으로 돌아갑니다. HOLD는 추가 단계�
 떼었다가 다시 누른 EXIT만 Graph로 돌아갑니다. EXE만 검증/확정하며 prompt의 F6는 비어 있습니다.
 다른 입력 화면은 기존 조작을 유지합니다.
 
-이전 두 검토 보류 사항을 닫았습니다. **63/63 host/UBSan**, SH29개 C 파일 warning0,
+이전 두 검토 보류 사항을 닫았습니다. **66/66 host/UBSan**, SH29개 C 파일 warning0,
 package13/13을 정확한 공개 소스에서 반복 검증합니다. 수치 알고리즘은 그대로입니다.
-[구현·검증](docs/VISIBILITY_PROMPT_AUDIT.md) ·
-[실제 renderer 12개 화면](docs/ui-review/visibility-overview.png).
+[구현·검증](docs/audits/VISIBILITY_PROMPT_AUDIT.md) ·
+[실제 renderer 12개 화면](docs/captures/visibility-overview.png).
 Equation/IC F1 INIT는 해당 입력만 복구합니다. 미완성 draft는 NEXT에서 전체 검증하고 첫 오류를
 선택합니다. IC numeric 값은 전체 성공 후에만 반영하며 미완성 IC draft는 runtime-only입니다.
 빨간 domain/numerical END는 비치명 상태로 유지하고 유효 구간 TRACE/G-Solve를 계속 사용할 수 있습니다.
 Output은 OFF에서도 선택 색의 선을 표시합니다.
-[현재 전수 감사와 제약](docs/FULL_AUDIT.md), [UI 규칙](docs/UI_CONVENTIONS.md),
-[BOX·변경 화면 모음](docs/ui-review/interaction-overview.png).
+[현재 전수 감사와 제약](docs/audits/FULL_AUDIT.md), [UI 규칙](docs/UI_CONVENTIONS.md),
+[BOX·변경 화면 모음](docs/archive/captures/interaction-overview.png).
 
-[Main·Subtype 6개 상태의 native/3× 캡처와 현재 TRACE·경고 화면](docs/ui-review/tiles-overview.png)
+[Main·Subtype 6개 상태의 native/3× 캡처와 현재 TRACE·경고 화면](docs/captures/tiles-overview.png)
 
 ## 소스에서 빌드하기
 
 호환되는 fxSDK/gint가 이미 설치되어 있고 PATH에 설정된 환경에서 실행합니다.
 
 ```sh
-fxsdk build-cg -j8
+./tools/build.sh
 python3 tools/verify_g3a.py dist/DIFFEQ.g3a
 ./tools/test.sh
 ```
@@ -326,7 +326,7 @@ NaN/Inf와 절댓값 `1e100` 초과 영역은 그리지 않습니다. 계산된 
 실패한 지점 너머로 해를 임의 연결하지 않습니다. G-Solve는 표본 사이의 특징을 놓칠 수 있습니다.
 TRACE는 제한된 표본과 보간을 사용하고 Table은 값을 다시 계산할 수 있습니다.
 CSV는 STAT에서 직접 가져와야 하며 OS List를 자동으로 쓰지 않습니다.
-[수치 안전성](docs/SOLVER_SAFETY_AUDIT.md)과 [릴리스 검증](docs/ACCEPTANCE.md)을 참고하세요.
+[수치 안전성](docs/audits/SOLVER_SAFETY_AUDIT.md)과 [릴리스 검증](docs/ACCEPTANCE.md)을 참고하세요.
 
 **HARDWARE TEST REQUIRED:** 새 RK45 계산/취소 및 stack high-water, Phase 표시·분석, 최신 LCD 배치·색상, 키 반복·blink 타이밍,
 MENU/Fugue 복귀, 실제 SAVE/RCL·STAT은 계산기에서 재시험해야 합니다.
@@ -345,7 +345,7 @@ MENU/Fugue 복귀, 실제 SAVE/RCL·STAT은 계산기에서 재시험해야 합�
 의존성은 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 기록된 각자의 조건을 유지합니다.
 fxSDK/gint, fxlibc, OpenLibm, GNU toolchain 기여자들에게 감사드립니다.
 호스트 font/key 자료는 고지된 gint revision에서 가져왔습니다.
-[이미지 출처와 재현 방법](docs/images/README.md)도 공개합니다.
+[이미지 출처와 재현 방법](docs/captures/README.md)도 공개합니다.
 
 Algebra FX 2.0의 DIFF EQ 앱에서 영감을 받았습니다. 참조 매뉴얼과 매뉴얼 화면은
 배포하지 않습니다. CASIO와 제휴하거나 CASIO의 승인을 받은 프로젝트가 아니며,

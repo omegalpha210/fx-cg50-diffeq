@@ -6,7 +6,13 @@ import subprocess
 import tempfile
 from PIL import Image,ImageDraw,ImageFont
 
-root=Path(__file__).resolve().parents[1];out=root/'docs/ui-review'
+import sys
+sys.dont_write_bytecode = True
+from capture_paths import CapturePaths
+
+paths = CapturePaths(__file__, "interaction")
+root = paths.root
+out = paths.output
 out.mkdir(parents=True,exist_ok=True)
 plain='1 4 F6 F6 F6 '
 sys='4 2 F6 F6 F6 F6 '
@@ -52,8 +58,8 @@ cases=[
 font=ImageFont.load_default();sheet=Image.new('RGB',(816,264*((len(cases)+1)//2)+8),'#e8eef5')
 draw=ImageDraw.Draw(sheet)
 for i,(name,title,keys) in enumerate(cases):
- with tempfile.TemporaryDirectory() as directory:
-  run=subprocess.run([str(root/'build-host/host_app')],cwd=directory,
+ with tempfile.TemporaryDirectory(dir=paths.temporary_root) as directory:
+  run=subprocess.run([str(paths.app)],cwd=directory,
       env=dict(os.environ,DIFFEQ_HOST_KEYS=keys,DIFFEQ_HOST_OUT=directory,DIFFEQ_HOST_MAX_FRAMES='10000',
           **({'DIFFEQ_HOST_TICK_LIMIT':'128'} if name=='busy' else {})),
       capture_output=True,text=True,timeout=30,check=True)
@@ -69,3 +75,5 @@ for i,(name,title,keys) in enumerate(cases):
  draw.text((x,y),title,fill='#193857',font=font);sheet.paste(frame,(x,y+25))
 sheet.save(out/'interaction-overview.png',optimize=True)
 print(f'Saved {len(cases)} current UI frames. HARDWARE TEST REQUIRED.')
+
+paths.finish()

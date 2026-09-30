@@ -60,7 +60,6 @@ bool trace_prepare(Document *d,CompiledModel *m,int family,int variable);
 bool trace_point_near(double x,TracePoint *point);
 bool trace_move(double x,int direction,TracePoint *point);
 bool trace_has_invalid(void);
-bool trace_direction_invalid(int direction);
 void trace_overlay_begin(void);
 void trace_overlay_restore(void);
 void trace_overlay_show(const Document *d,const TracePoint *point,int variable,bool highlight);

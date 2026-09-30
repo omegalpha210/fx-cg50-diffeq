@@ -23,8 +23,8 @@ Reproduce with the existing host build and Pillow:
 
 ```sh
 python3 tools/generate_menu_icons.py --check
-cmake --build build-host -j8
-python3 tools/capture_tiles.py
+cmake --build build/host -j8
+python3 tools/capture_tiles.py --update-docs
 ```
 
 The generator documents each formula and emits src/ui/menu_icons.inc: 378 uint8
@@ -33,4 +33,4 @@ Firmware uses those coordinates through ui_menu_icon; no PNG decoder, RK4/RK45
 calculation, heap image or extra framebuffer is involved in menu display.
 Each **108x34 PNG** is cropped from the host execution of that same C renderer.
 Their combined **3378 B** is separate from firmware asset size. Main/Subtype
-native and integer-enlarged screen previews are in docs/ui-review/tiles-*.png.
+native and integer-enlarged screen previews are in docs/captures/tiles-*.png.

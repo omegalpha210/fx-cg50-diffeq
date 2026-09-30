@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 DIFFEQ_PROJECT_ROOT="$PWD"
-mkdir -p .local/src .local/build docs/build-logs "$HOME/.local"
+mkdir -p .local/src .local/build .local/toolchain-logs "$HOME/.local"
 if [[ -L "$HOME/.local/diffeq-sdk" ]]; then
   [[ "$(readlink "$HOME/.local/diffeq-sdk")" == "$PWD/.local" ]] || {
     echo 'Existing diffeq-sdk alias points to another project; refusing to replace it.' >&2; exit 1;
@@ -64,7 +64,4 @@ for line in Path('tools/downloads.sha256').read_text().splitlines():
         raise SystemExit(f'{name}: downloaded archive checksum mismatch')
 PYHASH
 ./tools/build-toolchain.sh
-cd examples/hello
-fxsdk build-cg -j8
-cd ../..
-python3 tools/verify_g3a.py examples/hello/DIFFEQ-hello.g3a
+./tools/build.sh --hello

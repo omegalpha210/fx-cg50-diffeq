@@ -6,8 +6,13 @@ import subprocess
 import tempfile
 from PIL import Image
 
-root = Path(__file__).resolve().parents[1]
-out = root / 'docs/images'
+import sys
+sys.dont_write_bytecode = True
+from capture_paths import CapturePaths
+
+paths = CapturePaths(__file__, "readme")
+root = paths.root
+out = paths.output
 out.mkdir(parents=True, exist_ok=True)
 # General first-order y'=1-y^2, x0=0, y0={0,0.5}; window [-3,3] x [-1.5,1.5].
 equation = ('1 4 1 SUB A:SUB SQUARE EXE F6 F6 F3 NEG 3 EXE 3 EXE 1 EXE DOWN '
@@ -26,9 +31,9 @@ cases = [
     ('table-view', graph + 'F4', 1),
 ]
 for name, keys, scale in cases:
-    with tempfile.TemporaryDirectory() as directory:
+    with tempfile.TemporaryDirectory(dir=paths.temporary_root) as directory:
         env = dict(os.environ, DIFFEQ_HOST_KEYS=keys, DIFFEQ_HOST_OUT=directory)
-        run = subprocess.run([str(root/'build-host/host_app')], cwd=directory,
+        run = subprocess.run([str(paths.app)], cwd=directory,
                              env=env, capture_output=True, text=True, timeout=30, check=True)
         assert 'SCRIPT COMPLETE' in run.stdout and 'runtime error:' not in run.stderr
         assert 'Invalid value' not in run.stdout and 'Invalid parameter' not in run.stdout, name
@@ -40,3 +45,5 @@ for name, keys, scale in cases:
 icon = Image.open(root/'assets/icon-uns.png').convert('RGB')
 icon.resize((184,128), Image.Resampling.NEAREST).save(out/'diffeq-icon.png', optimize=True)
 print('Saved 8 app-rendered views and the original project icon; PNG, no metadata, nearest-neighbor enlargement.')
+
+paths.finish()

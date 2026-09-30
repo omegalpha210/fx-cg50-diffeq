@@ -7,8 +7,13 @@ import tempfile
 
 from PIL import Image
 
-root = Path(__file__).resolve().parents[1]
-output = root / "docs/images"
+import sys
+sys.dont_write_bytecode = True
+from capture_paths import CapturePaths
+
+paths = CapturePaths(__file__, "phase")
+root = paths.root
+output = paths.output
 output.mkdir(parents=True, exist_ok=True)
 # Factory SYS2: y1'=y2, y2'=-y1, (y1,y2)(0)=(1,0). The projected
 # cached trajectory initializes a separate Phase window on first entry.
@@ -20,10 +25,10 @@ cases = [
     ("phase-equilibrium", phase + "F5 F2 F3"),
 ]
 for name, keys in cases:
-    with tempfile.TemporaryDirectory() as directory:
+    with tempfile.TemporaryDirectory(dir=paths.temporary_root) as directory:
         env = dict(os.environ, DIFFEQ_HOST_KEYS=keys, DIFFEQ_HOST_OUT=directory)
         run = subprocess.run(
-            [str(root / "build-host/host_app")], cwd=directory, env=env,
+            [str(paths.app)], cwd=directory, env=env,
             capture_output=True, text=True, timeout=30, check=True)
         assert "SCRIPT COMPLETE" in run.stdout, (name, run.stdout[-1000:])
         assert "runtime error:" not in run.stderr, (name, run.stderr)
@@ -38,3 +43,5 @@ for name, keys in cases:
         image.save(output / (name + ".png"), optimize=True)
         print(f"Saved {name}.png ({image.width}x{image.height}, {len(frames)} frames)")
 print("Three app-rendered Phase views; lossless PNG without metadata. HARDWARE TEST REQUIRED.")
+
+paths.finish()

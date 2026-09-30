@@ -1,7 +1,7 @@
 English | [한국어](README_KO.md)
 
 <p align="center">
-  <img src="docs/images/diffeq-icon.png" width="184" height="128" alt="DIFFEQ's original solution-curve and slope-field icon">
+  <img src="docs/captures/diffeq-icon.png" width="184" height="128" alt="DIFFEQ's original solution-curve and slope-field icon">
 </p>
 
 # DIFFEQ for CASIO fx-CG50
@@ -10,22 +10,23 @@ Solve, graph, and explore ordinary differential equations on your calculator.
 DIFFEQ is a native **fx-CG50 add-in** with colorful solution curves, slope fields,
 TRACE, G-Solve, numerical tables, and phase analysis for two-variable systems.
 
-**Public Beta · v0.12.0-beta.9 · [MIT License](LICENSE)**
+**Public Beta · v0.12.0-beta.10 · [MIT License](LICENSE)**
 
-**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.9)**
+**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.10)**
 · [All releases](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [Report a bug](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
 
-**New: SYSTEM power settings.** DIFFEQ reads Auto Power Off, Backlight Duration and
-saved brightness, dims after inactivity and suspends at a safe point after any
-calculation rollback. MENU return refreshes the settings; wake waits for ON release.
-A reproduced SAVE read-error overwrite is fixed, and long lists show item position.
-**63/63 host/UBSan**, strict29-unit SH,13 package checks. Physical power timing and
-exact dim brightness remain **HARDWARE TEST REQUIRED**; optional ASan is unavailable
-on the development host. [Detailed safety/error audit](docs/POWER_SAFETY_AUDIT.md).
+**This beta preserves features while cleaning the source and build structure.**
+Graph responsibilities are clearer, four unused functions are removed, and builds
+and temporary captures use fixed paths. Numerical results and 18 UI workflows
+match the pre-cleanup baseline; SAVE v11 and every v3–v10 migration remain intact.
+**66/66 host/UBSan**, strict 29-unit SH and 13 package checks.
+[Cleanup evidence](docs/audits/CODE_CLEANUP_AUDIT.md) ·
+[Project structure](PROJECT_STRUCTURE.md). SYSTEM power support from beta.9 is
+retained; device-only behavior remains **HARDWARE TEST REQUIRED**.
 
-![Two DIFFEQ solution curves for y'=1-y^2 with a pale blue arrow slope field](docs/images/graph-slope-field.png)
+![Two DIFFEQ solution curves for y'=1-y^2 with a pale blue arrow slope field](docs/captures/graph-slope-field.png)
 
 *Screens on this page come from DIFFEQ's actual application renderer running in
 the host test harness. They are not hardware photographs or CPU-emulator captures.
@@ -38,7 +39,7 @@ Open any image for its full-size view, especially on a phone.
 
 | Main: 2 columns × 3 rows | First-order types: 2 columns × 2 rows |
 |---|---|
-| ![DIFF EQ native tiles: 1st selected; compact RECALL and SAVE row](docs/ui-review/tiles-main-first.png) | ![Four first-order tiles with Separable selected](docs/ui-review/tiles-subtype-first.png) |
+| ![DIFF EQ native tiles: 1st selected; compact RECALL and SAVE row](docs/captures/tiles-main-first.png) | ![Four first-order tiles with Separable selected](docs/captures/tiles-subtype-first.png) |
 
 Use arrows to select by row/column, digits for shortcuts, and EXE or **F6 OPEN**.
 Main's graph tiles and subtype tiles share the same 184×58 geometry; RECALL/SAVE
@@ -51,12 +52,12 @@ const geometry; [icon files and reproduction](assets/menu/README.md).
 
 | 1. Enter an equation | 2. Set initial conditions |
 |---|---|
-| ![General first-order editor containing 1-y^2](docs/images/equation-entry.png) | ![Initial conditions x0=0 and y0={0,0.5}](docs/images/initial-conditions.png) |
+| ![General first-order editor containing 1-y^2](docs/captures/equation-entry.png) | ![Initial conditions x0=0 and y0={0,0.5}](docs/captures/initial-conditions.png) |
 | Choose a type, then enter the right-hand side. | A first-order list draws a solution for each initial y value. |
 
 | 3. Choose solver settings | 4. Draw and explore |
 |---|---|
-| ![RK45 selected with h0=0.1, RelTol=1e-6 and AbsTol=1e-9](docs/images/solver-parameters.png) | ![Magenta and cyan solution curves with slope field disabled](docs/images/graph-solution.png) |
+| ![RK45 selected with h0=0.1, RelTol=1e-6 and AbsTol=1e-9](docs/captures/solver-parameters.png) | ![Magenta and cyan solution curves with slope field disabled](docs/captures/graph-solution.png) |
 | Choose RK4 or RK45, its settings, and optional field density. | Press GRAPH. Pan, zoom, trace, or open a table. |
 
 Headers show **1/3 → 2/3 → 3/3**. Use EXIT to go back from IC or Parameters.
@@ -68,22 +69,22 @@ unedited ordinary field, **EXE** performs the same primary action from any row.
 
 | TRACE | G-Solve |
 |---|---|
-| ![TRACE cursor with x and y values and NORMAL FAST FASTER controls](docs/images/graph-trace.png) | ![G-Solve finds the first solution's y-intercept at x=0, y=0](docs/images/graph-gsolve.png) |
+| ![TRACE cursor with x and y values and NORMAL FAST FASTER controls](docs/captures/graph-trace.png) | ![G-Solve finds the first solution's y-intercept at x=0, y=0](docs/captures/graph-gsolve.png) |
 | Move along a solution and switch between curves. | Find roots, extrema, intercepts, and intersections. |
 
 | Numerical table | Slope field |
 |---|---|
-| ![Ascending x table centered at zero with two solution columns and TOP BTM MID STAT controls](docs/images/table-view.png) | ![Two solutions over the arrow field for y'=1-y^2](docs/images/graph-slope-field.png) |
+| ![Ascending x table centered at zero with two solution columns and TOP BTM MID STAT controls](docs/captures/table-view.png) | ![Two solutions over the arrow field for y'=1-y^2](docs/captures/graph-slope-field.png) |
 | Keep x in view while scrolling solutions; export for STAT. | Adjust density in Parameters and style/color in SET. |
 
 ## Phase Portraits for 2D Systems
 
 | Enter a two-variable system | Explore its phase trajectory |
 |---|---|
-| ![System editor with the oscillator y1'=y2 and y2'=-y1](docs/images/phase-system-input.png) | ![Oscillator phase trajectory and normalized direction arrows](docs/images/phase-field.png) |
+| ![System editor with the oscillator y1'=y2 and y2'=-y1](docs/captures/phase-system-input.png) | ![Oscillator phase trajectory and normalized direction arrows](docs/captures/phase-field.png) |
 | Choose SYS → 2. The pictured oscillator starts at (y1,y2)=(1,0). | After calculating, use F4 VIEW → F2 PHASE. |
 
-![Numerical nullclines, an equilibrium near the origin, and its Center / Neutral candidate classification](docs/images/phase-equilibrium.png)
+![Numerical nullclines, an equilibrium near the origin, and its Center / Neutral candidate classification](docs/captures/phase-equilibrium.png)
 
 **F5 ANLYS** opens **F1 FIELD**, **F2 NULL**, **F3 EQPT**, and **F4 INFO**.
 Toggle arrows/nullclines, search for equilibria, then inspect the numerical Jacobian
@@ -100,7 +101,7 @@ inconclusive or unavailable classifications are retained honestly.
 Both projections reuse a bounded **258-point trajectory cache**. Compatible cached
 reprojection and PHASE pan/zoom avoid reintegration; TIME AUTO range changes can
 rerun the solver. Closely spaced features can exceed the retained resolution. Phase TRACE uses this cache and stays within its calculated time
-range. See [numerical methods and bounds](docs/PHASE_NUMERICS.md).
+range. See [numerical methods and bounds](docs/audits/PHASE_NUMERICS.md).
 **HARDWARE TEST REQUIRED:** these new Phase views and interactions are host-tested.
 
 ## Solver Methods
@@ -124,7 +125,7 @@ they do not guarantee tolerance accuracy between cached points. RK45 output
 uses a TIME Xdot-based grid separately from adaptive internal steps.
 **RK45 is an explicit adaptive Runge–Kutta method, not a stiff ODE solver.**
 Stiffness or strict tolerances can trigger work limits or Step underflow.
-See [coefficients, safeguards, benchmarks and memory](docs/RK45_NUMERICS.md).
+See [coefficients, safeguards, benchmarks and memory](docs/audits/RK45_NUMERICS.md).
 
 ## Event Detection and Solver Diagnostics
 
@@ -140,7 +141,7 @@ Opening it does not calculate or write files. Parameters **F1 INIT** resets solv
 
 | Event Settings | Solver Diagnostics (RK45) |
 |---|---|
-| ![Event y-10, enabled, RISING and STOP](docs/images/event-settings.png) | ![RK45 tolerances, accepted/rejected trials, attempts and actual RHS calls](docs/images/solver-diagnostics.png) |
+| ![Event y-10, enabled, RISING and STOP](docs/captures/event-settings.png) | ![RK45 tolerances, accepted/rejected trials, attempts and actual RHS calls](docs/captures/solver-diagnostics.png) |
 
 Events default OFF. Accepted-step bracketing can miss multiple crossings within
 one step; root accuracy remains limited by the numerical solution.
@@ -183,7 +184,7 @@ and its existing safe expansion remain available after EXIT.**
 
 All numerical/domain warnings now share the plot's top-left anchor, red normal text
 and a small opaque white backplate measured to the text. Valid-side TRACE/G-Solve
-remain usable; normal Event STOP stays neutral. [Warning and TRACE examples](docs/ui-review/tiles-overview.png).
+remain usable; normal Event STOP stays neutral. [Warning and TRACE examples](docs/captures/tiles-overview.png).
 
 Graph Settings uses **F1 INIT** to reset Grid, Axis Label and field style/color.
 The Style row uses LEFT/RIGHT; F1 INIT is visible and works on every Settings row. F2 stays blank.
@@ -213,7 +214,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 ## Install on your calculator
 
-1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.9).
+1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.10).
 2. Download **DIFFEQ.g3a**. `SHA256SUMS.txt` is available to check your download.
 3. Connect the fx-CG50 by USB, select USB Flash mode, and open its storage drive.
 4. Copy `DIFFEQ.g3a` to the drive's **root directory**, outside `@MainMem`.
@@ -301,27 +302,27 @@ G-Solve page 2. Held EXIT cannot leave a second level; a second fresh EXIT retur
 Graph. Only EXE validates/commits this temporary prompt; its F6 is blank/inert.
 Other form editors retain their existing controls.
 
-Both former review decisions are closed. **63/63 host/UBSan groups**, strict
+Both former review decisions are closed. **66/66 host/UBSan groups**, strict
 29-unit SH build with zero warnings and 13 package checks are repeated on the
 exact public source. Numerical algorithms remain unchanged.
-[Implementation and validation](docs/VISIBILITY_PROMPT_AUDIT.md) ·
-[12 production renderer frames](docs/ui-review/visibility-overview.png).
+[Implementation and validation](docs/audits/VISIBILITY_PROMPT_AUDIT.md) ·
+[12 production renderer frames](docs/captures/visibility-overview.png).
  Equation/IC F1 INIT resets only its
 own inputs. Incomplete drafts remain editable until NEXT validates all fields
 and focuses the first error. IC numeric values update only after complete validation;
 unfinished IC drafts are runtime-only. Red numerical/domain END remains nonfatal,
 with valid-side TRACE/G-Solve available. Output color-line previews persist when OFF.
-[Current full audit](docs/FULL_AUDIT.md),
-[UI conventions](docs/UI_CONVENTIONS.md), [BOX and updated screens](docs/ui-review/interaction-overview.png).
+[Current full audit](docs/audits/FULL_AUDIT.md),
+[UI conventions](docs/UI_CONVENTIONS.md), [BOX and updated screens](docs/archive/captures/interaction-overview.png).
 
-[Six native and 3× Main/subtype previews; current TRACE and warning screens](docs/ui-review/tiles-overview.png)
+[Six native and 3× Main/subtype previews; current TRACE and warning screens](docs/captures/tiles-overview.png)
 
 ## Build from source
 
 With an existing compatible fxSDK/gint installation on PATH:
 
 ```sh
-fxsdk build-cg -j8
+./tools/build.sh
 python3 tools/verify_g3a.py dist/DIFFEQ.g3a
 ./tools/test.sh
 ```
@@ -350,7 +351,7 @@ Nonfinite values and magnitudes above `1e100` are not plotted. Valid computed
 prefixes remain usable; the solver does not continue across an unknown gap.
 G-Solve can miss unsampled features. TRACE uses a bounded retained/interpolated
 sample set; Table may recompute values. CSV requires manual import into STAT and
-does not directly write OS lists. See [numerical safety](docs/SOLVER_SAFETY_AUDIT.md)
+does not directly write OS lists. See [numerical safety](docs/audits/SOLVER_SAFETY_AUDIT.md)
 and [release validation](docs/ACCEPTANCE.md).
 
 **HARDWARE TEST REQUIRED:** new RK45 execution/cancellation and stack high-water, Phase rendering/analysis, the latest LCD layout/colors, held-key and blink timing,
@@ -371,7 +372,7 @@ Project-authored code, documentation and original icons use the [MIT License](LI
 Dependencies retain their own terms in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 Thanks to fxSDK/gint, fxlibc, OpenLibm and the GNU toolchain contributors. The host
 font/key data comes from the credited gint revision. Image sources and reproduction
-are listed in [docs/images/README.md](docs/images/README.md).
+are listed in [docs/captures/README.md](docs/captures/README.md).
 
 Inspired by the DIFF EQ application on the Algebra FX 2.0. Reference manuals and
 manual screenshots are not redistributed. This is an unofficial community project,

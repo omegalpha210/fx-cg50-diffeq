@@ -6,9 +6,14 @@ import subprocess
 import tempfile
 from PIL import Image, ImageDraw, ImageFont
 
-root=Path(__file__).resolve().parents[1]
-executable=root/'build-host/host_app'
-output=root/'docs/ui-review'
+import sys
+sys.dont_write_bytecode = True
+from capture_paths import CapturePaths
+
+paths = CapturePaths(__file__, "ui")
+root = paths.root
+executable = paths.app
+output = paths.output
 output.mkdir(parents=True,exist_ok=True)
 cases=[('main','Main',''),
     ('save-confirm','SAVE / explicit confirmation','2 EXIT 6'),
@@ -92,7 +97,7 @@ sheet=Image.new('RGB',(816,8+264*((len(cases)+1)//2)),'#e8eef5')
 draw=ImageDraw.Draw(sheet)
 font=ImageFont.load_default()
 for i,(name,label,keys) in enumerate(cases):
-    with tempfile.TemporaryDirectory(dir=root/'build-host') as directory:
+    with tempfile.TemporaryDirectory(dir=paths.temporary_root) as directory:
         env=dict(os.environ,DIFFEQ_HOST_KEYS=keys,DIFFEQ_HOST_OUT=directory)
         subprocess.run([str(executable)],cwd=directory,env=env,check=True,
                        stdout=subprocess.DEVNULL,timeout=30)
@@ -118,4 +123,6 @@ for i,name in enumerate(review):
     draw.text((x,y),name,fill='#193857',font=font)
     sheet.paste(Image.open(output/(name+'.png')),(x,y+25))
 sheet.save(output/'workflow-overview.png')
-print(f'Saved {len(cases)} host framebuffer views to docs/ui-review/. HARDWARE RETEST REQUIRED.')
+print(f'Saved {len(cases)} host framebuffer views to the generated review directory. HARDWARE RETEST REQUIRED.')
+
+paths.finish()

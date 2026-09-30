@@ -6,13 +6,13 @@ labels remain exclusive to Equation/IC/Parameters. Power activity comes from
 physical keys, not redraws. Resume drains the wake key until release and retains
 editing state. Cancellation restores stable state before MENU or power-off.
 No duplicate power preferences, new automatic save, or extra generic EXE hints.
-[Power and failure audit](POWER_SAFETY_AUDIT.md).
+[Power and failure audit](audits/POWER_SAFETY_AUDIT.md).
 
 ---
 
 # Current UI conventions — v0.12.0-beta.8
 
-[Implementation and validation](VISIBILITY_PROMPT_AUDIT.md) closes FULL_AUDIT R1/UIR1.
+[Implementation and validation](audits/VISIBILITY_PROMPT_AUDIT.md) closes FULL_AUDIT R1/UIR1.
 - Drawing retains Graph; only logical(0,198),384x18 F-key rectangle becomes one
   application-blue bar: white Drawing... spinner left, EXIT cancels right, no cells.
   Shared156.25ms delay / max8Hz / cancel-first polling; bar-only native refresh.
@@ -36,8 +36,8 @@ Earlier milestone records below are historical where superseded above.
 
 # Current UI conventions — v0.12.0-beta.7
 
-[Full audit](FULL_AUDIT.md), [busy-screen ownership](BUSY_SCREEN_AUDIT.md) and
-[IC color consumers](MULTI_IC_COLOR_AUDIT.md) supplement retained beta.6 rules.
+[Full audit](audits/FULL_AUDIT.md), [busy-screen ownership](archive/BUSY_SCREEN_AUDIT.md) and
+[IC color consumers](archive/MULTI_IC_COLOR_AUDIT.md) supplement retained beta.6 rules.
 
 - Table/Drawing long preparation uses the native blue title row, white
   `EXIT cancels` row, neutral body and no visible F-key strip. Shared156ms delay
@@ -61,7 +61,7 @@ Earlier milestone rules below are historical where superseded here.
 
 # Current UI conventions — v0.12.0-beta.6
 
-[Overlay inventory and implementation](OVERLAY_AUDIT.md) defines the current rules.
+[Overlay inventory and implementation](archive/OVERLAY_AUDIT.md) defines the current rules.
 - Graph warning/instruction uses common logical(7,4), normal text and measured
   opaque white padding. Active instruction temporarily owns the channel, restoring
   the persistent warning afterward. Result/data panels remain lower-left;
@@ -94,7 +94,7 @@ Earlier milestone records below are historical.
 
 # Current UI conventions — v0.12.0-beta.5
 
-[Full tiles/TRACE audit](TILES_TRACE_AUDIT.md) supplements the retained beta.4
+[Full tiles/TRACE audit](archive/TILES_TRACE_AUDIT.md) supplements the retained beta.4
 INIT/BOX/draft/semantic-color rules. Current changes:
 
 - Main is 2x3: four shared 184x58 graph tiles and two 184x25 text-only tiles.
@@ -125,7 +125,7 @@ Earlier milestone records below are historical; current controls above take prio
 
 # Current UI conventions — v0.12.0-beta.4
 
-The complete before/after interaction inventory is [INTERACTION_AUDIT](INTERACTION_AUDIT.md).
+The complete before/after interaction inventory is [INTERACTION_AUDIT](archive/INTERACTION_AUDIT.md).
 [USER_GUIDE](USER_GUIDE.md) is the current full F-key table. Historical beta.3 audit
 below is retained as evidence; these current rules supersede its changed controls.
 
@@ -224,9 +224,9 @@ scrolling, graph/TRACE/G-Solve motion and the2D palette retain their own policie
 | Storage result/migration | Save/Load/STAT/Legacy status title | — / — / — / — / — / OK | Relevant file status, no automatic retry; long information panel remains justified |
 | Input error | Previously full-screen message | — / — / — / — / — / OK | Prefer field-preserving inline error and return to editing |
 
-Legacy ui_row/ui_edit/ui_number have no production caller from the native screen
-workflow. They are not additional exposed screens; retain their helpers without
-redesigning them. Their numeric editor primitives still use the common renderer.
+Cleanup checked build targets, symbol references and native workflows before
+removing the unused standalone ui_row/ui_edit/ui_number helpers. Current inline
+equation/numeric editors and their shared rendering primitives are unchanged.
 
 ## Stable conventions
 
@@ -281,7 +281,7 @@ ambiguous preview. Color rows never display independent ON/OFF. Seven-row SELECT
 paging/wrap reaches all ten ICs above the help. Single IC keeps the ordinary y row.
 Shrinking/growing an IC list retains indexed color preferences; unused slots have
 the original palette defaults. Output INIT resets all colors; IC INIT preserves
-them. See [multiple-IC color audit](MULTI_IC_COLOR_AUDIT.md).
+them. See [multiple-IC color audit](archive/MULTI_IC_COLOR_AUDIT.md).
 
 Graph draw order is background/grid/axes, field/nullclines, solution curves,
 Event squares, equilibrium diamonds, compact view/legend/status backplates, then
@@ -319,8 +319,8 @@ remain intentional where no plotted result/field is available.
 - Clean27-unit strict SH build/link: zero warnings;13/13 package checks.
 - SH text206816 (+752), data704 (0), BSS71952 (0), max ui_graph frame2568 (-4).
   Development G3A236200 B; exact public artifact identifiers are in Release VALIDATION.
-- [24 representative production-rendered screens](ui-review/consistency-overview.png)
-  and [workflow screens](ui-review/workflow-overview.png) were regenerated and
+- [24 representative production-rendered screens](archive/captures/consistency-overview.png)
+  and [workflow screens](captures/workflow-overview.png) were regenerated and
   visually reviewed. capture_consistency.py reproduces the new set. They are
   host framebuffer captures, not device photos or an SH emulator.
 - [36 new hardware checks](HARDWARE_RETEST.md) remain HARDWARE TEST REQUIRED,

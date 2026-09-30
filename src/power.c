@@ -9,7 +9,7 @@
 
 /* Verified OS ABI: libfxcg system.h / syscall stubs and TeamFX's original
    backlight research. Independent dispatch stubs; no new library dependency.
-   See docs/POWER_SAFETY_AUDIT.md for sources and native limitations. */
+   See docs/audits/POWER_SAFETY_AUDIT.md for sources and native limitations. */
 extern int diffeq_os_apo(void);
 extern char diffeq_os_duration(void);
 extern char diffeq_os_light(void);

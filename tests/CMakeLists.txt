@@ -280,3 +280,14 @@ add_test(NAME trajectory_visibility COMMAND test_visibility)
 add_test(NAME visibility_prompt_ui COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/test_visibility_ui.py $<TARGET_FILE:host_app>)
 set_tests_properties(trajectory_visibility visibility_prompt_ui PROPERTIES TIMEOUT 90)
+
+# Independent before/after contracts; original numerical/parser/UI tests remain.
+add_executable(numerical_probe numerical_probe.c)
+target_link_libraries(numerical_probe core m)
+add_test(NAME cleanup_numerical_golden COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_numerical_golden.py $<TARGET_FILE:numerical_probe>)
+add_test(NAME cleanup_ui_golden COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_ui_golden.py $<TARGET_FILE:host_app>)
+add_test(NAME cleanup_tool_safety COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_cleanup_tools.py)
+set_tests_properties(cleanup_numerical_golden cleanup_ui_golden cleanup_tool_safety PROPERTIES TIMEOUT 90)
