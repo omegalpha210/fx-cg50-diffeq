@@ -13,7 +13,36 @@
 #include <unistd.h>
 #ifdef FXCG50
 #include <gint/gint.h>
+#include "file_close_guard.h"
 #endif
+
+#ifdef FXCG50
+static FileCloseGuard close_guard={-1};
+static int cleanup_files(void){return file_close_cleanup(&close_guard);}
+#endif
+bool storage_usb_ready(void)
+{
+#ifdef FXCG50
+    return gint_world_switch(GINT_CALL(cleanup_files))!=0;
+#else
+    return true;
+#endif
+}
+static int storage_open(const char *path,int flags,int mode)
+{
+#ifdef FXCG50
+    if(!file_close_cleanup(&close_guard))return -1;
+#endif
+    return open(path,flags,mode);
+}
+static int storage_close(int fd)
+{
+#ifdef FXCG50
+    return file_close_guard(&close_guard,fd);
+#else
+    return close(fd);
+#endif
+}
 
 #define RECORD_MAGIC 0x44455131u
 #define RECORD_VERSION 11u
@@ -224,7 +253,7 @@ static int slot_probe_native(void *opaque)
 {
     SlotProbe *probe=opaque;
     native_read_error=false;
-    int fd=open(probe->path,O_RDONLY,0);
+    int fd=storage_open(probe->path,O_RDONLY,0);
     if(fd<0)return errno==ENOENT ? 0:-1;
     off_t length=native_seek(fd,0,SEEK_END);
     bool ok=native_seek(fd,0,SEEK_SET)==0 && native_read_all(fd,&probe->header,sizeof(probe->header))
@@ -243,7 +272,7 @@ static int slot_probe_native(void *opaque)
         }
     }
     if(ok)ok=native_read_all(fd,&probe->checksum,sizeof(probe->checksum));
-    if(close(fd)!=0)native_read_error=true;
+    if(storage_close(fd)!=0)native_read_error=true;
     return native_read_error ? -1:ok && hash==probe->checksum;
 }
 
@@ -388,7 +417,7 @@ static int record_read_native(void *opaque)
 {
     RecordRead *request=opaque;
     native_read_error=false;
-    int fd=open(request->path,O_RDONLY,0);
+    int fd=storage_open(request->path,O_RDONLY,0);
     if(fd<0)return -1;
     bool ok=valid_header(&request->expected)
         && native_seek(fd,0,SEEK_END)==(off_t)request->expected.size
@@ -404,7 +433,7 @@ static int record_read_native(void *opaque)
     if(ok)ok=read_document(fd,request->current,actual.version,true,&hash,request->warnings)
         && read_document(fd,request->recall,actual.version,actual.has_recall!=0,&hash,request->warnings)
         && native_read_all(fd,&checksum,sizeof(checksum)) && hash==checksum;
-    if(close(fd)!=0)native_read_error=true;
+    if(storage_close(fd)!=0)native_read_error=true;
     return native_read_error ? -1:ok;
 }
 
@@ -430,7 +459,7 @@ static bool native_write_hashed(int fd,const void *data,size_t size,uint32_t *ha
 static int record_write_native(void *opaque)
 {
     RecordWrite *request=opaque;
-    int fd=open(request->path,O_WRONLY|O_CREAT|O_TRUNC,0644);
+    int fd=storage_open(request->path,O_WRONLY|O_CREAT|O_TRUNC,0644);
     if(fd<0)return 0;
     unsigned char prefix[64]={0};
     size_t prefix_size=offsetof(RecordLayout,current);
@@ -446,7 +475,7 @@ static int record_write_native(void *opaque)
         && native_write_all(fd,&hash,sizeof(hash))
         && native_write_zeros(fd,sizeof(RecordLayout)
             -(offsetof(RecordLayout,checksum)+sizeof(hash)),NULL);
-    int close_result=close(fd);
+    int close_result=storage_close(fd);
     if(!ok || close_result!=0) {
         /* A close failure can leave Fugue's native handle locked. Only remove
            an incomplete slot after close definitely succeeded. */
@@ -460,20 +489,20 @@ static int file_create_native(void *opaque)
 {
     FileCreate *request=opaque;
     errno=0;
-    int fd=open(request->path,O_WRONLY|O_CREAT|O_EXCL,0644);
+    int fd=storage_open(request->path,O_WRONLY|O_CREAT|O_EXCL,0644);
     if(fd<0){request->exists=errno==EEXIST;return 0;}
-    request->closed=close(fd)==0;
+    request->closed=storage_close(fd)==0;
     return request->closed;
 }
 
 static int file_append_native(void *opaque)
 {
     FileAppend *request=opaque;
-    int fd=open(request->path,O_WRONLY|O_APPEND,0);
+    int fd=storage_open(request->path,O_WRONLY|O_APPEND,0);
     if(fd<0)return 0;
     request->opened=1;
     bool ok=native_write_all(fd,request->data,request->size);
-    request->closed=close(fd)==0;
+    request->closed=storage_close(fd)==0;
     return ok && request->closed;
 }
 

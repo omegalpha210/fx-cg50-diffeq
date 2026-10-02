@@ -47,7 +47,7 @@ def public_path(path):
     return (path in ROOT_FILES or path.startswith(DIRECTORIES) or
             path in {'docs/README.md', 'docs/ACCEPTANCE.md', 'docs/USER_GUIDE.md',
                      'docs/HARDWARE_RETEST.md', 'docs/UI_CONVENTIONS.md',
-                     'docs/EVENTS.md', 'docs/THIRD_PARTY.md'})
+                     'docs/EVENTS.md', 'docs/THIRD_PARTY.md', 'docs/USB_LIFECYCLE_AUDIT.md'})
 
 
 def check_content(path, data):

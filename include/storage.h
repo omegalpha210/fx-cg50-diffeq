@@ -7,6 +7,8 @@
 enum {STORAGE_LEGACY=1,STORAGE_IC_ADAPTED=2,STORAGE_EXPRESSION_REVIEW=4};
 bool storage_load(App *app,const char *directory);
 bool storage_save(App *app,const char *directory);
+/* One bounded native close retry before an OS/USB menu handoff. No SAVE. */
+bool storage_usb_ready(void);
 bool storage_csv(const Document *d,CompiledModel *m,const char *directory,
     char *path,unsigned capacity,OdeStatus *status,OdeCancel cancel,void *cancel_ctx);
 bool storage_stat_csv(const Document *d,CompiledModel *m,const char *directory,char *path,unsigned capacity,OdeStatus *status,

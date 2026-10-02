@@ -1,4 +1,11 @@
 #include "power.h"
+#include "usb_native.h"
+MockUsbCpg mock_usb_cpg;
+MockUsbPower mock_usb_power;
+MockUsbRegisters mock_usb_registers={.SYSCFG={1}};
+static bool usb_close_ok=true;
+static unsigned usb_cleanups;
+bool storage_usb_ready(void){usb_cleanups++;return usb_close_ok;}
 #include <gint/gint.h>
 #include <gint/drivers/keydev.h>
 #include <assert.h>
@@ -57,6 +64,9 @@ static void activity(void)
 }
 static void begin(void)
 {
+    mock_usb_cpg.USBCLKCR.CLKSTP=0;mock_usb_power.MSTPCR2.USB0=0;
+    mock_usb_registers.SYSCFG.SCKE=1;mock_usb_registers.INTSTS0.VBSTS=0;
+    usb_close_ok=true;
     filter=prior;now=0;held=false;hardware=light;queued=(key_event_t){0};
     on_sleep=on_menu=on_wake=NULL;wake_timeout=NULL;sleeps=0;
     power_init();int before=reads;power_init();assert(reads==before);
@@ -67,8 +77,42 @@ static void change_settings(void) {apo=60;duration=6;light=2;hardware=light;now=
 static void stale_wake(void) {queued=key(KEY_ACON);now=123;}
 static void held_wake(void) {held=true;queued=key(KEY_ACON);}
 static void release_wake(void) {if(sleeps==4)held=false;}
+static void insert_usb(void){mock_usb_registers.INTSTS0.VBSTS=1;}
+static void usb_cases(void)
+{
+    apo=10;duration=1;light=4;
+    /* Busy owners defer MENU until their existing rollback has completed. */
+    begin();int m=menus,o=offs;now=3840;assert(!power_poll(true));
+    assert(hardware==0);insert_usb();queued=key(KEY_MENU);
+    for(unsigned i=0;i<20;i++)assert(power_poll(false) && menus==m && hardware==0);
+    assert(power_poll(true) && menus==m+1 && offs==o && hardware==light);
+    assert(queued.type==KEYEV_NONE);
+    for(unsigned i=0;i<100;i++)assert(!power_poll(true) && menus==m+1);
+    mock_usb_cpg.USBCLKCR.CLKSTP=1;mock_usb_registers.INTSTS0.VBSTS=0;
+    assert(!power_poll(true));mock_usb_cpg.USBCLKCR.CLKSTP=0;insert_usb();
+    assert(!power_poll(true)); /* Unknown did not invent an unplug. */
+    mock_usb_registers.INTSTS0.VBSTS=0;assert(!power_poll(true));insert_usb();
+    assert(power_poll(true) && menus==m+2);end();
+    begin();m=menus;o=offs;key_event_t off=key(KEY_ACON);off.shift=1;
+    assert(power_key(off));insert_usb();assert(power_poll(true));
+    assert(menus==m+1 && offs==o && !power_poll(true));end();
+    /* Insert during a manual transition: absorb it, including reentry. */
+    begin();m=menus;on_menu=insert_usb;power_osmenu();
+    assert(menus==m+1 && !power_poll(true));end();
+    /* An unresolved descriptor blocks both transitions; no hot retry at APO. */
+    begin();m=menus;o=offs;now=600u*128u;usb_close_ok=false;
+    unsigned c=usb_cleanups;insert_usb();assert(power_poll(true));
+    for(unsigned i=0;i<100;i++)assert(!power_poll(true));
+    assert(menus==m && offs==o && usb_cleanups==c+1);
+    usb_close_ok=true;power_osmenu();assert(menus==m+1);end();
+    /* Modal/idle wait uses the same real loop; no synthetic keyboard activity. */
+    begin();m=menus;insert_usb();on_sleep=press;
+    assert(power_wait_key(NULL).key==KEY_EXE && menus==m+1);end();
+    puts("USB native: idle/modal wait, deferred busy rollback, dim, MENU/OFF races, rearm, unknown and bounded close failure PASS; manual SAVE unchanged.");
+}
 int main(void)
 {
+    usb_cases();
     const int minutes[]={10,60},halves[]={1,2,6};
     for(unsigned a=0;a<2;a++)for(unsigned d=0;d<3;d++)for(light=1;light<=5;light++) {
         apo=minutes[a];duration=halves[d];begin();

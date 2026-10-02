@@ -1,5 +1,11 @@
 # Source snapshot and release preflight
 
+The 2026-10-02 USB candidate has an explicit hardware gate: synchronize validated
+source only; **do not create a new binary release/tag until physical USB tests
+pass**. The owner retained manual SAVE (no USB autosave). See
+[USB audit](../USB_LIFECYCLE_AUDIT.md). The general binary steps below resume only
+after that gate. Current host/UBSan total is 68, retaining all previous 66 groups.
+
 1. Preserve local edits, protected manuals/dist, the installed SDK, public main
    ancestry and every existing tag. Inventory before mutation.
 2. Validate source changes: all 66 host/UBSan groups, including frozen numerical

@@ -1,4 +1,7 @@
 #include "power.h"
+#include "storage.h"
+#include "usb_lifecycle.h"
+#include "usb_native.h"
 #include <gint/gint.h>
 #include <gint/cpu.h>
 #include <gint/rtc.h>
@@ -27,9 +30,10 @@ OS_STUB(diffeq_os_set_light,0x0199);
 static struct {
     uint32_t last,apo,dim,seen;
     int light;
-    bool active,dimmed,manual,pending;
+    bool active,dimmed,manual,pending,io_blocked;
 } power;
 static volatile uint32_t activity;
+static UsbLifecycle usb;
 static keydev_async_filter_t prior_filter;
 static uint32_t since(uint32_t now,uint32_t before)
 {return now>=before ? now-before:now+DAY_TICKS-before;}
@@ -60,14 +64,14 @@ static void refresh(void)
 {
     gint_world_switch(GINT_CALL(read_settings));
     power.last=rtc_ticks();power.seen=activity;
-    power.dimmed=false;power.manual=false;power.pending=false;
+    power.dimmed=false;power.manual=false;power.pending=false;power.io_blocked=false;
 }
 void power_init(void)
 {
     if(power.active)return;
     prior_filter=keydev_async_filter(keydev_std());
     keydev_set_async_filter(keydev_std(),observe_key);
-    power.active=true;refresh();
+    power.active=true;refresh();usb_initialize(&usb,usb_native_sample());
 }
 void power_shutdown(void)
 {
@@ -77,9 +81,15 @@ void power_shutdown(void)
 }
 void power_osmenu(void)
 {
+    if(!usb_handoff_begin(&usb,usb_native_sample()))return;
+    power.manual=power.pending=false; /* MENU wins an already pending OFF. */
+    if(!storage_usb_ready()){
+        power.io_blocked=true;usb_handoff_end(&usb,usb_native_sample());return;
+    }
     restore_light();gint_osmenu();
     if(power.active)refresh();
     dupdate();
+    usb_handoff_end(&usb,usb_native_sample());
 }
 bool power_key(key_event_t event)
 {
@@ -93,15 +103,25 @@ bool power_key(key_event_t event)
 bool power_poll(bool idle)
 {
     if(!power.active)return false;
+    usb_observe(&usb,usb_native_sample());
+    if(usb.pending){
+        if(!idle)return true; /* Owner rolls back solver/drawing/table first. */
+        power_osmenu();clearevents();return true; /* No autosave; consume raced keys. */
+    }
     uint32_t now=rtc_ticks(),serial=activity;
     if(serial!=power.seen || !keydev_idle(keydev_std(),0)) {
-        power.seen=serial;power.last=now;restore_light();
+        power.seen=serial;power.last=now;power.io_blocked=false;restore_light();
         if(!power.manual)power.pending=false;
     }
     uint32_t elapsed=since(now,power.last);
-    if(power.apo && elapsed>=power.apo)power.pending=true;
+    if(power.apo && elapsed>=power.apo && !power.io_blocked)power.pending=true;
     if(power.pending) {
         if(!idle)return true;
+        if(!usb_handoff_begin(&usb,usb_native_sample()))return true;
+        if(!storage_usb_ready()){
+            power.manual=power.pending=false;power.io_blocked=true;
+            usb_handoff_end(&usb,usb_native_sample());return true;
+        }
         restore_light();gint_poweroff(true);
         /* Let the 128-Hz keyboard scanner observe ON, then require release.
            Otherwise automatic wake can look like a fresh AC editor clear. */
@@ -109,7 +129,7 @@ bool power_poll(bool idle)
         do {sleep();clearevents();}
         while(since(rtc_ticks(),resumed)<2 || !keydev_idle(keydev_std(),0));
         /* Drop queued pre-suspend/wake events before handing input to UI. */
-        clearevents();refresh();dupdate();return true;
+        clearevents();refresh();dupdate();usb_handoff_end(&usb,usb_native_sample());return true;
     }
     if(!power.dimmed && power.dim && elapsed>=power.dim && power.light) {
         gint_world_switch(GINT_CALL(set_light,1));

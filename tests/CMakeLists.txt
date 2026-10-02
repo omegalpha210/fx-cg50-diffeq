@@ -291,3 +291,10 @@ add_test(NAME cleanup_ui_golden COMMAND ${Python3_EXECUTABLE}
 add_test(NAME cleanup_tool_safety COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/test_cleanup_tools.py)
 set_tests_properties(cleanup_numerical_golden cleanup_ui_golden cleanup_tool_safety PROPERTIES TIMEOUT 90)
+
+add_executable(test_usb test_usb.c)
+target_include_directories(test_usb PRIVATE native-power ../include)
+add_test(NAME usb_lifecycle COMMAND test_usb)
+add_executable(test_file_close test_file_close.c)
+target_include_directories(test_file_close PRIVATE native-power ../include)
+add_test(NAME native_close_guard COMMAND test_file_close)
