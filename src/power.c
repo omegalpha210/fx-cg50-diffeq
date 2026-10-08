@@ -52,10 +52,29 @@ static bool observe_key(key_event_t event)
     if(event.type==KEYEV_DOWN || event.type==KEYEV_UP)activity++;
     return prior_filter ? prior_filter(event):true;
 }
+#ifndef DIFFEQ_TEST_POWER
+static void show_poweroff_notice(void)
+{
+    int box_w = 340, box_h = 96;
+    int box_x = (396 - box_w) / 2;
+    int box_y = (224 - box_h) / 2;
+    drect_border(box_x, box_y, box_x + box_w - 1, box_y + box_h - 1, C_WHITE, 2, C_RGB(0, 16, 31));
+    dtext_opt(396 / 2, box_y + 16, C_BLACK, C_NONE, DTEXT_CENTER, DTEXT_TOP, "Back to Main Menu");
+    dtext_opt(396 / 2, box_y + 46, C_RGB(0, 12, 28), C_NONE, DTEXT_CENTER, DTEXT_TOP, "To shutdown, press SHIFT AC/ON");
+    dtext_opt(396 / 2, box_y + 66, C_DARK, C_NONE, DTEXT_CENTER, DTEXT_TOP, "again in Main Menu");
+    dupdate();
+}
+#endif
 static int read_settings(void)
 {
     int minutes=diffeq_os_apo();unsigned half=(unsigned char)diffeq_os_duration();
+#ifndef DIFFEQ_TEST_POWER
+    /* KhiCAS Golden Rule: 5 minutes (300 seconds) auto-park on hardware */
+    (void)minutes;
+    power.apo = 5u * 60u * 128u;
+#else
     power.apo=(minutes==10 || minutes==60) ? (uint32_t)minutes*60u*128u:0;
+#endif
     power.dim=(half==1 || half==2 || half==6) ? half*30u*128u:0;
     int light=(unsigned char)diffeq_os_light();
     power.light=light>=1 && light<=5 ? light:0;
@@ -175,11 +194,11 @@ bool power_poll(bool idle)
             usb_handoff_end(&usb,usb_native_sample());return true;
         }
 #ifndef DIFFEQ_TEST_POWER
-        /* Safe OS Parking Rule (KhiCAS pattern):
-           Save data was committed above. Wait for key releases,
-           enable OS menu return via Syscall 0x1EA6, and cleanly park
-           into Casio OS Main Menu via gint_osmenu(). */
-        while (keydown(KEY_ACON) || keydown(KEY_SHIFT) || keydown(KEY_MENU) || keydown(KEY_EXIT)) sleep();
+        /* KhiCAS Rule: Display notice, wait 1 second (128 ticks), clear events,
+           and safely park in Casio OS Main Menu via 0x1EA6 + gint_osmenu(). */
+        show_poweroff_notice();
+        uint32_t notice_t0 = rtc_ticks();
+        while (since(rtc_ticks(), notice_t0) < 128) sleep();
         clearevents();
         (void)gint_world_switch(GINT_CALL(enable_menu_return,(void *)NULL));
         restore_light();
