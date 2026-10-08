@@ -216,12 +216,15 @@ bool power_poll(bool idle)
             usb_handoff_end(&usb,usb_native_sample());return true;
         }
 #ifndef DIFFEQ_TEST_POWER
-        /* KhiCAS Rule: Display notice, wait 1 second (128 ticks), clear events,
-           and safely park in Casio OS Main Menu via 0x1EA6 + gint_osmenu(). */
-        show_poweroff_notice();
-        uint32_t notice_t0 = rtc_ticks();
-        while (since(rtc_ticks(), notice_t0) < 128) sleep();
-        restore_notice_bg();
+        /* KhiCAS Rule: On manual SHIFT+AC/ON, display notice for 1 second (128 ticks),
+           clear events, and safely park in Casio OS Main Menu via 0x1EA6 + gint_osmenu().
+           On 5-minute inactivity timeout (APO), park silently without popup. */
+        if(power.manual) {
+            show_poweroff_notice();
+            uint32_t notice_t0 = rtc_ticks();
+            while (since(rtc_ticks(), notice_t0) < 128) sleep();
+            restore_notice_bg();
+        }
         clearevents();
         (void)gint_world_switch(GINT_CALL(enable_menu_return,(void *)NULL));
         restore_light();
