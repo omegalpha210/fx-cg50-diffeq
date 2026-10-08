@@ -53,15 +53,37 @@ static bool observe_key(key_event_t event)
     return prior_filter ? prior_filter(event):true;
 }
 #ifndef DIFFEQ_TEST_POWER
+#include <string.h>
+#define NOTICE_BOX_W 340
+#define NOTICE_BOX_H 96
+#define NOTICE_BOX_X ((396 - NOTICE_BOX_W) / 2)
+#define NOTICE_BOX_Y ((224 - NOTICE_BOX_H) / 2)
+static uint16_t notice_bg[NOTICE_BOX_W * NOTICE_BOX_H];
+static void save_notice_bg(void)
+{
+    for(int y = 0; y < NOTICE_BOX_H; y++) {
+        memcpy(&notice_bg[y * NOTICE_BOX_W],
+               &gint_vram[(NOTICE_BOX_Y + y) * 396 + NOTICE_BOX_X],
+               NOTICE_BOX_W * sizeof(uint16_t));
+    }
+}
+static void restore_notice_bg(void)
+{
+    for(int y = 0; y < NOTICE_BOX_H; y++) {
+        memcpy(&gint_vram[(NOTICE_BOX_Y + y) * 396 + NOTICE_BOX_X],
+               &notice_bg[y * NOTICE_BOX_W],
+               NOTICE_BOX_W * sizeof(uint16_t));
+    }
+}
 static void show_poweroff_notice(void)
 {
-    int box_w = 340, box_h = 96;
-    int box_x = (396 - box_w) / 2;
-    int box_y = (224 - box_h) / 2;
-    drect_border(box_x, box_y, box_x + box_w - 1, box_y + box_h - 1, C_WHITE, 2, C_RGB(0, 16, 31));
-    dtext_opt(396 / 2, box_y + 16, C_BLACK, C_NONE, DTEXT_CENTER, DTEXT_TOP, "Back to Main Menu");
-    dtext_opt(396 / 2, box_y + 46, C_RGB(0, 12, 28), C_NONE, DTEXT_CENTER, DTEXT_TOP, "To shutdown, press SHIFT AC/ON");
-    dtext_opt(396 / 2, box_y + 66, C_DARK, C_NONE, DTEXT_CENTER, DTEXT_TOP, "again in Main Menu");
+    save_notice_bg();
+    drect_border(NOTICE_BOX_X, NOTICE_BOX_Y,
+                 NOTICE_BOX_X + NOTICE_BOX_W - 1, NOTICE_BOX_Y + NOTICE_BOX_H - 1,
+                 C_WHITE, 2, C_RGB(0, 16, 31));
+    dtext_opt(396 / 2, NOTICE_BOX_Y + 16, C_BLACK, C_NONE, DTEXT_CENTER, DTEXT_TOP, "Back to Main Menu");
+    dtext_opt(396 / 2, NOTICE_BOX_Y + 46, C_RGB(0, 12, 28), C_NONE, DTEXT_CENTER, DTEXT_TOP, "To shutdown, press SHIFT AC/ON");
+    dtext_opt(396 / 2, NOTICE_BOX_Y + 66, C_DARK, C_NONE, DTEXT_CENTER, DTEXT_TOP, "again in Main Menu");
     dupdate();
 }
 #endif
@@ -199,11 +221,13 @@ bool power_poll(bool idle)
         show_poweroff_notice();
         uint32_t notice_t0 = rtc_ticks();
         while (since(rtc_ticks(), notice_t0) < 128) sleep();
+        restore_notice_bg();
         clearevents();
         (void)gint_world_switch(GINT_CALL(enable_menu_return,(void *)NULL));
         restore_light();
         gint_osmenu();
         clearevents();
+        dupdate();
         power.manual=power.pending=false;
         input_epoch++;
         refresh();
