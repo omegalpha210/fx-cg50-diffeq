@@ -14,6 +14,8 @@ static keydev_transform_t transform;
 static bool power_requested;
 static bool idle_wait;
 static int power_resumed;
+static bool deferred_menu,menu_pending,menu_ready;
+unsigned power_input_epoch(void){return (unsigned)power_resumed;}
 keydev_t *keydev_std(void) {return NULL;}
 keydev_transform_t keydev_transform(keydev_t *d) {(void)d;return transform;}
 void keydev_set_transform(keydev_t *d,keydev_transform_t t) {(void)d;transform=t;}
@@ -35,12 +37,21 @@ void gint_osmenu(void) {menu_count++;}
 /* This original fixture isolates common.c; power's real native lifecycle is
    exercised separately with OS-world/RTC/keyboard adapters. */
 bool power_poll(bool idle)
-{if(!power_requested)return false;if(idle){power_requested=false;power_resumed++;}return true;}
+{
+    if(menu_pending) {
+        if(!idle)return true;
+        if(!menu_ready)return false;
+        menu_pending=menu_ready=false;gint_osmenu();return true;
+    }
+    if(!power_requested)return false;
+    if(idle){power_requested=false;power_resumed++;}return true;
+}
 bool power_key(key_event_t e)
 {if(e.key!=KEY_ACON || !e.shift)return false;power_requested=true;return true;}
 key_event_t power_wait_key(volatile int *timeout)
 {idle_wait=true;key_event_t e=timeout ? getkey_opt(GETKEY_DEFAULT,timeout):getkey();idle_wait=false;return e;}
-void power_osmenu(void) {gint_osmenu();dupdate();}
+void power_osmenu(void)
+{if(deferred_menu)menu_pending=true;else {gint_osmenu();dupdate();}}
 int timer_configure(int timer,uint64_t delay,gint_call_t callback)
 {
     assert(timer==TIMER_ANY && delay==250000 && timers==0);
@@ -135,6 +146,18 @@ int main(void)
         assert(partial_uploads==(area==UI_BUSY_DRAW ? 12:82)); /* Subsequent frame:21 header rows only. */
         ui_busy_end(&busy);assert(partial_uploads==(area==UI_BUSY_DRAW ? 12:82));host_tick_step(0);
     }
+    /* MENU completion must retain fresh queued control keys. POWER wake alone
+       owns the reset epoch; treating every MENU return as a flush loses EXIT. */
+    deferred_menu=true;int menus_before=menu_count;
+    next=0;length=3;events[0]=event(KEY_MENU);events[1]=event(KEY_F1);events[2]=event(KEY_EXIT);
+    ui_defer_input();assert(ui_getkey().key==KEY_F1 && menu_pending && menu_count==menus_before);
+    menu_ready=true;assert(ui_getkey().key==KEY_EXIT && menu_count==menus_before+1 && !menu_pending);
+    next=0;length=3;events[0]=event(KEY_MENU);events[1]=event(KEY_F1);events[2]=event(KEY_MENU);
+    ui_defer_input();assert(ui_getkey().key==KEY_F1 && menu_pending);
+    menu_ready=true;assert(ui_getkey().key==KEY_5 && menu_pending && menu_count==menus_before+2);
+    menu_ready=true;assert(ui_getkey().key==KEY_5 && !menu_pending && menu_count==menus_before+3);
+    assert(ui_getkey().key==KEY_5 && menu_count==menus_before+3);
+    puts("MENU queue ownership: fresh deferred EXIT and next MENU survive helper return; only POWER invalidates stale UI input PASS.");
     puts("Target-branch key policy: retained events, one MENU, bounded saturation, 100 timer lifetimes passed.");
     return 0;
 }

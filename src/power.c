@@ -2,6 +2,7 @@
 #include "storage.h"
 #include "usb_lifecycle.h"
 #include "usb_native.h"
+#include "menu_boundary.h"
 #include <gint/gint.h>
 #include <gint/cpu.h>
 #include <gint/rtc.h>
@@ -17,6 +18,7 @@ extern int diffeq_os_apo(void);
 extern char diffeq_os_duration(void);
 extern char diffeq_os_light(void);
 extern void diffeq_os_set_light(char level);
+extern int diffeq_os_enable_menu_return(void);
 #ifndef DIFFEQ_TEST_POWER
 #define OS_STUB(name,id) __asm__(".text\n.balign 4\n.global _" #name "\n_" #name ":\n" \
     "mov.l 1f,r0\nmov.l 2f,r1\njmp @r1\nnop\n.balign 4\n1: .long " #id "\n2: .long 0x80020070\n")
@@ -24,6 +26,9 @@ OS_STUB(diffeq_os_apo,0x1e91);
 OS_STUB(diffeq_os_duration,0x12d9);
 OS_STUB(diffeq_os_light,0x1e8f);
 OS_STUB(diffeq_os_set_light,0x0199);
+OS_STUB(diffeq_os_enable_menu_return,0x1ea6);
+static int enable_menu_return(void *unused)
+{ (void)unused; return diffeq_os_enable_menu_return(); }
 #endif
 
 #define DAY_TICKS (86400u*128u)
@@ -34,6 +39,9 @@ static struct {
 } power;
 static volatile uint32_t activity;
 static UsbLifecycle usb;
+static CgMenuBoundary menu;
+static bool menu_closed;
+static unsigned input_epoch;
 static keydev_async_filter_t prior_filter;
 static uint32_t since(uint32_t now,uint32_t before)
 {return now>=before ? now-before:now+DAY_TICKS-before;}
@@ -76,25 +84,71 @@ void power_init(void)
 void power_shutdown(void)
 {
     if(!power.active)return;
+    if(menu_closed)usb_handoff_end(&usb,usb_native_sample());
+    cg_menu_cancel(&menu);menu_closed=false;
     restore_light();keydev_set_async_filter(keydev_std(),prior_filter);
     power.active=false;
 }
 void power_osmenu(void)
 {
-    if(!usb_handoff_begin(&usb,usb_native_sample()))return;
+    if(!power.active || menu.pending || usb.handling)return;
+    /* Own the opening press. Its UP must be consumed by the normal foreground
+       reader before either scanned or consumed state can form a quiet gate. */
     power.manual=power.pending=false; /* MENU wins an already pending OFF. */
-    if(!storage_usb_ready()){
-        power.io_blocked=true;usb_handoff_end(&usb,usb_native_sample());return;
+    (void)usb_take_request(&usb); /* Own this edge; timeout cannot hot-rearm it. */
+    cg_menu_request(&menu,rtc_ticks());
+}
+static bool menu_service(bool idle)
+{
+    if(!menu.pending)return false;
+    if(!idle)return true; /* The numerical/UI owner rolls back first. */
+    int result=cg_menu_step(&menu,keydev_std(),rtc_ticks(),DAY_TICKS);
+    if(result==CG_MENU_INVALID || result==CG_MENU_TIMEOUT) {
+        cg_menu_cancel(&menu);
+        if(menu_closed)usb_handoff_end(&usb,usb_native_sample());
+        menu_closed=false;
+        return false; /* Cancel only: keep unsaved RAM, never force the helper. */
     }
-    restore_light();gint_osmenu();
+    if(result!=CG_MENU_READY)return false;
+    if(!menu_closed) {
+        if(!usb_handoff_begin(&usb,usb_native_sample()))return false;
+        restore_light();
+        if(!storage_usb_ready()) {
+            cg_menu_cancel(&menu);power.io_blocked=true;
+            usb_handoff_end(&usb,usb_native_sample());return true;
+        }
+        menu_closed=true;
+        /* Closing files/brightness can switch OS worlds. Require another
+           consumed quiet boundary and fresh scan after those workers. */
+        menu.quiet=false;
+        return false;
+    }
+    cg_menu_cancel(&menu);menu_closed=false;
+    bool fresh_manual=power.manual,fresh_power=power.pending;
+#ifndef DIFFEQ_TEST_POWER
+    while (keydown(KEY_MENU) || keydown(KEY_EXIT)) sleep();
+    clearevents();
+    (void)gint_world_switch(GINT_CALL(enable_menu_return,(void *)NULL));
+#endif
+    gint_osmenu();
     if(power.active)refresh();
+    /* Requests accepted after this MENU was armed belong to the next
+       foreground boundary, including after the settings refresh. */
+    power.manual=fresh_manual;power.pending=fresh_power;
     dupdate();
     usb_handoff_end(&usb,usb_native_sample());
+    return true;
 }
+unsigned power_input_epoch(void){return input_epoch;}
 bool power_key(key_event_t event)
 {
     if(!power.active)return false;
     if(event.type==KEYEV_DOWN || event.type==KEYEV_HOLD)activity++;
+    if(event.type==KEYEV_DOWN && event.key==KEY_EXIT && menu.pending) {
+        cg_menu_cancel(&menu);
+        if(menu_closed)usb_handoff_end(&usb,usb_native_sample());
+        menu_closed=false; /* EXIT remains a normal UI key, with RAM intact. */
+    }
     if(event.type==KEYEV_DOWN && event.key==KEY_ACON && event.shift && !event.alpha) {
         power.manual=true;power.pending=true;return true;
     }
@@ -104,10 +158,8 @@ bool power_poll(bool idle)
 {
     if(!power.active)return false;
     usb_observe(&usb,usb_native_sample());
-    if(usb.pending){
-        if(!idle)return true; /* Owner rolls back solver/drawing/table first. */
-        power_osmenu();clearevents();return true; /* No autosave; consume raced keys. */
-    }
+    if(usb.pending && !menu.pending && !usb.handling)power_osmenu();
+    if(menu.pending)return menu_service(idle);
     uint32_t now=rtc_ticks(),serial=activity;
     if(serial!=power.seen || !keydev_idle(keydev_std(),0)) {
         power.seen=serial;power.last=now;power.io_blocked=false;restore_light();
@@ -122,6 +174,24 @@ bool power_poll(bool idle)
             power.manual=power.pending=false;power.io_blocked=true;
             usb_handoff_end(&usb,usb_native_sample());return true;
         }
+#ifndef DIFFEQ_TEST_POWER
+        /* Safe OS Parking Rule (KhiCAS pattern):
+           Save data was committed above. Wait for key releases,
+           enable OS menu return via Syscall 0x1EA6, and cleanly park
+           into Casio OS Main Menu via gint_osmenu(). */
+        while (keydown(KEY_ACON) || keydown(KEY_SHIFT) || keydown(KEY_MENU) || keydown(KEY_EXIT)) sleep();
+        clearevents();
+        (void)gint_world_switch(GINT_CALL(enable_menu_return,(void *)NULL));
+        restore_light();
+        gint_osmenu();
+        clearevents();
+        power.manual=power.pending=false;
+        input_epoch++;
+        refresh();
+        dupdate();
+        usb_handoff_end(&usb,usb_native_sample());
+        return true;
+#else
         restore_light();gint_poweroff(true);
         /* Let the 128-Hz keyboard scanner observe ON, then require release.
            Otherwise automatic wake can look like a fresh AC editor clear. */
@@ -129,7 +199,8 @@ bool power_poll(bool idle)
         do {sleep();clearevents();}
         while(since(rtc_ticks(),resumed)<2 || !keydev_idle(keydev_std(),0));
         /* Drop queued pre-suspend/wake events before handing input to UI. */
-        clearevents();refresh();dupdate();usb_handoff_end(&usb,usb_native_sample());return true;
+        clearevents();input_epoch++;refresh();dupdate();usb_handoff_end(&usb,usb_native_sample());return true;
+#endif
     }
     if(!power.dimmed && power.dim && elapsed>=power.dim && power.light) {
         gint_world_switch(GINT_CALL(set_light,1));

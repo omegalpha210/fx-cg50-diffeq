@@ -23,6 +23,14 @@ static int trace_repeater(int key,int duration,int count)
 {(void)key;(void)duration;return count==0 ? 400000:125000;}
 #endif
 static key_event_t trace_pending;
+static unsigned input_epoch;
+static void sync_power_input(void)
+{
+    unsigned epoch=power_input_epoch();
+    if(epoch!=input_epoch) {
+        pending_count=0;trace_pending=(key_event_t){0};input_epoch=epoch;
+    }
+}
 static bool trace_control(int key) {return key==KEY_EXIT || key==KEY_MENU;}
 static void trace_accept(key_event_t event)
 {
@@ -66,9 +74,11 @@ bool ui_trace_cancel(void *unused)
 }
 key_event_t ui_trace_key(UiBlink *blink)
 {
-    if(power_poll(true)){pending_count=0;trace_pending=(key_event_t){0};}
+    (void)power_poll(true);sync_power_input();
     ui_trace_cancel(NULL);
-    if(trace_pending.type==KEYEV_NONE)trace_accept(ui_blink_key(blink));
+    if(trace_pending.type==KEYEV_NONE) {
+        key_event_t fresh=ui_blink_key(blink);sync_power_input();trace_accept(fresh);
+    }
     ui_trace_cancel(NULL);
     key_event_t event=trace_pending;trace_pending=(key_event_t){0};
 #ifdef FXCG50
@@ -78,7 +88,7 @@ key_event_t ui_trace_key(UiBlink *blink)
 }
 static key_event_t take_key(void)
 {
-    if(power_poll(true)){pending_count=0;trace_pending=(key_event_t){0};}
+    (void)power_poll(true);sync_power_input();
     while(pending_count) {
         key_event_t event=pending[0];
         memmove(pending,pending+1,(--pending_count)*sizeof(*pending));
@@ -91,7 +101,7 @@ static key_event_t take_key(void)
         }
         return event;
     }
-    return power_wait_key(NULL);
+    key_event_t event=power_wait_key(NULL);sync_power_input();return event;
 }
 key_event_t ui_getkey(void)
 {
