@@ -207,7 +207,6 @@ bool power_poll(bool idle)
         power.manual=power.pending=false;
         input_epoch++;
         refresh();
-        dupdate();
         usb_handoff_end(&usb,usb_native_sample());
         return true;
 #else

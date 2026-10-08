@@ -26,6 +26,7 @@ typedef struct {
     char power_draft[EXPR_TEXT];bool power_pending;unsigned equation_limited;
     bool graph_first,has_session;
 } AppUi;
+static AppUi ui;
 
 typedef enum {TRANSITION_STAY,TRANSITION_OPEN,TRANSITION_BACK,TRANSITION_REPLACE} TransitionKind;
 typedef struct {TransitionKind kind;AppScreen screen;} ScreenTransition;
@@ -429,7 +430,7 @@ int app_run(void)
 {
     app_initialize(&app,DIFFEQ_STORAGE_DIR);
     pristine_input=input_fingerprint(&app.doc);
-    AppUi ui={0};app_navigation_init(&ui.navigation);ui.dimension_selected=1;
+    ui=(AppUi){0};app_navigation_init(&ui.navigation);ui.dimension_selected=1;
     for(;;) {
         AppScreen from=ui.navigation.current;ScreenTransition transition=stay();
         uint32_t before;

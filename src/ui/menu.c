@@ -1,5 +1,6 @@
 #include "menu.h"
 #include "ui.h"
+#include "power.h"
 #include "menu_icons.inc"
 
 MenuTile ui_menu_tile(int i)
@@ -73,8 +74,16 @@ int ui_menu_choose(bool subtype,int *selected)
     for(int i=0;i<count;i++)ui_menu_draw_tile(subtype,i,i==*selected);
     ui_help(8,184,"MENU: return to MAIN MENU",true);
     ui_softkeys("","","","","","OPEN");dupdate();
+    unsigned epoch=power_input_epoch();
     for(;;) {
         int key=ui_getkey().key,previous=*selected;
+        if(power_input_epoch()!=epoch) {
+            epoch=power_input_epoch();
+            ui_frame(subtype ? "First-order equation":"DIFF EQ",NULL);
+            for(int i=0;i<count;i++)ui_menu_draw_tile(subtype,i,i==*selected);
+            ui_help(8,184,"MENU: return to MAIN MENU",true);
+            ui_softkeys("","","","","","OPEN");dupdate();
+        }
         if(key==KEY_EXIT){if(subtype)return -1;continue;}
         int digit=ui_digit(key);
         if(digit>=1 && digit<=count){*selected=digit-1;return *selected;}

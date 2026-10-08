@@ -265,6 +265,7 @@ static bool ic_draft(UiInitialState *state,int field,const NumberEdit *edit)
     state->limited=(state->limited & ~(1u<<field))|(edit->limited ? 1u<<field:0);
     return true;
 }
+static ExprProgram ic_prog;
 static int ic_validate(Document *d,const UiInitialState *state,char *error,unsigned capacity)
 {
     double numbers[ODE_MAX_DIM+1];InitialValues values={0};
@@ -276,9 +277,9 @@ static int ic_validate(Document *d,const UiInitialState *state,char *error,unsig
             IcListStatus status=initial_values_parse(text,&values);
             if(status!=IC_LIST_OK){snprintf(error,capacity,"%s",initial_values_error(status));return i;}
         } else {
-            ExprProgram p;ExprError e=expr_compile(text,(ExprScope){0,false,false,false},&p);
+            ExprError e=expr_compile(text,(ExprScope){0,false,false,false},&ic_prog);
             ExprStatus status=e.status;
-            if(status==EXPR_OK)status=expr_eval(&p,0,NULL,0,&numbers[i]);
+            if(status==EXPR_OK)status=expr_eval(&ic_prog,0,NULL,0,&numbers[i]);
             if(status!=EXPR_OK || !isfinite(numbers[i]) || fabs(numbers[i])>1e100) {
                 snprintf(error,capacity,"%s",status==EXPR_OK ? "Magnitude must be at most 1e100.":expr_status_text(status));return i;
             }
