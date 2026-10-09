@@ -10,21 +10,21 @@ Solve, graph, and explore ordinary differential equations on your calculator.
 DIFFEQ is a native **fx-CG50 add-in** with colorful solution curves, slope fields,
 TRACE, G-Solve, numerical tables, and phase analysis for two-variable systems.
 
-**Public Beta · v0.12.0-beta.10 · [MIT License](LICENSE)**
+**Public Beta · v0.12.0-beta.11 · [MIT License](LICENSE)**
 
-**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.10)**
+**[Download the beta](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.11)**
 · [All releases](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [Report a bug](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
 
-**This beta preserves features while cleaning the source and build structure.**
-Graph responsibilities are clearer, four unused functions are removed, and builds
-and temporary captures use fixed paths. Numerical results and 18 UI workflows
-match the pre-cleanup baseline; SAVE v11 and every v3–v10 migration remain intact.
-**66/66 host/UBSan**, strict 29-unit SH and 13 package checks.
-[Cleanup evidence](docs/audits/CODE_CLEANUP_AUDIT.md) ·
-[Project structure](PROJECT_STRUCTURE.md). SYSTEM power support from beta.9 is
-retained; device-only behavior remains **HARDWARE TEST REQUIRED**.
+**This beta refreshes every screen's UI while leaving the calculations untouched.**
+Crisp full-width headers and F-key tabs, clearer field hints and example chips,
+an error banner, a modal SAVE confirmation and one shared bottom busy bar.
+G-Solve now names the curve it selects and solves (e.g. `IC1 y' MAX 1/2`), and a
+hardware crash on every G-Solve result is fixed. Solver, parser, storage and power
+code are unchanged; numerical output matches beta.10 exactly.
+**69/69 host/UBSan** and 13 package checks. [Changes](CHANGELOG.md) ·
+[UI conventions](docs/UI_CONVENTIONS.md). Device behavior remains **HARDWARE TEST REQUIRED**.
 
 ![Two DIFFEQ solution curves for y'=1-y^2 with a pale blue arrow slope field](docs/captures/graph-slope-field.png)
 
@@ -214,7 +214,7 @@ always use radians. See the [full controls and examples, in Korean](docs/USER_GU
 
 ## Install on your calculator
 
-1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.10).
+1. Open the [current beta release](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.11).
 2. Download **DIFFEQ.g3a**. `SHA256SUMS.txt` is available to check your download.
 3. Connect the fx-CG50 by USB, select USB Flash mode, and open its storage drive.
 4. Copy `DIFFEQ.g3a` to the drive's **root directory**, outside `@MainMem`.

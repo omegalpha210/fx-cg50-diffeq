@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — UI/UX refresh (visual only)
+## v0.12.0-beta.11 — UI/UX refresh and G-Solve crash fix
 
 - Full-width (396px) header with accent rule and 3-step stage indicator; F-keys are
   full-width dark tabs with a 3px semantic band (GRAPH/RUN filled), empty slots blank.

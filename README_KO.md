@@ -10,20 +10,20 @@
 DIFFEQ는 **CASIO fx-CG50용 네이티브 애드인**입니다. 미분방정식의 수치해를
 컬러 그래프·기울기장·TRACE·G-Solve·표로 살펴보고, 2변수 시스템의 위상을 분석할 수 있습니다.
 
-**공개 베타 · v0.12.0-beta.10 · [MIT 라이선스](LICENSE)**
+**공개 베타 · v0.12.0-beta.11 · [MIT 라이선스](LICENSE)**
 
-**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.10)**
+**[베타 다운로드](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.11)**
 · [전체 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases)
 · [버그 신고](https://github.com/omegalpha210/fx-cg50-diffeq/issues/new/choose)
 
 
-**이번 베타는 기능을 보존하면서 코드·빌드·문서 구조를 정리했습니다.**
-Graph의 표시와 입력 책임을 분리하고, 사용되지 않는 함수 4개를 제거했습니다.
-빌드와 임시 캡처는 고정 경로를 사용합니다. 수치 결과와 UI 흐름 18개가 정리 전과
-일치하며 SAVE v11·v3–v10 migration은 그대로입니다.
-**66/66 host/UBSan**, SH 29개 C·warning 0·package 13/13 통과.
-[정리 근거](docs/audits/CODE_CLEANUP_AUDIT.md) · [프로젝트 구조](PROJECT_STRUCTURE.md).
-이전 beta.9의 SYSTEM 절전 연동도 유지하며 기기 검증은 **HARDWARE TEST REQUIRED**입니다.
+**이번 베타는 계산은 그대로 두고 모든 화면의 UI를 새로 다듬었습니다.**
+선명한 전폭 header와 F-key 탭, 더 명확한 입력 안내와 예시 chip, 오류 배너,
+SAVE 확인 창, 하나로 통일한 하단 계산 바를 적용했습니다. G-Solve는 선택·결과에
+곡선 이름을 표시하며(예: `IC1 y' MAX 1/2`), G-Solve 결과 표시 시 기기가 멈추던 오류를 고쳤습니다.
+solver·parser·저장·절전 코드는 변경하지 않았고 수치 결과는 beta.10과 완전히 같습니다.
+**69/69 host/UBSan**, package 13/13 통과. [변경 내역](CHANGELOG.md) ·
+[UI 규칙](docs/UI_CONVENTIONS.md). 기기 동작 검증은 **HARDWARE TEST REQUIRED**입니다.
 
 ![y'=1-y^2의 두 해 곡선과 옅은 파란색 화살표 기울기장](docs/captures/graph-slope-field.png)
 
@@ -200,7 +200,7 @@ Parameters **F3 V-WIN**에서 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax
 
 ## 계산기에 설치하기
 
-1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.10)를 엽니다.
+1. [현재 베타 릴리스](https://github.com/omegalpha210/fx-cg50-diffeq/releases/tag/v0.12.0-beta.11)를 엽니다.
 2. **DIFFEQ.g3a**를 받습니다. 다운로드 확인용 `SHA256SUMS.txt`도 제공됩니다.
 3. fx-CG50을 USB로 연결하고 USB Flash 모드를 선택한 뒤 컴퓨터에서 계산기 드라이브를 엽니다.
 4. `DIFFEQ.g3a`를 드라이브 **최상위**에 복사합니다. `@MainMem` 폴더 안에 넣지 않습니다.
