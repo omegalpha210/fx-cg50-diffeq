@@ -14,8 +14,8 @@ def run(keys,image=False):
 def tail(out):return next(t for t in reversed(out.split('\nKEY ')) if 'TEXT ' in t)
 def bar(out):
     result=['']*6
-    for x,label in re.findall(r'TEXT (\d+) 206 ([^\n]*)',tail(out)):
-        result[(int(x)-6)//64]+=label
+    for x,label in re.findall(r'TEXT (\d+) 210 ([^\n]*)',tail(out)):
+        result[int(x)//66]+=label
     return result
 def point(out):
     f,x,y=re.findall(r'IC(\d+) x=([-+.\deE]+) [^=\n]+=([-+.\deE]+)',tail(out))[-1]
@@ -38,12 +38,13 @@ for speed,multiple in [('F2',1),('F3',2),('F4',3)]:
         assert point(out)==(2,x,x+1) and solves(out)==solves(base)
         assert bar(out)==['INIT','NORMAL','FAST','FASTER','LEFT','RIGHT']
         for slot,color in [(1,0xfc40),(2,0x37e6),(3,0x07ff)]:
-            assert pixel(rgb,6+64*slot+3,204)==rgb565(color)
-            # Text pixels in each label are black; the selection border is black.
-            colors=[pixel(rgb,xx,yy) for xx in range(6+64*slot+4,6+64*slot+60) for yy in range(206,215)]
-            assert rgb565(0) in colors and rgb565(0xffff) not in colors
-            border=pixel(rgb,6+64*slot+1,203)
-            assert border==rgb565(0 if slot==multiple else color)
+            assert pixel(rgb,66*slot+10,203)==rgb565(color)
+            # Active speed: whole tab in its color with black text; others: dark
+            # tab (0x29cb) with white text under the same color band.
+            colors=[pixel(rgb,xx,yy) for xx in range(66*slot+4,66*slot+62) for yy in range(210,219)]
+            active=slot==multiple
+            assert pixel(rgb,66*slot+5,212)==rgb565(color if active else 0x29cb)
+            assert rgb565(0 if active else 0xffff) in colors
         direction='LEFT' if x<0 else 'RIGHT'
         moved=run(trace+speed+' '+jump+' '+direction)
         assert point(moved)==point(out)  # Frozen visible numerical boundary.

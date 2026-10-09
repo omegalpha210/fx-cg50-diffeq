@@ -176,6 +176,7 @@ void graph_message(const char *text,GraphMessageStyle style)
 {
     char visible[96];ui_short(visible,sizeof(visible),text,UI_W-100);
     int width;dsize(visible,NULL,&width,NULL);
+    if(style==GRAPH_INSTRUCTION)width=ui_help_width(visible); /* key caps */
     ui_rect(GRAPH_MESSAGE_X-2,GRAPH_MESSAGE_Y-2,width+4,dfont_default()->data_height+4,C_WHITE);
     if(style==GRAPH_STATUS)ui_text(GRAPH_MESSAGE_X,GRAPH_MESSAGE_Y,UI_INK,"%s",visible);
     else if(style==GRAPH_WARNING)ui_text(GRAPH_MESSAGE_X,GRAPH_MESSAGE_Y,C_RED,"%s",visible);

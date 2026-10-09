@@ -19,3 +19,13 @@ UI tests explain individual controls and remain enabled alongside this contract.
 
 Run both through `./tools/test.sh`. Do not regenerate fixtures just to make a
 failure pass: any intentional behavior change needs a separate review.
+
+## v0.13 UI refresh re-record
+
+`ui-beta9.json` was re-recorded once for the intentional v0.13 visual refresh
+(full-width header/F-key chrome, key-cap hints, new field/edit/error styling).
+Before re-recording, all 18 workflows were run on the unchanged source and on
+the refreshed source: their `REPORT` (solver report) and `FRAME` (screen order
+and titles) sequences were identical, and `numerical-beta9.txt` passed
+unchanged. Only `PLOT` pixel hashes and `TEXT` layout lines differ. The file
+keeps its name so the regression contract stays in one place.

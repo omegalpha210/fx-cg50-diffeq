@@ -12,7 +12,13 @@ def run(keys,directory=None):
     return p.stdout
 def tail(out):return next(p for p in reversed(out.split('\nKEY ')) if 'TEXT ' in p)
 def plot(out):return re.findall(r'^PLOT (\w+)',out,re.M)[-1]
-def rows(out):return list(map(float,re.findall(r'TEXT 16 (?:69|86|103|120|137|154|171) ([^\n]+)',tail(out))))
+def cells(out,y):
+    """Right-aligned Table cells at physical row y, keyed by column (125px bands)."""
+    found={}
+    for x,t in re.findall(r'TEXT (\d+) '+str(y)+r' ([^\n]*)',out):
+        if 12<=int(x)<387:found[(int(x)-12)//125]=t
+    return found
+def rows(out):return [float(c[0]) for y in (69,86,103,120,137,154,171) for c in [cells(tail(out),y)] if 0 in c]
 def headers(out):return re.findall(r'TEXT \d+ 49 ([^\n]*)',tail(out))
 def keys(text):
     mapping={'{':'S:MUL','}':'S:DIV',',':'COMMA','-':'NEG','.':'DOT','/':'DIV','+':'ADD',
@@ -43,7 +49,7 @@ assert re.findall(r'solves=(\d+)',out)[-1]=='0'
 manual=ic('{0,1}')+'F6 NEG 5 EXE 5 EXE F6 F4 '
 out=run(manual);assert headers(out)==['x','y1','y2']
 xs=rows(out);assert len(xs)==7 and xs[3]==0 and xs==sorted(xs)
-assert 'TEXT 141 120 0\n' in tail(out) and 'TEXT 266 120 1\n' in tail(out)
+assert cells(tail(out),120)[1]=='0' and cells(tail(out),120)[2]=='1'
 assert rows(run(manual+'UP'))[-1]<xs[0] and rows(run(manual+'DOWN'))[0]>xs[-1]
 for path in ['F1 F3','F2 F3','F1 F3 F2 F3 '*20]:assert rows(run(manual+path))==xs
 assert rows(run(manual+'F1'))[0]==-5 and rows(run(manual+'F2'))[-1]==5

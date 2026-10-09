@@ -28,7 +28,7 @@ static bool number_value(NumberEdit *e,double *out)
 static void number_cursor(const NumberEdit *e,int row)
 {
     if(!e->active)return;
-    ui_inline_draw(e,138,31+row*22,226,C_WHITE,UI_BLUE);
+    ui_inline_field(e,31+row*22);
 }
 static bool stage_leave(int key)
 {
@@ -41,6 +41,13 @@ static UiStageAction stage_action(int key)
     if(key==KEY_F4)return UI_STAGE_OUTPUT;
     if(key==KEY_F5)return UI_STAGE_SETTINGS;
     return key==KEY_F6 ? UI_STAGE_NEXT:UI_STAGE_BACK;
+}
+/* AUTO/MAN is a range mode, not a value: a small outlined chip. */
+static void range_chip(int y,const char *text,bool selected)
+{
+    int width;dsize(text,NULL,&width,NULL);
+    ui_rect(330,y-2,width+8,13,selected ? UI_ACCENT:UI_KEY_EDGE);ui_rect(331,y-1,width+6,11,C_WHITE);
+    ui_text(334,y,selected ? UI_ACCENT:UI_MUTED,"%s",text);
 }
 /* Visible-row mapping keeps hidden Step/SF fields out of selection/editing. */
 static int parameter_rows(const Document *d,int rows[8])
@@ -76,13 +83,15 @@ UiStageAction ui_parameters(Document *d,UiStageState *state)
         ui_progress(advanced ? 0:3);
         for(int row=top;row<count && row<top+7;row++) {
             int item=rows[row];
-            ui_field(row-top,labels[item],edit.active && row==selected ? edit.text:values[item],row==selected);
+            if(item==6)ui_field_option(row-top,labels[item],values[item],row==selected);
+            else ui_field(row-top,labels[item],edit.active && row==selected ? edit.text:values[item],row==selected);
             if(item<=1 && !(edit.active && row==selected))
-                ui_text(334,31+(row-top)*22,row==selected ? C_WHITE:UI_MUTED,"%s",d->solver_custom ? "MAN":"AUTO");
+                range_chip(31+(row-top)*22,d->solver_custom ? "MAN":"AUTO",row==selected);
         }
+        ui_scrollbar(27,153,top,7,count);
         number_cursor(&edit,selected-top);
-        ui_form_hint(&edit,adaptive && field==2 ? "Initial step; RK45 adjusts internally":
-            (adaptive && field==5 ? "Accepted + rejected attempts per path":help[field]));
+        ui_form_hint_last(&edit,adaptive && field==2 ? "Initial step; RK45 adjusts internally":
+            (adaptive && field==5 ? "Accepted + rejected attempts per path":help[field]),selected==count-1);
         if(advanced)ui_softkeys("EVENT","INFO","","","","");
         else ui_softkeys("INIT","ADV","V-WIN","OUTPUT","SET","GRAPH");
         dupdate();
@@ -166,7 +175,7 @@ void ui_vwindow(Document *d)
         ui_frame(phase ? "Phase View Window":"View Window",NULL);
         for(int i=0;i<7;i++)ui_field(i,labels[i],edit.active && i==selected ? edit.text:values[i],i==selected);
         number_cursor(&edit,selected);
-        ui_form_hint(&edit,"Xdot edits Xmax; Xmin/Xmax recalculate Xdot");
+        ui_form_hint_last(&edit,"Xdot edits Xmax; Xmin/Xmax recalculate Xdot",selected==6);
         if(edit.active)ui_softkeys("","FUNC","","CLEAR","DEL","OK");
         else ui_softkeys("INIT","","","","","DONE");
         dupdate();
@@ -217,11 +226,11 @@ void ui_graph_settings(Document *d)
     int selected=0;bool supported=model_field_supported(d);int count=supported ? 4:2;
     for(;;) {
         ui_frame("Graph settings",NULL);
-        ui_field(0,"Grid",view->grid ? "On":"Off",selected==0);
-        ui_field(1,"Axis Label",view->labels ? "On":"Off",selected==1);
+        ui_field_option(0,"Grid",view->grid ? "On":"Off",selected==0);
+        ui_field_option(1,"Axis Label",view->labels ? "On":"Off",selected==1);
         if(supported) {
             ui_text(14,94,UI_MUTED,"Slope Field");
-            ui_field(4,"Style",d->field_style==FIELD_ARROW ? "Arrow":"Segment",selected==2);
+            ui_field_option(4,"Style",d->field_style==FIELD_ARROW ? "Arrow":"Segment",selected==2);
             ui_field(5,"Color",field_names[d->field_color<FIELD_COLORS ? d->field_color:0],selected==3);
             ui_color_swatch(326,142,graph_field_color(d->field_color));
         }
@@ -265,6 +274,25 @@ static bool ic_draft(UiInitialState *state,int field,const NumberEdit *edit)
     state->limited=(state->limited & ~(1u<<field))|(edit->limited ? 1u<<field:0);
     return true;
 }
+/* First-order initial values as chips in their curve colors. The y0 text is
+   parsed for display only (the document is untouched; NEXT still validates);
+   an unparsable draft simply shows no chips. */
+static void ic_solutions(const Document *d,const char *y0)
+{
+    InitialValues values;
+    if(initial_values_parse(y0,&values)!=IC_LIST_OK || !values.count)return;
+    int x=88,y=82,count=(int)values.count;
+    ui_text(12,y,UI_MUTED,"Solutions");
+    for(int i=0;i<count;i++) {
+        char text[40];snprintf(text,sizeof(text),"IC%d %.6g",i+1,values.value[i]);
+        ui_short(text,sizeof(text),text,120);
+        int width;dsize(text,NULL,&width,NULL);width+=22;
+        if(x+width>376){x=88;y+=17;if(y>116)return;}
+        ui_rect(x,y-2,width,13,UI_KEY_EDGE);ui_rect(x+1,y-1,width-2,11,C_WHITE);
+        ui_rect(x+4,y+3,10,3,graph_palette_color(model_color(d,i,0)));
+        ui_text(x+18,y,UI_INK,"%s",text);x+=width+4;
+    }
+}
 static ExprProgram ic_prog;
 static int ic_validate(Document *d,const UiInitialState *state,char *error,unsigned capacity)
 {
@@ -304,11 +332,15 @@ UiStageAction ui_initial_conditions(Document *d,UiInitialState *state)
             else {model_variable_label(d,field-1,label,sizeof(label));
                 size_t n=strlen(label);snprintf(label+n,sizeof(label)-n,d->kind==EQ_SYSTEM ? "_0":"0");}
             ic_text(d,state,field,value);
-            ui_field(row,label,edit.active && field==selected ? edit.text:value,field==selected);
+            ui_field_eq(row,label,edit.active && field==selected ? edit.text:value,field==selected);
             if(field==selected){snprintf(current,sizeof(current),"%s",value);if(edit.active)number_cursor(&edit,row);}
         }
+        ui_scrollbar(27,153,page*7,7,count);
+        if(scalar && !(edit.active && selected==1)) {
+            char y0[EXPR_TEXT];ic_text(d,state,1,y0);ic_solutions(d,y0);
+        }
         if(scalar)ui_text(10,170,UI_MUTED,"y0: scalar or {values}; at most 10");
-        ui_form_hint(&edit,scalar ? "Comma: separator":"One solution: x0 plus all state values");
+        ui_form_hint_last(&edit,scalar ? "Comma: separator":"One solution: x0 plus all state values",selected==count-1);
         ui_softkeys("INIT","","","","","NEXT");
         if(error[0])ui_form_error(error);
         dupdate();key_event_t event=ui_getkey();int key=event.key;error[0]=0;
@@ -347,11 +379,13 @@ static int choose_color(const char *title,const char *const names[6],int (*color
     int selected=initial<6 ? (int)initial:0;
     for(;;) {
         ui_rect(0,179,UI_W,19,C_WHITE); /* Only the palette owns contextual help. */
-        ui_rect(71,42,242,139,UI_INK);ui_rect(74,45,236,133,C_WHITE);
-        ui_text(84,53,UI_INK,"%s",title);
+        ui_rect(74,45,239,136,C_RGB(1,2,5));
+        ui_rect(70,41,242,139,UI_NAVY);ui_rect(71,42,240,137,C_WHITE);
+        ui_rect(71,42,240,20,UI_NAVY);ui_rect(71,62,240,2,UI_ACCENT);
+        ui_text(84,47,C_WHITE,"%s",title);
         for(int i=0;i<6;i++) {
             int x=94+(i%3)*68,y=78+(i/3)*34;
-            ui_rect(x-4,y-4,56,30,i==selected ? UI_INK:UI_LINE);
+            ui_rect(x-4,y-4,56,30,i==selected ? UI_ACCENT:UI_LINE);
             ui_rect(x-2,y-2,52,26,C_WHITE);
             ui_rect(x,y,48,22,color((unsigned)i));
         }
@@ -380,11 +414,12 @@ void ui_output(Document *d)
             int index=page*7+row,variable=families ? 0:index;char label[20];
             if(families)snprintf(label,sizeof(label),"IC%d y",index+1);
             else model_variable_label(d,variable,label,sizeof(label));
-            ui_field(row,label,model_curve_visible(d,scalar ? index:0,variable) ? "ON":"OFF",index==selected);
+            ui_field_option(row,label,model_curve_visible(d,scalar ? index:0,variable) ? "ON":"OFF",index==selected);
             /* A curve preview keeps its chosen color even when output is OFF. */
             ui_rect(326,30+row*22,34,15,C_WHITE);
             ui_rect(329,36+row*22,28,2,graph_palette_color(model_color(d,scalar ? index:0,variable)));
         }
+        ui_scrollbar(27,153,page*7,7,count);
         ui_form_hint(NULL,"LEFT/RIGHT: ON/OFF toggle, F3: COLOR");
         ui_softkeys("INIT","","COLOR","","","DONE");dupdate();
         int key=ui_getkey().key;

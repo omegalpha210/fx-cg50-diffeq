@@ -64,7 +64,7 @@ static int screen_upload;
 void r61524_display_rect(uint16_t *vram,int xmin,int xmax,int ymin,int ymax)
 {
     assert(vram==gint_vram);
-    if(screen_upload==2)assert(xmin==UI_X && xmax==UI_X+383 && ymin>=UI_Y+198 && ymax<UI_Y+216 && ymax-ymin<3);
+    if(screen_upload==2)assert(xmin==0 && xmax==DWIDTH-1 && ymin>=UI_Y+198 && ymax<DHEIGHT && ymax-ymin<3);
     else if(screen_upload==1)assert(xmin==0 && xmax==DWIDTH-1 && ymin>=0 && ymax<DHEIGHT && ymax-ymin<3);
     else assert(xmin==11 && xmax-xmin<120 && ymin==188 && ymax-ymin==11);
     partial_uploads++;
@@ -134,17 +134,23 @@ int main(void)
     length=next=0;trace_blink.timer=-1;
     assert(ui_trace_key(&trace_blink).key==KEY_5 && power_resumed==2);
     ui_trace_input(false);
-    length=next=0;host_tick_step(8);UiBusy busy;ui_busy_start(&busy);
+    /* TRACE CALCULATING... also uses the full-width bottom bar now. */
+    screen_upload=2;partial_uploads=0;
+    length=next=0;host_tick_step(8);UiBusy busy;ui_busy_begin(&busy,"CALCULATING...",UI_BUSY_TRACE,ui_cancel,NULL);
     for(int i=0;i<3;i++)assert(!ui_busy_cancel(&busy));
-    assert(busy.visible && partial_uploads==1);ui_busy_end(&busy);assert(partial_uploads==2);host_tick_step(0);
+    assert(busy.visible && partial_uploads==8);ui_busy_end(&busy);assert(partial_uploads==8);host_tick_step(0);
+    /* G-Solve CALCULATING... shares the full-width bottom bar with Drawing. */
+    screen_upload=2;partial_uploads=0;host_tick_step(8);ui_busy_start(&busy);
+    for(int i=0;i<3;i++)assert(!ui_busy_cancel(&busy));
+    assert(busy.visible && partial_uploads==8);ui_busy_end(&busy);assert(partial_uploads==8);host_tick_step(0);
     for(int area=UI_BUSY_TABLE;area<=UI_BUSY_DRAW;area++) {
         screen_upload=area==UI_BUSY_DRAW ? 2:1;partial_uploads=0;host_tick_step(8);
         ui_busy_begin(&busy,area==UI_BUSY_TABLE ? "Preparing Table...":"Drawing...",area,ui_cancel,NULL);
         for(int i=0;i<3;i++)assert(!ui_busy_cancel(&busy));
-        assert(busy.visible && partial_uploads==(area==UI_BUSY_DRAW ? 6:75)); /* Once-only 224-row canvas. */
+        assert(busy.visible && partial_uploads==(area==UI_BUSY_DRAW ? 8:75)); /* Once-only 224-row canvas; 22-row bar. */
         for(int i=0;i<2;i++)assert(!ui_busy_cancel(&busy));
-        assert(partial_uploads==(area==UI_BUSY_DRAW ? 12:82)); /* Subsequent frame:21 header rows only. */
-        ui_busy_end(&busy);assert(partial_uploads==(area==UI_BUSY_DRAW ? 12:82));host_tick_step(0);
+        assert(partial_uploads==(area==UI_BUSY_DRAW ? 16:82)); /* Subsequent frame:21 header rows only. */
+        ui_busy_end(&busy);assert(partial_uploads==(area==UI_BUSY_DRAW ? 16:82));host_tick_step(0);
     }
     /* MENU completion must retain fresh queued control keys. POWER wake alone
        owns the reset epoch; treating every MENU return as a flush loses EXIT. */

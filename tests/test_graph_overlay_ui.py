@@ -13,9 +13,10 @@ def run(keys,pixels=False):
 def tail(out):return next(s for s in reversed(out.split('\nKEY ')) if 'TEXT ' in s)
 def last(out,word):return re.findall(r'^'+word+r' (\w+)',out,re.M)[-1]
 def solves(out):return int(re.findall(r'solves=(\d+)',out)[-1])
-def bar(out):return re.findall(r'TEXT \d+ 206 ([^\n]*)',out)[-6:]
+def bar(out):return re.findall(r'TEXT \d+ 210 ([^\n]*)',out)[-6:]
 def window(out):return [float(v) for v in re.findall(r'TEXT 144 (?:35|57|79|101|123|145|167) ([-+0-9.eE]+)\n',tail(out))]
-def point(out):return tuple(map(float,re.findall(r'X=([-+.\deE]+)  Y=([-+.\deE]+)',out)[-1]))
+def point(out):return (float(re.findall(r'TEXT 9 210 x=([-+.\deE]+)\n',out)[-1]),
+    float(re.findall(r'TEXT 169 210 [^=\n]+=([-+.\deE]+)\n',out)[-1]))
 base='2 F6 F6 F6 '
 GS=['ROOT','MAX','MIN','Y-ICPT','ICPT','>']
 BASE=['TRACE','ZOOM','V-WIN','TABLE','G-SLV','INIT']
@@ -23,8 +24,8 @@ ops=['F1','F2','F3','F4','F6 F1','F6 F2']
 for op in ops:
  menu=base+'F5 ';prior=run(menu)
  selected=run(menu+op)
- assert 'TEXT 13 8 UP/DOWN: SELECT GRAPH, ' in tail(selected)
- assert 'TEXT 183 8 EXE\nTEXT 208 8 : SELECT' in tail(selected)
+ assert 'HINT 13 8 UP/DOWN: SELECT GRAPH, EXE: SELECT\n' in tail(selected)
+ assert 'TEXT 36 8 SELECT GRAPH, \nTEXT 145 8 EXE\nTEXT 177 8 SELECT' in tail(selected)  # caps
  assert solves(selected)==solves(prior) and last(selected,'REPORT')==last(prior,'REPORT')
  out=run(menu+op+' BLINK DOWN BLINK UP EXIT R:EXIT R:EXIT')
  expected=GS if 'F6' not in op else ['Y-CAL','X-CAL','','','','<']
@@ -36,7 +37,7 @@ for op in ops:
 multi='3 3 F6 F6 F6 F6 F5 '
 prior=run(multi)
 for suffix in ['F5','F5 EXE']:
- selected=run(multi+suffix);assert 'TEXT 13 8 UP/DOWN: SELECT GRAPH, ' in tail(selected)
+ selected=run(multi+suffix);assert 'HINT 13 8 UP/DOWN: SELECT GRAPH, ' in tail(selected)
  out=run(multi+suffix+' EXIT R:EXIT')
  assert bar(out)==GS and last(out,'PLOT')==last(prior,'PLOT')
  assert solves(out)==solves(prior) and last(out,'REPORT')==last(prior,'REPORT')
@@ -44,7 +45,7 @@ for suffix in ['F5','F5 EXE']:
 scalar='1 4 1 F6 DOWN 0 F6 F6 '
 assert 'SELECT GRAPH' not in run(scalar+'F5 F4')
 for op in ['F1 EXE','F2 EXE','F3 EXE','F4 EXE','F5','F6 F1 EXE 0 EXE','F6 F2 EXE 0 EXE']:
- shown=run(base+'F5 '+op);assert 'X=' in shown or 'Not found' in shown
+ shown=run(base+'F5 '+op);assert 'TEXT 9 210 x=' in shown or 'Not found' in shown
  out=run(base+'F5 '+op+' EXIT R:EXIT R:EXIT')
  expected=GS if not op.startswith('F6') else ['Y-CAL','X-CAL','','','','<']
  assert bar(out)==expected and 'Partial: Cancelled' not in out
@@ -84,8 +85,11 @@ for p in [base,small,'4 2 F6 F6 F6 F6 F4 F2 ']:
 assert 'CALCULATING...' not in run(base+'TICKS:0 F1')
 for suffix,label in [('F1','CALCULATING...'),('F4','Preparing Table...')]:
  out=run(base+'TICKS:8 '+suffix)
- phases=re.findall(r'^TEXT \d+ \d+ '+re.escape(label)+r' ([/\\|\-])$',out,re.M)
- assert phases[:4]==['/','-','\\','|'],(suffix,phases)
+ if suffix=='F1':  # TRACE: full-width bottom bar, label only (stepped block)
+  assert len(re.findall(r'^TEXT 10 210 CALCULATING\.\.\.$',out,re.M))>=4
+ else:
+  phases=re.findall(r'^TEXT \d+ \d+ '+re.escape(label)+r' ([/\\|\-])$',out,re.M)
+  assert phases[:4]==['/','-','\\','|'],(suffix,phases)
  assert label not in tail(out).split('FRAME')[-1]
  assert 'IC1 x=' in tail(out) if suffix=='F1' else 'STAT' in tail(out)
  prior=run(base)

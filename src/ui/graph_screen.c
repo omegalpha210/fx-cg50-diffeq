@@ -5,6 +5,11 @@
 #include "phase_graph.h"
 #include <math.h>
 #include <stdio.h>
+#include <string.h>
+/* Lower readout panel: opaque white with a hairline that separates it from
+   the plot; same 384x19 rectangle the TRACE footer cache saves/restores. */
+static void result_panel(int top)
+{ui_rect(0,top,384,19,C_WHITE);ui_line(0,top,383,top,UI_LINE);}
 static bool pan_key(ViewWindow *view,int key)
 {
     if(key==KEY_LEFT)return graph_zoom(view,1,-.2,0);
@@ -112,20 +117,22 @@ void ui_trace(App *a,GraphResult result)
         }
         if(valid)trace_overlay_show(d,&point,curve.variable,blink.highlighted);
         graph_labels(d,&a->model);graph_status(result);
-        ui_rect(0,179,384,19,C_WHITE);
+        result_panel(179);
         if(valid) {
             char label[16];model_variable_label(d,curve.variable,label,sizeof(label));
             if(model_phase_supported(d) && d->view.phase)
-                ui_text(8,184,UI_BLUE,"x=%.5g y1=%.5g y2=%.5g",point.x,point.y[0],point.y[1]);
-            else ui_text(8,184,UI_BLUE,"IC%d x=%.7g %s=%.7g",curve.family+1,point.x,label,point.y[curve.variable]);
-        } else ui_text(8,184,UI_BLUE,"Trace unavailable in this view");
+                ui_text(8,184,UI_INK,"x=%.5g y1=%.5g y2=%.5g",point.x,point.y[0],point.y[1]);
+            else {
+                /* Swatch = the traced curve's colour as shown (blinks with it). */
+                int base=graph_palette_color(model_color(d,curve.family,curve.variable));
+                ui_rect(8,187,10,3,blink.highlighted ? graph_highlight_color(base,true):base);
+                ui_text(22,184,UI_INK,"IC%d x=%.7g %s=%.7g",curve.family+1,point.x,label,point.y[curve.variable]);
+            }
+        } else ui_text(8,184,UI_INK,"Trace unavailable in this view");
         if(notice!=ODE_OK && notice!=ODE_HAS_INVALID && notice!=ODE_EVENT_STOP && notice!=ODE_CANCELLED) {
-            ui_rect(0,179,384,19,C_WHITE);ui_text(8,184,UI_BLUE,"TRACE: %s",ode_status_text(notice));
+            result_panel(179);ui_text(8,184,UI_INK,"TRACE: %s",ode_status_text(notice));
         }
-        ui_softkeys("INIT","NORMAL","FAST","FASTER","LEFT","RIGHT");
-        int left=64*stride+1;
-        ui_line(left,199,left+61,199,C_BLACK);ui_line(left,215,left+61,215,C_BLACK);
-        ui_line(left,199,left,215,C_BLACK);ui_line(left+61,199,left+61,215,C_BLACK);
+        ui_softkeys_active("INIT","NORMAL","FAST","FASTER","LEFT","RIGHT",stride);
         dupdate();key_event_t event=ui_trace_key(&blink);int key=event.key;
         if(key==KEY_EXIT)break;
         if(key>=KEY_F2 && key<=KEY_F4){stride=key-KEY_F2+1;continue;}
@@ -149,7 +156,44 @@ void ui_trace(App *a,GraphResult result)
     trace_overlay_restore();graph_labels(d,&a->model);graph_status(result);
     ui_blink_stop(&blink);ui_trace_input(false);
 }
-static bool choose_curve(App *a,GsolveCurve *curve,const GsolveCurve *excluded)
+/* "IC1 y'" : which trajectory/variable a G-Solve result belongs to. */
+static void curve_name(const Document *d,GsolveCurve curve,char *out,unsigned size)
+{
+    char label[16];model_variable_label(d,curve.variable,label,sizeof(label));
+    snprintf(out,size,"IC%d %s",curve.family+1,label);
+}
+/* fxlibc's printf (firmware) has no '*' width/precision: an int precision
+   argument would shift every later argument (a %s then reads double bits as
+   a pointer: TLB miss). Precision is therefore always a literal here. */
+static void format_value(char *out,unsigned size,int digits,double value)
+{
+    if(digits>=8)snprintf(out,size,"%.8g",value);
+    else if(digits>=6)snprintf(out,size,"%.6g",value);
+    else if(digits>=4)snprintf(out,size,"%.4g",value);
+    else snprintf(out,size,"%.2g",value);
+}
+/* "label=value" at the highest precision that fits one half of the F1-F5
+   info panel (literal precisions only; see format_value). */
+static void value_text(char *out,unsigned size,const char *label,double value)
+{
+    for(int digits=8;;digits-=2) {
+        char number[32];int width;format_value(number,sizeof(number),digits,value);
+        snprintf(out,size,"%s=%s",label,number);dsize(out,NULL,&width,NULL);
+        if(width<=UI_INFO_HALF-10 || digits<=2)return;
+    }
+}
+/* The swatch shows the colour the curve has on screen right now, so it blinks
+   in step with the highlighted curve (G-Solve overlays swap black/blue and
+   invert other colours; see graph_overlay_curves). */
+static int curve_swatch(const Document *d,GsolveCurve curve,bool highlighted)
+{
+    int base=graph_palette_color(model_color(d,curve.family,curve.variable));
+    if(!highlighted)return base;
+    if(base==C_BLACK)return C_BLUE;
+    if(base==C_BLUE)return C_BLACK;
+    return base^0xffff;
+}
+static bool choose_curve(App *a,GsolveCurve *curve,const GsolveCurve *excluded,const char *mode)
 {
     int count=gsolve_curve_count(&a->doc),selected=0;
     if(count<1)return false;
@@ -168,7 +212,12 @@ static bool choose_curve(App *a,GsolveCurve *curve,const GsolveCurve *excluded)
         /* Active instruction temporarily owns the channel; the exact saved
            warning and graph pixels return when this operation layer closes. */
         graph_message("UP/DOWN: SELECT GRAPH, EXE: SELECT",false);
-        ui_softkeys("","","","","","CANCEL");dupdate();
+        /* The plot carries no labels: name the highlighted candidate below. */
+        char name[24],context[48];curve_name(&a->doc,*curve,name,sizeof(name));
+        if(excluded){char first[24];curve_name(&a->doc,*excluded,first,sizeof(first));
+            snprintf(context,sizeof(context),"%s with %s",mode,first);}
+        else snprintf(context,sizeof(context),"%s: graph %d/%d",mode,selected+1,count);
+        ui_softkeys_info(name,context,curve_swatch(&a->doc,*curve,blink.highlighted),"CANCEL");dupdate();
         key_event_t event=ui_blink_key(&blink);int key=event.key;
         if(event.type==KEYEV_HOLD && (key==KEY_F6 || key==KEY_EXE))continue;
         if(key==KEY_EXIT || key==KEY_F6)break;
@@ -178,7 +227,7 @@ static bool choose_curve(App *a,GsolveCurve *curve,const GsolveCurve *excluded)
     }
     graph_overlay_restore();ui_blink_stop(&blink);return accepted;
 }
-static bool gsolve_input(App *a,GsolveCurve curve,const char *label,double *value)
+static bool gsolve_input(App *a,GsolveCurve curve,const char *label,const char *mode,double *value)
 {
     UiInlineEdit edit;ui_inline_begin(&edit,"",false);int selected=0;
     UiBlink blink;ui_blink_start(&blink);bool error=false;
@@ -188,7 +237,8 @@ static bool gsolve_input(App *a,GsolveCurve curve,const char *label,double *valu
         ui_rect(0,179,384,19,C_WHITE);ui_text(8,184,UI_BLUE,"%s=",label);
         ui_inline_draw_cursor(&edit,31,184,200,UI_BLUE,C_WHITE,edit.active && blink.highlighted);
         if(error)ui_text(242,184,C_RED,"Invalid number");
-        ui_softkeys("","","","","","");dupdate();
+        char name[24];curve_name(&a->doc,curve,name,sizeof(name));
+        ui_softkeys_info(name,mode,curve_swatch(&a->doc,curve,true),"");dupdate();
         key_event_t event=ui_blink_key(&blink);int key=event.key;
         if(key==KEY_EXIT){graph_overlay_restore();ui_blink_stop(&blink);return false;}
         if(key==KEY_EXE && event.type!=KEYEV_HOLD) {
@@ -228,15 +278,24 @@ static void show_results(App *a,GsolveCurve curve,const GsolveCurve *other,
             if(graph_point(&a->doc.view,point.x,point.y,&px,&py))graph_overlay_point(px,py);
         }
         graph_labels(&a->doc,&a->model);graph_status(canonical);
-        ui_rect(0,GRAPH_RESULT_TOP,384,19,C_WHITE);
-        if(result.status!=ODE_OK)ui_text(7,184,C_RED,"%s: %s",mode,ode_status_text(result.status));
-        else if(!result.count)ui_text(7,184,UI_BLUE,"%s: Not found%s",mode,
+        result_panel(GRAPH_RESULT_TOP);
+        char who[48];curve_name(&a->doc,curve,who,sizeof(who));
+        if(other){char second[24];curve_name(&a->doc,*other,second,sizeof(second));
+            snprintf(who+strlen(who),sizeof(who)-strlen(who)," & %s",second);}
+        if(result.status!=ODE_OK)ui_text(7,184,C_RED,"%s %s: %s",who,mode,ode_status_text(result.status));
+        else if(!result.count)ui_text(7,184,UI_INK,"%s %s: Not found%s",who,mode,
             result.has_invalid ? " (valid regions)":"");
         else {
+            /* Which curve(s), operation and index above; coordinates below in
+               the otherwise empty F1-F5 area. ICPT y is shared by both curves. */
             GsolvePoint point=result.point[selected];
-            ui_text(7,184,UI_BLUE,"X=%.8g  Y=%.8g  %s %d/%d",point.x,point.y,mode,selected+1,result.count);
+            char label[16],x[48],y[48];model_variable_label(&a->doc,curve.variable,label,sizeof(label));
+            ui_text(7,184,UI_INK,"%s %s %d/%d",who,mode,selected+1,result.count);
+            value_text(x,sizeof(x),"x",point.x);value_text(y,sizeof(y),other ? "y":label,point.y);
+            ui_softkeys_info(x,y,-1,"BACK");
         }
-        ui_softkeys("","","","","","BACK");dupdate();
+        if(result.status!=ODE_OK || !result.count)ui_softkeys("","","","","","BACK");
+        dupdate();
         key_event_t event=ui_getkey();int key=event.key;
         if(event.type==KEYEV_HOLD && (key==KEY_F6 || key==KEY_EXE))continue;
         if(key==KEY_EXIT || key==KEY_F6 || key==KEY_EXE)break;
@@ -249,7 +308,7 @@ static void show_gsolve_notice(const char *mode,const char *message)
 {
     graph_overlay_begin(GRAPH_RESULT_TOP);
     for(;;) {
-        ui_rect(0,GRAPH_RESULT_TOP,384,19,C_WHITE);ui_text(7,184,UI_BLUE,"%s: %s",mode,message);
+        result_panel(GRAPH_RESULT_TOP);ui_text(7,184,UI_INK,"%s: %s",mode,message);
         ui_softkeys("","","","","","BACK");dupdate();
         key_event_t event=ui_getkey();int key=event.key;
         if(event.type!=KEYEV_HOLD && (key==KEY_EXIT || key==KEY_F6 || key==KEY_EXE))break;
@@ -282,18 +341,18 @@ static void gsolve_run(App *a,int operation,GraphResult canonical)
             show_gsolve_notice(name,"Not available");return;
         }
         if(count==2){gsolve_curve_at(&a->doc,0,&curve);gsolve_curve_at(&a->doc,1,&other);}
-        else if(!choose_curve(a,&curve,NULL)
-            || !choose_curve(a,&other,&curve))return;
+        else if(!choose_curve(a,&curve,NULL,name)
+            || !choose_curve(a,&other,&curve,name))return;
         UiBusy busy;ui_busy_start(&busy);
         GsolveResults result=gsolve_intersections(&a->doc,&a->model,curve,other,ui_busy_cancel,&busy);
         ui_busy_end(&busy);show_results(a,curve,&other,name,result,canonical);return;
     }
-    if(!choose_curve(a,&curve,NULL)) {
+    if(!choose_curve(a,&curve,NULL,name)) {
         if(count<1)show_gsolve_notice(name,"Not available");
         return;
     }
-    if(operation==5 && !gsolve_input(a,curve,"X",&target))return;
-    if(operation==6 && !gsolve_input(a,curve,"Y",&target))return;
+    if(operation==5 && !gsolve_input(a,curve,"X",name,&target))return;
+    if(operation==6 && !gsolve_input(a,curve,"Y",name,&target))return;
     if(operation==3 || operation==5) {
         double x=operation==3 ? 0:target;GsolvePoint point;
         double xmin=fmax(a->doc.solver.xmin,a->doc.view.xmin);
@@ -418,13 +477,13 @@ static void render_equilibrium_selection(const Document *d,const CompiledModel *
     const PhaseResults *r=graph_phase_results();
     if(selected>=0 && (unsigned)selected<r->count)graph_phase_markers(d,selected);
     graph_labels(d,model);
-    ui_rect(0,163,384,35,C_WHITE);
+    ui_rect(0,163,384,35,C_WHITE);ui_line(0,163,383,163,UI_LINE);
     if(selected>=0 && (unsigned)selected<r->count) {
         const PhaseRoot *p=&r->root[selected];
-        ui_text(6,165,UI_BLUE,"EQPT %d/%u%s y1=%.6g y2=%.6g",selected+1,r->count,
+        ui_text(6,165,UI_INK,"EQPT %d/%u%s y1=%.6g y2=%.6g",selected+1,r->count,
             r->truncated ? "+":"",p->y[0],p->y[1]);
-        ui_text(6,182,UI_BLUE,"Linearized: %s",phase_type_name(p->type));
-    } else ui_text(6,181,UI_BLUE,"EQPT: Not found%s",r->has_invalid ? " (valid regions)":"");
+        ui_text(6,182,UI_INK,"Linearized: %s",phase_type_name(p->type));
+    } else ui_text(6,181,UI_INK,"EQPT: Not found%s",r->has_invalid ? " (valid regions)":"");
 }
 /* Pan happens before menu-specific input. Return the proposed geometry change;
    ui_graph still owns preflight, drawing, and rollback of that transaction. */

@@ -1,4 +1,5 @@
 #include "ui.h"
+#include "trace.h"
 #include <gint/rtc.h>
 #include <assert.h>
 #include <stdio.h>
@@ -16,13 +17,20 @@ static void expected_canvas(UiBusyArea area,const char *label,char spinner)
 {
     char title[40];snprintf(title,sizeof(title),"%s %c",label,spinner);
     if(area==UI_BUSY_DRAW) {
-        int width;dsize("EXIT cancels",NULL,&width,NULL);
-        ui_rect(0,198,384,18,UI_BLUE);
-        ui_text(5,202,C_WHITE,"%s",title);
-        ui_text(384-5-width,202,C_WHITE,"EXIT cancels");
+        /* Same painter, one frame per spinner phase; the block must step. */
+        unsigned frame=(unsigned)(strchr("/-\\|",spinner)-"/-\\|");
+        ui_busy_bar(label,frame);
+        int track;dsize(label,NULL,&track,NULL);track+=14;
+        assert(gint_vram[(UI_Y+210)*DWIDTH+UI_X+track+(int)frame*24+12]==UI_ACCENT);
     } else ui_frame(title,"EXIT cancels");
     assert(!memcmp(gint_vram,host_display_pixels(),sizeof(original)));
     memcpy(gint_vram,original,sizeof(original));
+}
+/* Full-width bar rows 202..223, transferred in strips of the borrowed buffer. */
+static unsigned draw_uploads(void)
+{
+    unsigned capacity;(void)graph_busy_pixels(&capacity,true);
+    unsigned rows=capacity/DWIDTH;return (unsigned)(DHEIGHT-(UI_Y+198)+(int)rows-1)/rows;
 }
 static void check(UiBusyArea area,const char *label)
 {
@@ -36,15 +44,15 @@ static void check(UiBusyArea area,const char *label)
     assert(!ui_busy_cancel(&b) && !b.visible);
     assert(host_display_uploads()==count && !memcmp(previous,host_display_pixels(),sizeof(previous)));
     assert(!ui_busy_cancel(&b) && b.visible && b.frame==1);
-    assert(host_display_uploads()-count==(area==UI_BUSY_DRAW ? 6:(DHEIGHT+2)/3));source_unchanged();
+    assert(host_display_uploads()-count==(area==UI_BUSY_DRAW ? draw_uploads():(DHEIGHT+2)/3));source_unchanged();
     expected_canvas(area,label,'/');
     for(unsigned i=1;i<4;i++) {
         count=host_display_uploads();memcpy(previous,host_display_pixels(),sizeof(previous));
         assert(!ui_busy_cancel(&b) && b.frame==i);
         assert(host_display_uploads()==count);
         assert(!ui_busy_cancel(&b) && b.frame==i+1);source_unchanged();
-        assert(host_display_uploads()-count==(area==UI_BUSY_DRAW ? 6:7));
-        for(int y=0;y<DHEIGHT;y++)if(area==UI_BUSY_DRAW ? (y<UI_Y+198 || y>=UI_Y+216):(y<UI_Y || y>=UI_Y+21))
+        assert(host_display_uploads()-count==(area==UI_BUSY_DRAW ? draw_uploads():7));
+        for(int y=0;y<DHEIGHT;y++)if(area==UI_BUSY_DRAW ? y<UI_Y+198:(y<UI_Y || y>=UI_Y+21))
             assert(!memcmp(previous+y*DWIDTH,host_display_pixels()+y*DWIDTH,DWIDTH*2));
         expected_canvas(area,label,"/-\\|"[i]);
     }

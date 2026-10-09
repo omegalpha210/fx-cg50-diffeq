@@ -98,5 +98,5 @@ for expression in ['S:SQUARE 1 SUB XOT RIGHTP','1 DIV LEFTP XOT SUB 1 RIGHTP','L
  p='1 4 '+expression+' F6 F6 '+('DOWN DOWN DOWN 0 DOT 2 5 EXE F6 ' if expression.startswith('1 DIV') else 'F6 ')
  out=run(p);assert 'END:' in tail(out) or 'Partial:' in tail(out),(p,tail(out))
  assert 'IC1 x=' in tail(run(p+'F1'))
- out=run(p+'F5 F4');assert 'Y-ICPT' in tail(out) and 'X=0' in tail(out)
+ out=run(p+'F5 F4');assert 'Y-ICPT' in tail(out) and 'x=0' in tail(out)
 print('Interaction UI: conditional labels, all-row INIT, draft/NEXT/focus, VAR, BOX/cancel/reverse/windows, Graph INIT/ORIG, delayed busy and valid-domain operations passed.')

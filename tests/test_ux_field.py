@@ -12,8 +12,8 @@ def run(keys,directory=None):
 def tail(out):return next(part for part in reversed(out.split('\nKEY ')) if 'TEXT ' in part)
 def bar(out):
     keys=['']*6
-    for x,label in re.findall(r'TEXT (\d+) 206 ([^\n]*)',tail(out)):
-        keys[(int(x)-6)//64]+=label
+    for x,label in re.findall(r'TEXT (\d+) 210 ([^\n]*)',tail(out)):
+        keys[int(x)//66]+=label
     return keys
 def plot(out):return re.findall(r'^PLOT (\w+)',out,re.M)[-1]
 def solves(out):return int(re.findall(r'solves=(\d+)',out)[-1])

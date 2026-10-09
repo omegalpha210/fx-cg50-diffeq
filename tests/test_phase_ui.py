@@ -43,7 +43,7 @@ def tail(output):
 
 
 def bar(output):
-    return re.findall(r"TEXT \d+ 206 ([^\n]*)", tail(output))[-6:]
+    return re.findall(r"TEXT \d+ 210 ([^\n]*)", tail(output))[-6:]
 
 
 def last_plot(output):

@@ -58,7 +58,8 @@ static void overlays(void)
         for(int i=0;i<8;i++) {
             graph_overlay_restore();graph_overlay_curve(&d,0,selected,i%2);
             unsigned glyphs=host_text_glyphs();graph_message("UP/DOWN: SELECT GRAPH, EXE: SELECT",GRAPH_INSTRUCTION);
-            assert(host_text_glyphs()-glyphs==strlen("UP/DOWN: SELECT GRAPH, EXE: SELECT"));
+            /* UP/DOWN cap draws arrows, EXE cap 3 glyphs, two words once: 23. */
+            assert(host_text_glyphs()-glyphs==23);
         }
         graph_overlay_restore();same_pixels();
     }
@@ -73,9 +74,11 @@ static void overlays(void)
     assert(!memcmp(&report,solver_report(),sizeof(report)));
     assert(graph_plot_prepare(&d,&m,ui_cancel,NULL)==ODE_OK);same_pixels();
     assert(!memcmp(&report,solver_report(),sizeof(report)));
-    dclear(UI_CYAN);int width;dsize("UP/DOWN: SELECT GRAPH, EXE: SELECT",NULL,&width,NULL);assert(width<=284);
+    dclear(UI_CYAN);int width=ui_help_width("UP/DOWN: SELECT GRAPH, EXE: SELECT");assert(width<=284);
     graph_message("UP/DOWN: SELECT GRAPH, EXE: SELECT",GRAPH_INSTRUCTION);
-    unsigned blue=0;for(int y=8;y<19;y++)for(int x=183;x<207;x++)blue+=gint_vram[y*DWIDTH+x]==C_BLUE;
+    unsigned blue=0;for(int y=8;y<19;y++)for(int x=13;x<13+width;x++)blue+=gint_vram[y*DWIDTH+x]==C_BLUE;
+    /* The white pad covers exactly the rendered caps and words. */
+    assert(gint_vram[6*DWIDTH+13+width+1]==C_WHITE && gint_vram[6*DWIDTH+13+width+3]==UI_CYAN);
     assert(blue && gint_vram[6*DWIDTH+11]==C_WHITE && gint_vram[6*DWIDTH+310]==UI_CYAN);
     printf("Selection prompt width: %d px\n",width);
 }

@@ -73,10 +73,11 @@ assert 'RECALL' in run('')
 # Current semantic stage colors and OUTPUT-specific styles.
 for keys,colors in [('2',[None,None,None,None,None,0x07ff]),
  ('2 F6',[None,None,None,None,None,0x07ff]),
- ('2 F6 F6',[0xffe0,0,None, None,0x37e6,0xf800])]:
+ ('2 F6 F6',[0xffe0,0xa59a,None, None,0x37e6,0xd104])]:
     _,rgb=run(keys,image=True)
+    # 3px semantic band on each 66px tab; GRAPH alone is a filled red tab.
     for i,color in enumerate(colors):
-        if color is not None:assert pixel(rgb,7+i*64,203)==rgb565(color)
+        if color is not None:assert pixel(rgb,10+i*66,203)==rgb565(color)
     assert plot(run(keys+(' DOWN F3 EXIT' if keys=='2 F6 F6' else ' DOWN F3')))==plot(run(keys+' DOWN'))
 output='2 F6 F6 F4 '
 assert plot(run(output+'EXE'))==plot(run(output+'DOWN'))
@@ -86,8 +87,8 @@ modified=output+'DOWN RIGHT '
 assert 'Output selection' in tail(run(modified+'EXE'))
 assert 'Parameter' in tail(run(modified+'EXE EXE'))
 _,rgb=run(output+'DOWN',image=True)
-assert pixel(rgb,7,203)==rgb565(0xffe0) and pixel(rgb,135,203)==bytes([255,255,255])
-region={pixel(rgb,x,y) for x in range(134,197) for y in range(205,217)}
+assert pixel(rgb,10,203)==rgb565(0xffe0) and pixel(rgb,140,207)==rgb565(0x29cb)  # dark COLOR tab
+region={pixel(rgb,x,y) for x in range(133,197) for y in range(203,206)}  # 5-color band
 for color in [0xf800,0xfc40,0x37e6,0x07ff,0xf81f]:assert rgb565(color) in region
 assert 'Curve color' not in run(output+'DOWN RIGHT')
 assert 'Curve color' in tail(run(output+'DOWN F3'))
@@ -128,7 +129,7 @@ for entry in ['3','4']:
         assert 'Change Equation Size' in kept and 'TEXT 144 57 5\n' in tail(kept)
     assert 'TEXT 144 57 5\n' not in tail(run(populated+'2 F6 F6'))
 # Each zoom operation keeps its submenu; only EXIT restores base softkeys.
-def bar(out):return [text for _,text in re.findall(r'TEXT (\d+) 206 ([^\n]*)',out)][-6:]
+def bar(out):return [text for _,text in re.findall(r'TEXT (\d+) 210 ([^\n]*)',out)][-6:]
 graph='2 F6 F6 F6 '
 for operation in ['F1','F2','F3','F4']:
     out=run(graph+'F2 '+operation)
@@ -143,7 +144,9 @@ assert plot(run(manual+'RIGHT F2 F4'))==plot(run(manual))
 # Scalar prompts: empty draft, EXE commits and EXIT cancels, blink has no solves.
 for operation,result in [('F1','Y-CAL'),('F2','X-CAL')]:
     prompt=graph+'F5 F6 '+operation+' EXE '
-    assert bar(run(prompt))==['','','','','','']
+    # Info panel names the curve and operation; no key is offered (F6 blank).
+    panel=re.findall(r'TEXT \d+ 210 ([^\n]*)',tail(run(prompt)))[-3:]
+    assert panel[0].startswith('IC1 ') and panel[1]==result and panel[2]==''
     for submit in ['EXE']:
         invalid=run(prompt+submit)
         assert 'Invalid number' in tail(invalid) and result+' 1/' not in invalid
@@ -153,5 +156,6 @@ for operation,result in [('F1','Y-CAL'),('F2','X-CAL')]:
     baseline=run(prompt+'1')
     blink=run(prompt+'1 '+'BLINK '*100)
     assert re.findall(r'solves=(\d+)',baseline)[-1]==re.findall(r'solves=(\d+)',blink)[-1]
-    assert bar(run(prompt+'F1 F2 F3 F4 F5'))==['','','','','','']
+    # F1-F5 are inert here: the info panel and blank F6 stay exactly as opened.
+    assert re.findall(r'TEXT \d+ 210 ([^\n]*)',tail(run(prompt+'F1 F2 F3 F4 F5')))[-3:]==re.findall(r'TEXT \d+ 210 ([^\n]*)',tail(run(prompt)))[-3:]
 print('New feedback UI: EXE next/primary, EXIT, inline FUNC/VAR, Output/color/INIT, Main shortcuts, persistent Zoom and scalar RUN passed.')

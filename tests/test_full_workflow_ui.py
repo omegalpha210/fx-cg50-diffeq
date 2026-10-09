@@ -14,8 +14,8 @@ def run(keys,directory=None):
 def tail(out):return next(p for p in reversed(out.split('\nKEY ')) if 'TEXT ' in p)
 def bar(out):
     keys=['']*6;previous=5
-    for x,text in reversed(re.findall(r'TEXT (\d+) 206 ([^\n]*)',tail(out))):
-        slot=(int(x)-6)//64
+    for x,text in reversed(re.findall(r'TEXT (\d+) 210 ([^\n]*)',tail(out))):
+        slot=int(x)//66
         if slot>previous:break
         if 0<=slot<6:keys[slot]=text+keys[slot];previous=slot
     return keys

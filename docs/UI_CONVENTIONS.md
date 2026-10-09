@@ -1,3 +1,27 @@
+# Current UI conventions — UI refresh (unreleased)
+
+[Proposal and before/after mockups](proposals/UI_UX_REFRESH.md). Controls, keys and
+screen order are unchanged; these drawing rules supersede earlier visual details.
+- Crisp geometry: 1px rectangles/lines only; no rounded corners, synthetic bold or AA.
+- Chrome spans 396x224: navy header (+2px accent rule), F-key tabs in 66px slots from
+  logical y199 to the LCD bottom. Content and the 384x198 plot keep logical coordinates.
+- Semantic F-key color is a 3px band; GRAPH/RUN alone fill; TRACE speed fills when active.
+- Hints draw `KEY:` prefixes as caps (MENU red on Main, EXE blue). Edit hint: non-last field
+  `EXE: commit + next field   EXIT: commit`; last field `EXE/EXIT: commit`. SELECT-state
+  generic EXE help stays hidden.
+- `=` rows: equations, initial values, Event E. `:` rows: settings. Option rows show arrows.
+- Errors: full-width banner; red marks only on the field being edited.
+- Confirmations: card over the dimmed (single-buffered) VRAM; keys unchanged.
+- Busy: Drawing, G-Solve and TRACE share the full-width bottom bar (label, stepped block,
+  EXIT cancels); Table keeps its preparation screen.
+- Screens whose only key is F6 (G-Solve result, graph selection, Y-/X-CAL prompt) use
+  F1-F5 as one read-only info panel: result x / value, or the highlighted curve's
+  name with a swatch blinking in step with the curve. Results: `IC1 y' MAX 1/2` above.
+- G-Solve computes every result in the plotted range at once (count shown, LEFT/RIGHT
+  wraps instantly); refinement stays in the validated engine.
+
+---
+
 # Current UI conventions — v0.12.0-beta.9
 
 Beta.8 controls remain authoritative. Long SELECT/Output lists (>7 items) add a

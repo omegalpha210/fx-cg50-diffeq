@@ -10,7 +10,7 @@ def run(keys,directory=None):
     assert p.returncode==0 and 'SCRIPT COMPLETE' in p.stdout and 'runtime error:' not in p.stderr,(p.stderr,p.stdout[-1500:])
     return p.stdout
 def tail(out):return out[out.rfind('\nKEY '):]
-def bar(out):return re.findall(r'TEXT \d+ 206 ([^\n]*)',tail(out))[-6:]
+def bar(out):return re.findall(r'TEXT \d+ 210 ([^\n]*)',tail(out))[-6:]
 def metrics(out):return re.findall(r'METRICS ([^\n]+)',out)[-1]
 params='1 4 A:SUB EXE F6 DOWN 1 EXE F6 '
 assert bar(run(params))==['INIT','ADV','V-WIN','OUTPUT','SET','GRAPH']

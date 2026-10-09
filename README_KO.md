@@ -218,7 +218,7 @@ Parameters **F3 V-WIN**에서 Xmin `-3`, Xmax `3`, Xscale `1`, Ymin `-1.5`, Ymax
 |---|---|
 | Main | 숫자 1~6: 1st/2nd/N-th/SYS/RCL/SAVE; 방향키로 행·열 순환 선택, EXE 또는 F6 OPEN 진입; F1~F5 비움 |
 | 일반 필드 선택 | UP/DOWN 순환 선택, LEFT/RIGHT로 편집 시작, EXE로 NEXT/GRAPH/DONE/OPEN |
-| 편집 중 | EXE는 확정 후 다음 필드 선택, 마지막 행은 머묾. EXIT는 확정 후 같은 행 선택 |
+| 편집 중 | EXE는 확정 후 다음 필드 선택, 마지막 행에서는 확정만 함. EXIT는 확정 후 같은 행 선택 |
 | Equation | F1 INIT, EDIT에서 F2 FUNC/F3 VAR(지원 모드만). EXIT는 열린 token bar부터 닫음 |
 | OUTPUT | LEFT/RIGHT는 visibility 행의 ON/OFF (IC 색상 행에서는 무동작), F1 INIT, F3 COLOR, F6 DONE. EXE는 출력 행 순서로 이동 |
 | Parameters | F1 INIT; F2 ADV → EVENT/INFO; Method: LEFT/RIGHT로 RK4/RK45 전환; F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
@@ -254,9 +254,10 @@ Pale stipple 아래 곡선이 보이고 어느 단계의 EXIT도 창을 바꾸�
 TRACE/G-Solve/BOX는 9px 검정 cross와 흰 중심을 공유하며 기존 2px 곡선 blink는 유지합니다.
 G-Solve 선택은 좌측 최상단에 **UP/DOWN: SELECT GRAPH, EXE: SELECT**를 표시하며 EXE만
 normal 파랑입니다. 활성 안내가 경고를 잠시 대체하고 종료 시 복구합니다.
+F1–F5 영역에는 후보 곡선 이름(예: **IC1 y**)과 곡선과 함께 깜박이는 색 견본이 표시됩니다.
 **선택·결과에서 EXIT 한 번 → G-Solve submenu, 다음 새 EXIT → Graph**입니다.
 HOLD는 계층을 건너뛰지 않고 scratch 계산 취소는 기존 그래프·trajectory 진단을 보존합니다.
-결과 패널은 좌측 하단에 고정합니다. marker가 가려지면 X·scale·Y span·수치 결과를 유지하며
+결과는 곡선·모드 header(예: **IC1 y' MAX 1/2**)와 F1–F5 영역의 x/y 값으로 표시합니다. marker가 가려지면 X·scale·Y span·수치 결과를 유지하며
 Y만 최소한 평행 이동합니다. 이미 보이는 점은 창을 움직이지 않고 결과 순회는 재계산하지 않습니다.
 
 오래 걸리는 **Drawing은 현재 Graph를 유지**하고 하단 여섯 softkey 영역만
@@ -265,7 +266,7 @@ Y만 최소한 평행 이동합니다. 이미 보이는 점은 창을 움직이�
 원래 F-key를 복구하고 안정된 결과와 Last calculation을 보존합니다.
 최초 Graph는 axes를 한 번 만든 뒤 계산하며 최초 취소는 Parameters로 돌아갑니다.
 **Table은 기존 전용 준비 화면**(파란 header·흰 EXIT 행/본문·숨긴 F-key)을 유지합니다.
-TRACE/G-Solve는 기존 하단 **CALCULATING...** 표시를 유지합니다.
+TRACE/G-Solve도 같은 전폭 하단 바에 **CALCULATING...**을 표시합니다.
 
 **각 1차 IC의 독립 ON/OFF와 색상:** 단일 IC는 y, 여러 IC는 IC1 y~IC10 y입니다.
 LEFT/RIGHT는 해당 IC만 ON/OFF, F3 COLOR는 해당 색만 바꿉니다. OFF도 실제 색 선을 유지합니다.

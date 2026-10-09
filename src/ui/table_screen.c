@@ -26,14 +26,22 @@ void ui_table(App *a)
         for(int j=0;j<3 && (j==0 || column+j-1<index.count);j++) {
             int selected=j==0 ? -1:column+j-1;char label[20];
             table_column_label(d,&index,selected,label,sizeof(label));
-            ui_rect(6+j*125,41,123,18,UI_BLUE);ui_text(10+j*125,45,C_WHITE,"%s",label);
+            /* Header underline uses the column's actual curve color. */
+            int item=selected<0 ? 0:index.columns[selected],right=6+j*125+123-5,width;
+            int color=selected<0 ? UI_MUTED:graph_palette_color(model_color(d,
+                index.solutions ? item:0,index.solutions ? 0:item));
+            ui_rect(6+j*125,41,123,16,UI_SURFACE);ui_rect(6+j*125,57,123,2,color);
+            dsize(label,NULL,&width,NULL);ui_text(right-width,45,UI_INK,"%s",label);
             for(unsigned row=0;row<page.count;row++) {
-                int y=65+(int)row*17,data=selected+1;
-                ui_rect(6+j*125,y-2,123,16,row%2 ? UI_PALE:C_WHITE);
-                if(page.valid[row]&(1u<<data))ui_text(10+j*125,y,UI_INK,"%.8g",page.row[row][data]);
-                else ui_text(10+j*125,y,UI_MUTED,"--");
+                int y=65+(int)row*17,data=selected+1;char cell[32];
+                ui_rect(6+j*125,y-2,123,16,row%2 ? UI_SURFACE:C_WHITE);
+                bool valid=page.valid[row]&(1u<<data);
+                if(valid)snprintf(cell,sizeof(cell),"%.8g",page.row[row][data]);
+                else snprintf(cell,sizeof(cell),"--");
+                dsize(cell,NULL,&width,NULL);ui_text(right-width,y,valid ? UI_INK:UI_MUTED,"%s",cell);
             }
         }
+        ui_scrollbar(41,138,(int)start,(int)page.count,(int)index.total);
         if((!start && index.low==ODE_EVENT_STOP) || (start==table_bottom(&index) && index.high==ODE_EVENT_STOP))
             ui_text(8,184,UI_INK,"END: Event");
         else if((!start && ode_invalid_region(index.low))

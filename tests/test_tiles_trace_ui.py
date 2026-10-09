@@ -50,12 +50,13 @@ for subtype, count in [(False, 6), (True, 4)]:
     prefix = '1 ' if subtype else ''
     original, data = run(prefix, True)
     assert all(label in original for label in (['Separable', 'Linear', 'Bernoulli', 'Others'] if subtype else ['1st', '2nd', 'N-th', 'SYSTEM', 'RECALL', 'SAVE']))
-    assert re.findall(r'TEXT \d+ 206 ([^\n]*)', original)[-6:] == ['', '', '', '', '', 'OPEN']
+    assert re.findall(r'TEXT \d+ 210 ([^\n]*)', original)[-6:] == ['', '', '', '', '', 'OPEN']
     for i in range(count):
         moves = 'DOWN '*(i//2)+'RIGHT '*(i%2)
         out, data = run(prefix+moves, True)
-        x, y = 10+192*(i%2), 31+62*(i//2)
-        assert pixel(data, x, y) == rgb((19 << 6) | 29)
+        # 2px accent focus ring sits 2px outside the tile's top-left corner.
+        x, y = 8+192*(i%2), 29+62*(i//2)
+        assert pixel(data, x, y) == rgb(0x341f) and pixel(data, x+1, y+1) == rgb(0x341f)
         opened = run(prefix+moves+'F6')
         direct = run(prefix+str(i+1))
         assert re.findall(r'PLOT (\w+)', opened)[-1] == re.findall(r'PLOT (\w+)', direct)[-1]
@@ -90,8 +91,8 @@ for speed, stride in [('F2', 1), ('F3', 2), ('F4', 3)]:
 reset, data = run(trace+'F4 F6 DOWN F1', True)
 assert point(reset) == (1, 0, 0) and solves(reset) == solves(base)
 for slot, color in [(0, 0xffe0), (1, 0xfc40), (2, 0x37e6), (3, 0x07ff)]:
-    assert pixel(data, 6+64*slot+3, 204) == rgb(color)
-assert pixel(data, 6+64*3+1, 203) == rgb(0)  # FASTER retained by INIT.
+    assert pixel(data, 66*slot+10, 203) == rgb(color)
+assert pixel(data, 66*3+5, 212) == rgb(0x07ff)  # FASTER (filled tab) retained by INIT.
 assert point(run(trace+'F4 F6 DOWN')) == (2, 1, 6)
 assert window(run(trace+'F4 F6 DOWN F1 EXIT F3'))[:4] == entry[:4]
 assert 'MAN\n' in tail(run(trace+'F6 F1 EXIT EXIT'))

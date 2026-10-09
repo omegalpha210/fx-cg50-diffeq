@@ -10,8 +10,14 @@ def run(keys):
         return p.stdout
 def tail(out):return out[out.rfind('\nKEY '):]
 def solves(out):return int(re.findall(r'solves=(\d+)',out)[-1])
-def rows(out):return re.findall(r'TEXT 16 (?:69|86|103|120|137|154|171) ([^\n]+)',tail(out))
-def bar(out):return re.findall(r'TEXT \d+ 206 ([^\n]*)',tail(out))[-6:]
+def cells(out,y):
+    """Right-aligned Table cells at physical row y, keyed by column (125px bands)."""
+    found={}
+    for x,t in re.findall(r'TEXT (\d+) '+str(y)+r' ([^\n]*)',out):
+        if 12<=int(x)<387:found[(int(x)-12)//125]=t
+    return found
+def rows(out):return [c[0] for y in (69,86,103,120,137,154,171) for c in [cells(tail(out),y)] if 0 in c]
+def bar(out):return re.findall(r'TEXT \d+ 210 ([^\n]*)',tail(out))[-6:]
 # Actual requested Separable example, including repeated endpoint navigation.
 sep='1 1 LEFT ACON F2 F2 XOT RIGHTP EXE F6 F6 F6 '
 table=sep+'F4 '
@@ -30,13 +36,12 @@ assert '| END' in tail(normal) and 'Numerical limit' not in tail(normal)
 system='4 4 F6 F6 F6 F6 F4 '
 for moves,expected in [('',('y1','y2')),('RIGHT',('y2','y3')),('RIGHT RIGHT',('y3','y4'))]:
     out=tail(run(system+moves))
-    assert 'TEXT 16 49 x\n' in out
-    assert 'TEXT 141 49 '+expected[0]+'\n' in out and 'TEXT 266 49 '+expected[1]+'\n' in out
+    assert cells(out,49)=={0:'x',1:expected[0],2:expected[1]}
     assert 'Left/Right: columns' in out
 assert 'Left/Right: columns' not in tail(run('2 EXE EXE EXE F4'))
 # Re-entering after hiding states uses only the remaining columns.
 out=tail(run(system+'RIGHT RIGHT EXIT EXIT F4 DOWN DOWN RIGHT DOWN RIGHT EXIT F6 F4'))
-assert 'TEXT 16 49 x\n' in out and 'TEXT 141 49 y1\n' in out and 'TEXT 266 49 y2\n' in out
+assert cells(out,49)=={0:'x',1:'y1',2:'y2'}
 assert 'Left/Right: columns' not in out
 # SELECT EXE completes at any field, and hidden VAR has no legacy popup fallback.
 for entry in ['1 1','1 2','1 3','1 4','2','3 F6']:

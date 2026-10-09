@@ -291,6 +291,9 @@ add_test(NAME cleanup_ui_golden COMMAND ${Python3_EXECUTABLE}
 add_test(NAME cleanup_tool_safety COMMAND ${Python3_EXECUTABLE}
   ${CMAKE_CURRENT_SOURCE_DIR}/test_cleanup_tools.py)
 set_tests_properties(cleanup_numerical_golden cleanup_ui_golden cleanup_tool_safety PROPERTIES TIMEOUT 90)
+# Host libc accepts formats fxlibc (firmware) rejects, e.g. '*' precision.
+add_test(NAME firmware_printf_formats COMMAND ${Python3_EXECUTABLE}
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_firmware_printf.py)
 
 add_executable(test_usb test_usb.c)
 target_include_directories(test_usb PRIVATE native-power ../include)

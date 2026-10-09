@@ -146,6 +146,39 @@ static const char *formula(const Document *document,char *buffer,unsigned size)
     }
 }
 
+/* Display-only starting points for the selected field; each is valid in that
+   field's expression scope (x-only, y-only, or the full state). */
+static void equation_examples(const Document *document,int index,int y)
+{
+    static const char *const separable[2][3]={{"x","cos(x)","1/(1+x^2)"},{"y","1-y^2","y*(1-y)"}};
+    static const char *const linear[2][3]={{"1","2*x","1/(1+x^2)"},{"x","sin(x)","exp(-x)"}};
+    static const char *const second[3][3]={{"0","0.5","x"},{"1","4","x"},{"0","cos(2*x)","1"}};
+    const char *const *items=NULL;
+    static const char *const general[]={"1-y^2","sin(x)-y","x*y"};
+    static const char *const power[]={"2","3","0.5"};
+    static const char *const higher1[]={"-y","1-y^2","x-y"};
+    static const char *const higher[]={"-y","-y-0.5*y1","sin(x)-y"};
+    static const char *const system1[]={"-y1","1-y1^2","x-y1"};
+    static const char *const system[]={"y2","-y1","y1-y2"};
+    switch(document->kind) {
+        case EQ_SEPARABLE:items=separable[index ? 1:0];break;
+        case EQ_LINEAR:items=linear[index ? 1:0];break;
+        case EQ_BERNOULLI:items=index>=2 ? power:linear[index];break;
+        case EQ_GENERAL:items=general;break;
+        case EQ_SECOND:items=second[index<3 ? index:2];break;
+        case EQ_HIGHER:items=document->dim>1 ? higher:higher1;break;
+        case EQ_SYSTEM:items=document->dim>1 ? system:system1;break;
+        default:return;
+    }
+    ui_text(12,y,UI_MUTED,"e.g.");
+    int x=50;
+    for(int i=0;i<3;i++) {
+        int width;dsize(items[i],NULL,&width,NULL);width+=8;
+        if(x+width>376)break;
+        ui_rect(x,y-2,width,13,UI_SURFACE);ui_text(x+4,y,UI_INK,"%s",items[i]);x+=width+6;
+    }
+}
+
 static int equation_count(const Document *document)
 {
     return model_equations(document)+(document->kind==EQ_BERNOULLI);
@@ -233,8 +266,8 @@ static ScreenTransition screen_dimension(App *a,AppUi *ui)
     for(;;) {
         ui_frame(ui->dimension_kind==EQ_HIGHER ? "Order (1-9)":"Variables (1-9)",NULL);
         ui_field(0,"Value",edit.text,true);
-        if(edit.active)ui_inline_draw(&edit,138,31,226,C_WHITE,UI_BLUE);
-        ui_form_hint(&edit,"Enter an integer from 1 to 9");
+        if(edit.active)ui_inline_field(&edit,31);
+        ui_form_hint_last(&edit,"Enter an integer from 1 to 9",true);
         ui_softkeys("","","","","","OPEN");dupdate();
         key_event_t event=ui_getkey();int key=event.key;
         if(!edit.active){int field=0;key=ui_field_complete(key,false,&field,1);event.key=(unsigned)key;}
@@ -273,19 +306,21 @@ static ScreenTransition screen_equation(App *a,AppUi *ui)
         int variables=ui_equation_variables(document);
         char general[80];
         if(!menu) {
-            ui_frame(title,formula(document,general,sizeof(general)));
+            ui_frame(title,NULL);ui_formula(formula(document,general,sizeof(general)));
             ui_progress(1);
-            int page=*selected/6,row_offset=1;
+            int page=*selected/6,row_offset=1,rows=0;
             for(int row=0;row<6 && page*6+row<count;row++) {
                 int index=page*6+row;char label[24],value[EXPR_TEXT];
                 equation_field(document,index,label,sizeof(label),value,sizeof(value));
                 if(index==model_equations(document) && ui->power_pending)snprintf(value,sizeof(value),"%s",ui->power_draft);
-                ui_field(row+row_offset,label,edit->active && index==*selected ? edit->text:value,
+                ui_field_eq(row+row_offset,label,edit->active && index==*selected ? edit->text:value,
                     index==*selected);
-                if(edit->active && index==*selected)
-                    ui_inline_draw(edit,138,31+(row+row_offset)*22,226,C_WHITE,UI_BLUE);
+                if(edit->active && index==*selected)ui_inline_field(edit,31+(row+row_offset)*22);
+                rows++;
             }
-            ui_form_hint(edit,"LEFT/RIGHT: edit");
+            ui_scrollbar(49,131,page*6,6,count);
+            if(rows<=4)equation_examples(document,*selected,31+(rows+row_offset)*22+6);
+            ui_form_hint_last(edit,"LEFT/RIGHT: edit",*selected==count-1);
         }
         if(menu){ui_progress(0);ui_equation_menu(menu,menu_page,variables);}
         else ui_softkeys("INIT",edit->active ? "FUNC":"",edit->active && variables ? "VAR":"","","","NEXT");

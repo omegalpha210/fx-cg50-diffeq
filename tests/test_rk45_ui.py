@@ -10,7 +10,7 @@ def run(keys,directory=None):
     assert p.returncode==0 and 'SCRIPT COMPLETE' in p.stdout and 'runtime error:' not in p.stderr,(p.stderr,p.stdout[-2000:])
     return p.stdout
 def tail(out):return out[out.rfind('\nKEY '):]
-def bar(out):return re.findall(r'TEXT \d+ 206 ([^\n]*)',tail(out))[-6:]
+def bar(out):return re.findall(r'TEXT \d+ 210 ([^\n]*)',tail(out))[-6:]
 def solves(out):return int(re.findall(r'solves=(\d+)',out)[-1])
 for entry,scalar in [('1 4',True),('2',False),('3 9 F6',False),('4 9 F6',False)]:
     params=entry+' F6 F6 '
@@ -43,7 +43,7 @@ for invalid in ['0','NEG 1']:
 graph=params+'F6 '
 assert solves(run(params+'EXE'))==solves(run(graph))
 failed=run('2 F6 1 EXE F6 DOWN DOWN RIGHT DOWN 1 EXP NEG 3 0 0 EXE F6 EXE LEFT')
-assert 'Step underflow' in failed and ': commit / next   EXIT: commit' in tail(failed)
+assert 'Step underflow' in failed and 'EXE: commit + next field   EXIT: commit' in tail(failed)
 base=run(graph+'F1')
 assert 'IC1 x=0 y=1' in base and solves(base)>0
 moved=run(graph+'F1 F4 '+('R:RIGHT '*70)+'EXIT')

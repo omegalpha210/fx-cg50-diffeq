@@ -20,11 +20,11 @@ void ui_event(Document *d)
     for(;;) {
         if(!menu) {
             ui_frame("Event Settings",NULL);
-            ui_field(0,"Enabled",d->event.enabled ? "ON":"OFF",selected==0);
-            ui_field(1,"E",edit.active ? edit.text:d->event.text,selected==1);
-            ui_field(2,"Direction",directions[d->event.direction],selected==2);
-            ui_field(3,"Action",d->event.action==EVENT_STOP ? "STOP":"MARK",selected==3);
-            if(edit.active)ui_inline_draw(&edit,138,53,226,C_WHITE,UI_BLUE);
+            ui_field_option(0,"Enabled",d->event.enabled ? "ON":"OFF",selected==0);
+            ui_field_eq(1,"E",edit.active ? edit.text:d->event.text,selected==1);
+            ui_field_option(2,"Direction",directions[d->event.direction],selected==2);
+            ui_field_option(3,"Action",d->event.action==EVENT_STOP ? "STOP":"MARK",selected==3);
+            if(edit.active)ui_inline_field(&edit,53);
             ui_form_hint(&edit,selected==1 ? (d->kind==EQ_SECOND ? "E=0; y1 is y'":"E(x, state)=0"):
                 (selected==2 ? "Crossing direction for increasing x":"LEFT/RIGHT: toggle"));
         }
@@ -126,6 +126,7 @@ void ui_solver_info(void)
             const char *label;char value[48];info_row(r,rows[i+top],&label,value,sizeof(value));
             ui_field(i,label,value,false);
         }
+        if(r->valid)ui_scrollbar(27,153,top,7,count);
         ui_form_hint(NULL,r->valid ? "Last trajectory run; UP/DOWN: scroll":NULL);
         ui_softkeys("","","","","","");dupdate();int key=ui_getkey().key;
         if(key==KEY_EXIT)return;

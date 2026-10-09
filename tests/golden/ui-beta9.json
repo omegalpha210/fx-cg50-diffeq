@@ -1,92 +1,92 @@
 {
   "main": {
     "keys": "",
-    "lines": 24,
-    "sha256": "0adfef1feb5165699a20faa68829f323e30c4c25cf2cc42d38ec62295ff1ac3c"
+    "lines": 26,
+    "sha256": "3cc19a5aad39f3e0ef14b8f3d8fa583f29dfe35eb3fb82289919364a37d6f099"
   },
   "equation": {
     "keys": "1 4 LEFT",
-    "lines": 78,
-    "sha256": "1e918a9378397f7b55a5a996f77fe3e5855c89e2b3028664c3583215f23809c7"
+    "lines": 95,
+    "sha256": "56fecd0932c6ff5e10774b43bfe07e3763a5f591123bd3773226a35c19c74258"
   },
   "ic": {
     "keys": "1 4 F6 DOWN",
-    "lines": 98,
-    "sha256": "13eeed11ecccec8d868264520a99f33ee028f07bb55ccbc30482b2097c38c619"
+    "lines": 116,
+    "sha256": "87520783021086166faeb3863f1b63c8e3517ca63ef3e15ba042155d2def0f8f"
   },
   "parameters": {
     "keys": "1 4 F6 F6",
-    "lines": 114,
-    "sha256": "db15d76828b775e9aa2944f5c049100ec14e1768c710ebe78a5e6f037e513628"
+    "lines": 129,
+    "sha256": "8511387d359fb5f22da067d111ae5c13a2149a7602a905e9c0bd3811e7daab04"
   },
   "vwindow": {
     "keys": "1 4 F6 F6 F3",
-    "lines": 146,
-    "sha256": "e5b181981d88bacbf904ad2398eba8f325b46c9ef13d50dab291f3ed71ee3a4b"
+    "lines": 161,
+    "sha256": "e83976e0559d4d05d9e500a8359b820b508f864e0ad144928b984e781b0cbc81"
   },
   "graph": {
     "keys": "1 4 F6 F6 F6",
-    "lines": 142,
-    "sha256": "ce3b00c335b55542f1c54fe415bb38c18e15b788988094a6097fb3d9c3217b58"
+    "lines": 157,
+    "sha256": "9e747d61e03112f57aef165481ed733e5df40fd5e6aa45c20b41109a72889e2a"
   },
   "trace": {
     "keys": "1 4 F6 F6 F6 F1 RIGHT RIGHT",
-    "lines": 172,
-    "sha256": "0a90cea32e342befb36a9d91a98731bf4b692149a9dfc9ae9423c0db16226760"
+    "lines": 187,
+    "sha256": "69419859c5281fe20740c0fc75c27bb7c6bcccfde923d88d22c8478ae960558c"
   },
   "gsolve": {
     "keys": "2 F6 F6 F6 F5 F1 EXE",
-    "lines": 158,
-    "sha256": "9b14383c8488e4053bc9dd9f362dee6f365da00750c5712eeb98db4155b951db"
+    "lines": 162,
+    "sha256": "edf8f68517866395f29fa91d84eb078154cd8df0c17324344102f9dc20f23453"
   },
   "gsolve-page2": {
     "keys": "1 4 F6 F6 F6 F5 F6",
-    "lines": 160,
-    "sha256": "0d6dc9ce8118b31649cf141da1c12e17cd876ad37d47b0b69e631d6406b7674a"
+    "lines": 175,
+    "sha256": "dcc8d9ede9261da639f2766273ed9421c3f451a46bb9c1aa39db3573f178f902"
   },
   "numeric-exit": {
     "keys": "1 4 F6 F6 F6 F5 F6 F1 NEG EXIT R:EXIT",
-    "lines": 191,
-    "sha256": "10ca6668aaf3760567ae6e3dcd9e42694eb18b81f82abffdc71519babd62506e"
+    "lines": 200,
+    "sha256": "28326577395b5c0769d49cc51da7f696e12a981a781cfb75aebbbcb6631ecbec"
   },
   "box": {
     "keys": "1 4 F6 F6 F6 F2 F5 RIGHT RIGHT EXE RIGHT RIGHT UP UP EXE",
-    "lines": 263,
-    "sha256": "c977cdf12614cb5cc05fe5d48610e9a4ffeb032ecd006aa43798e39aa573b90a"
+    "lines": 294,
+    "sha256": "68322b39fce70545255fd81a859e817d4e3c1e22e5e80eb603f06e91851c5a12"
   },
   "table": {
     "keys": "1 4 F6 F6 F6 F4",
-    "lines": 170,
-    "sha256": "837b4ed59e9bac155c2a34bd4d64fc1a2939a42c54942c90fa4cd02d29b17590"
+    "lines": 185,
+    "sha256": "a8c833dffc5c8b392069b1e26d672f19992e90e487c7ebc6b6479fc5c338451c"
   },
   "output": {
     "keys": "1 4 F6 DOWN S:MUL 1 COMMA 2 COMMA 3 S:DIV EXE F6 F4 RIGHT DOWN F3 RIGHT EXE",
-    "lines": 421,
-    "sha256": "e519ac6e01d23b65346d9d6ace0d65f1d4288a8692b507395fdf1ebaaf1e2e02"
+    "lines": 447,
+    "sha256": "a6e730674f824d4397ddf869fb37283361dd48bcd28f44cba739aa8d8faf43cf"
   },
   "event": {
     "keys": "1 4 F6 F6 F2 F1 RIGHT DOWN A:SUB SUB 1 0 EXE DOWN RIGHT F6 EXIT F6",
-    "lines": 486,
-    "sha256": "7ede372e9b40326e1795cef5cfda288159677b1237468531253553e08acfef8e"
+    "lines": 509,
+    "sha256": "bbe3bdcd851711df16552d82982e3364b10220267c0d36c116657bf1774cda8f"
   },
   "phase": {
     "keys": "4 2 F6 F6 F6 F6 F4 F2 F5 F2",
-    "lines": 199,
-    "sha256": "d9274775bdfdea3457f5a63c4b67dd5fea90d7c4296ee0079b37cb3440e720e5"
+    "lines": 210,
+    "sha256": "0ce7bae121d6bda13ad334877cbc480ed872119b5da51558a4d972c6fc521507"
   },
   "drawing-cancel": {
     "keys": "1 4 F6 F6 F6 TICKS:8 RIGHT EXIT",
-    "lines": 229,
-    "sha256": "e2217efa8cf6370d95bfeb1b46ad2f6c7017a31baa9291c8f7a971812eeba725"
+    "lines": 251,
+    "sha256": "22ac962b16833bbdb01cd6fa8ba227e02006e67bd85653c1090b5eb8c4d98fc8"
   },
   "table-cancel": {
     "keys": "1 4 F6 F6 F6 TICKS:8 F4 EXIT",
-    "lines": 210,
-    "sha256": "3f318c4ab8ba91ec3722e524d9a6ddc3a45a9709f9d17e76889754e88663c7df"
+    "lines": 225,
+    "sha256": "37daf082768fe8d7a7bf01fcdf8f806a11d92f4739c7c5de54018e9caeb143f7"
   },
   "domain": {
     "keys": "1 4 S:SQUARE 1 SUB XOT RIGHTP F6 F6 F6",
-    "lines": 234,
-    "sha256": "6b34902f2bfe36d93d4825dd12ac2ed72c43501a710b0f5987ce843a7208262a"
+    "lines": 274,
+    "sha256": "771d2cc65dc66ec55ef11baa5bdb34da6f8355ea7d21afd4934733c4b2aa9389"
   }
 }

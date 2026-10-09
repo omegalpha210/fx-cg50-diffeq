@@ -25,7 +25,7 @@ window='F3 NEG 6 EXE 6 EXE 1 EXE DOWN NEG 1 EXE 6 EXE 1 EXE F6 '
 subset=mixed+'F6 '+window+'F6 '
 cases=[
  ('normal','Normal Graph: six softkeys',colored,None),
- ('drawing','Drawing: same Graph, one blue bottom bar',colored+'TICKS:8 RIGHT','Drawing... /'),
+ ('drawing','Drawing: same Graph, one dark bottom bar',colored+'TICKS:8 RIGHT','Drawing...'),
  ('table','Table keeps its dedicated preparation page',colored+'TICKS:8 F4','Preparing Table... /'),
  ('output-five','Five IC: independent visibility and retained colors',mixed,None),
  ('output-ten-first','Ten IC: seven rows on first page',ten+'F4 DOWN RIGHT',None),

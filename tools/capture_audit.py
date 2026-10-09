@@ -22,7 +22,7 @@ for i,choice in enumerate(['RIGHT ','','DOWN RIGHT RIGHT ','RIGHT RIGHT ','DOWN 
 colored=five+colors+'F6 F3 NEG 6 EXE 6 EXE 1 EXE DOWN NEG 1 EXE 6 EXE 1 EXE F6 F6 '
 cases=[
  ('table-busy','Table: blue header, cancel row, hidden softkeys','2 F6 F6 F6 TICKS:8 F4','Preparing Table... /'),
- ('drawing-busy','Drawing: Graph retained; bottom blue busy bar','2 F6 F6 TICKS:8 F6','Drawing... /'),
+ ('drawing-busy','Drawing: Graph retained; bottom dark busy bar','2 F6 F6 TICKS:8 F6','Drawing...'),
  ('sf50','SF50 accepted; default remains12','1 4 F6 F6 '+'DOWN '*5+'5 0 EXE',None),
  ('sf51-error','SF51: inline range error, field retained','1 4 F6 F6 '+'DOWN '*5+'5 1 EXE',None),
  ('output-single','Single IC: existing y row',params(1)+'F4',None),

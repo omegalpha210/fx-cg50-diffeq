@@ -233,7 +233,7 @@ Older add-ins may reject new saves; adaptations are explained in the
 |---|---|
 | Main Menu | Digits 1–6 open 1st/2nd/N-th/SYS/RCL/SAVE; arrows select by row/column with wrap, EXE or F6 OPEN opens; F1–F5 blank |
 | Selected ordinary field | UP/DOWN selects cyclically; LEFT/RIGHT starts editing; EXE runs NEXT/GRAPH/DONE/OPEN |
-| Editing | EXE commits and selects the next field; the last field stays. EXIT commits and stays |
+| Editing | EXE commits and selects the next field; on the last field it only commits. EXIT commits and stays |
 | Equation | F1 INIT; F2 FUNC/F3 VAR only in EDIT (VAR in supported modes). EXIT closes the token bar first |
 | OUTPUT | LEFT/RIGHT toggles visibility rows (IC color rows ignore it); F1 INIT, F3 COLOR, F6 DONE. EXE follows the output rows |
 | Parameters | F1 INIT; F2 ADV → EVENT/INFO; Method: LEFT/RIGHT toggles RK4/RK45; F3 V-WIN, F4 OUTPUT, F5 SET, F6 GRAPH |
@@ -269,11 +269,13 @@ EXIT cancels either stage without changing the view. TIME/PHASE windows stay sep
 
 TRACE, G-Solve and BOX share a local 9px black cross with white center; existing 2px
 curve blink stays. G-Solve selection uses **UP/DOWN: SELECT GRAPH, EXE: SELECT**
-at the graph's top-left, temporarily replacing any warning and restoring it on exit.
-EXE alone is blue and normal weight. **One EXIT from selection/results returns to
+at the graph's top-left, temporarily replacing any warning and restoring it on exit,
+while the F1–F5 area names the candidate curve (e.g. **IC1 y**) beside a swatch
+blinking with that curve. EXE alone is blue and normal weight. **One EXIT from selection/results returns to
 G-Solve; another fresh EXIT returns Graph.** Held EXIT cannot skip layers. Scratch
 query cancellation preserves the original plot and trajectory diagnostics.
-Results keep their lower-left panel; a hidden marker causes only the minimum Y
+Results show a header naming the curve and mode (e.g. **IC1 y' MAX 1/2**) with
+x/y values in the F1–F5 area; a hidden marker causes only the minimum Y
 translation, retaining X/scales/Y span and the existing numerical result. A safely
 visible marker leaves the view unchanged; result cycling does not rerun G-Solve.
 
@@ -284,7 +286,7 @@ delay, at most 8 Hz; only the bar refreshes. Completion/cancellation restores th
 normal controls and preserves accepted results and Last calculation. Initial
 Graph entry establishes axes once; cancelling it returns Parameters.
 **Table** keeps its dedicated blue preparation header, white EXIT row/body and
-hidden softkeys. TRACE/G-Solve retain lower-panel **CALCULATING...** feedback.
+hidden softkeys. TRACE/G-Solve show **CALCULATING...** in the same full-width bottom bar.
 
 **Output: independent ON/OFF and color for every first-order IC.** Select `y`
 for one IC or `IC1 y`–`IC10 y` for multiple ICs. LEFT/RIGHT toggles the selected

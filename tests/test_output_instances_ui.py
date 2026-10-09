@@ -10,7 +10,7 @@ def run(keys):
         assert 'SCRIPT COMPLETE' in result.stdout
         return result.stdout[result.stdout.rfind('\nKEY '):]
 def rows(out):return re.findall(r'^TEXT 20 \d+ ([^\n]*)',out,re.M)
-def states(out):return re.findall(r'^TEXT 144 \d+ ([^\n]*)',out,re.M)
+def states(out):return re.findall(r'^TEXT 144 (?!210 )\d+ ([^\n]*)',out,re.M)  # not the F-key row
 def plot(out):return re.findall(r'^PLOT (\w+)',out,re.M)[-1]
 def entry(count):
     values=' COMMA '.join(' '.join(str(i)) for i in range(1,count+1))

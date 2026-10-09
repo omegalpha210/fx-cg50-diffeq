@@ -17,8 +17,8 @@ def run(keys,images=False,directory=None):
 def tail(out):return next(p for p in reversed(out.split('\nKEY ')) if 'TEXT ' in p)
 def bar(out):
     keys=['']*6;previous=5
-    for x,text in reversed(re.findall(r'TEXT (\d+) 206 ([^\n]*)',tail(out))):
-        slot=(int(x)-6)//64
+    for x,text in reversed(re.findall(r'TEXT (\d+) 210 ([^\n]*)',tail(out))):
+        slot=int(x)//66
         if slot>previous:break
         if 0<=slot<6:keys[slot]=text+keys[slot];previous=slot
     return keys
@@ -27,8 +27,8 @@ def plot(out):return re.findall(r'^PLOT (\w+)',out,re.M)[-1]
 def rgb(c):return bytes([(c>>11&31)*255//31,(c>>5&63)*255//63,(c&31)*255//31])
 def pixel(data,x,y):return data[(y*396+x)*3:(y*396+x)*3+3]
 main,data=run('',True)
-assert 'EXE' not in tail(main) and 'TEXT 14 188 MENU\n' in main
-assert 'TEXT 47 188 : return to MAIN MENU\n' in main
+assert 'EXE' not in tail(main) and 'HINT 14 188 MENU: return to MAIN MENU' in main
+assert 'TEXT 18 188 MENU\n' in main and 'TEXT 58 188 return to MAIN MENU' in main  # red MENU key cap
 colors={pixel(data,x,y) for y in range(184,201) for x in range(6,390)}
 assert rgb(0xf800) in colors and rgb(0x001f) not in colors
 # Shared tile borders, clear horizontal/vertical gutters, same six shortcuts.
@@ -41,9 +41,17 @@ for entry in ['1 1','1 2','1 3','1 4','2','3 9 F6','4 9 F6']:
     assert 'EXE' not in tail(run(entry))
     assert 'EXE' not in tail(run(entry+' F6'))
     edit=tail(run(entry+' LEFT'))
-    assert 'TEXT 14 188 EXE\n' in edit and ': commit / next   EXIT: commit' in edit
+    assert 'TEXT 18 188 EXE\n' in edit and ('HINT 14 188 EXE: commit + next field   EXIT: commit\n' in edit
+        or 'HINT 14 188 EXE/EXIT: commit\n' in edit)
+# EXE on a non-last field commits and moves on; on the last field it only
+# commits, and only the next EXE (or F6) leaves the screen.
+first=tail(run('1 1 LEFT'));assert 'HINT 14 188 EXE: commit + next field   EXIT: commit\n' in first
+last=tail(run('1 1 DOWN LEFT'));assert 'HINT 14 188 EXE/EXIT: commit\n' in last
+assert 'Initial Conditions' not in run('1 1 DOWN LEFT ACON 2 EXE')
+assert 'Initial Conditions' in tail(run('1 1 DOWN LEFT ACON 2 EXE EXE'))
+assert 'Initial Conditions' in tail(run('1 1 DOWN LEFT ACON 2 EXE F6'))
 _,edit=run('1 4 LEFT',True)
-assert all(pixel(edit,144,y)==rgb(0xffff) for y in range(56,70)) # Value-column caret.
+assert all(pixel(edit,144,y)==rgb(0x198a) for y in range(56,70)) # Ink caret in the white edit box.
 _,selected=run('1 4',True)
 assert any(pixel(selected,144,y)!=rgb(0xffff) for y in range(56,70))
 error=run('1 4 SIN F6')
@@ -69,7 +77,7 @@ for pixels in [on_pixels,off_pixels]:
     assert all(pixel(pixels,x,40)==rgb(0xf81f) for x in range(335,363))
     assert all(pixel(pixels,x,38)==rgb(0xffff) for x in range(335,363))
 palette=tail(run(output+'F3'))
-assert 'TEXT 90 169 EXE\n' in palette and ': SELECT   EXIT: cancel' in palette
+assert 'TEXT 94 169 EXE\n' in palette and 'HINT 90 169 EXE: SELECT   EXIT: cancel' in palette  # EXE key cap
 # Every critical replacement has the same safe confirmation grammar.
 for path in ['6','5 2','3 3 F6 5 EXIT EXIT 2 F6','3 3 F6 OPTN']:
     out=run(path)

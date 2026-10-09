@@ -31,7 +31,7 @@ def run(keys, pixels=False):
 
 
 def bar(out):
-    return re.findall(r'TEXT \d+ 206 ([^\n]*)', out)[-6:]
+    return re.findall(r'TEXT \d+ 210 ([^\n]*)', out)[-6:]
 
 
 def last(out, field):
@@ -50,9 +50,13 @@ def values(out):
 
 def verify_busy(out, frames, label):
     drawing = label == 'Drawing...'
-    anchor = 'TEXT 11 206 ' if drawing else 'TEXT 14 9 '
-    phases = re.findall(r'^' + anchor + re.escape(label) + r' ([/\\|\-])$', out, re.M)
-    assert phases[:4] == ['/', '-', '\\', '|'], phases
+    anchor = 'TEXT 10 210 ' if drawing else 'TEXT 14 9 '
+    if drawing:  # Label alone; progress is a stepped block, not a glyph.
+        assert len(re.findall(r'^' + anchor + re.escape(label) + r'$', out, re.M)) >= 4
+    else:
+        phases = re.findall(r'^' + anchor + re.escape(label) + r' ([/\\|\-])$', out, re.M)
+        assert phases[:4] == ['/', '-', '\\', '|'], phases
+    blocks = []
     pending = False
     count = 0
     previous = None
@@ -65,16 +69,20 @@ def verify_busy(out, frames, label):
                 if drawing:
                     assert previous is not None
                     assert rgb[:202*396*3] == previous[:202*396*3]
-                    assert rgb[220*396*3:] == previous[220*396*3:]
-                    # Every former separator is now solid application blue.
-                    for x in [69,133,197,261,325,389]:
-                        assert rgb[(203*396+x)*3:(203*396+x)*3+3] == bytes([24,80,197])
+                    # One full-width dark bar (rows 203..223, x 1..394).
+                    for x in [1, 200, 394]:
+                        assert rgb[(207*396+x)*3:(207*396+x)*3+3] == bytes([41, 56, 90])
+                    accent = [x for x in range(396) if rgb[(213*396+x)*3:(213*396+x)*3+3] == bytes([49, 129, 255])]
+                    assert len(accent) == 24
+                    blocks.append(accent[0])
                 else:
                     assert rgb[44*396*3:] == b'\xff' * ((224-44)*396*3)
                 count += 1
             pending = False
             previous = rgb
     assert count >= 4
+    # The block steps 24px per phase around a 96px track.
+    assert all((b - a) % 96 == 24 for a, b in zip(blocks, blocks[1:4])), blocks
 
 
 prior, _ = run(base)
@@ -105,7 +113,7 @@ assert bar(initial) == PARAMETERS
 params, _ = run('2 F6 F6')
 assert last(initial, 'REPORT') == last(params, 'REPORT')
 fast, _ = run('2 F6 F6 TICKS:0 F6')
-assert 'TEXT 11 206 Drawing...' not in fast and bar(fast) == BASE
+assert 'TEXT 10 210 Drawing...' not in fast and bar(fast) == BASE
 # Page buffers already contain all visible columns: column-only motion and an
 # unchanged row position must reuse them without solver work or spinner flash.
 for prefix, suffix in [(base + 'F4 ', 'F3'),

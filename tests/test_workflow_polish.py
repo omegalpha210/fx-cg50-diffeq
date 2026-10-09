@@ -11,7 +11,7 @@ def run(keys,directory=None):
     return p.stdout
 def tail(out):return next(p for p in reversed(out.split('\nKEY ')) if 'TEXT ' in p)
 def plot(out):return re.findall(r'^PLOT (\w+)',out,re.M)[-1]
-def bar(out):return re.findall(r'TEXT \d+ 206 ([^\n]*)',tail(out))[-6:]
+def bar(out):return re.findall(r'TEXT \d+ 210 ([^\n]*)',tail(out))[-6:]
 def metrics(out):return tuple(map(int,re.findall(r'METRICS solves=(\d+) searches=(\d+) reads=(\d+) writes=(\d+) opens=(\d+) closes=(\d+)',out)[-1]))
 def progress(out,n):
     found=re.findall(r'TEXT \d+ 9 ([123]/3)\n',tail(out));assert found==([f'{n}/3'] if n else []),tail(out)

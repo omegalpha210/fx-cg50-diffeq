@@ -1,5 +1,25 @@
 # Changelog
 
+## Unreleased — UI/UX refresh (visual only)
+
+- Full-width (396px) header with accent rule and 3-step stage indicator; F-keys are
+  full-width dark tabs with a 3px semantic band (GRAPH/RUN filled), empty slots blank.
+- Key-cap hints (`EXE:`, `LEFT/RIGHT:` …) and precise edit hints: a non-last field says
+  "commit + next field", the last says "EXE/EXIT: commit" (existing EXE rule unchanged).
+- Pale selected rows with accent bar, white bordered edit box, `=` for equations/ICs/Event E,
+  `:` for settings, LEFT/RIGHT arrows on option rows, AUTO/MAN chips, scrollbars on long lists.
+- Error banner; the edited culprit field turns red. Confirmations are cards over the dimmed screen.
+- Equation template card and per-field example chips; IC solution chips in curve colors.
+- Table: right-aligned numbers, curve-colored column headers, scrollbar. TRACE swatch, readout hairlines.
+- Crisp 1px geometry only: no rounded corners, no synthetic bold, no new fonts/bitmaps.
+- G-Solve results name the curve (`IC1 y' MAX 1/2`); x and y sit in the F1-F5 info panel.
+- Graph selection and Y-CAL/X-CAL prompts name the highlighted curve (blinking swatch) in that panel.
+- CALCULATING… (G-Solve and TRACE) uses the full-width bottom bar with EXIT cancels, like Drawing.
+- Fix: hardware TLB-miss crash on every G-Solve result (fxlibc printf has no `%.*g`; host libc
+  hid it). Literal precisions only; new `firmware_printf_formats` test scans all formats.
+- Solver, parser, storage, power, TRACE/plot geometry (384x198 plot) untouched: numerical golden and
+  all 18 UI-golden REPORT/FRAME sequences identical; UI golden pixels re-recorded once.
+
 ## v0.12.0-beta.10 — Source and workspace cleanup, preserved behavior
 
 - Remove four proven unused functions; separate Graph rendering and Zoom input.

@@ -118,6 +118,8 @@ const char *ui_equation_token(int kind,int page,int variables,int key)
     if(key<KEY_F1 || key>KEY_F5 || index<0 || index>=count)return "";
     return kind==1 ? variable_tokens[index]:function_tokens[index];
 }
+void ui_inline_field(const UiInlineEdit *edit,int y)
+{ui_inline_draw(edit,138,y,226,UI_INK,C_WHITE);ui_edit_frame(y);}
 void ui_inline_draw(const UiInlineEdit *edit,int x,int y,int width,int foreground,int background)
 {ui_inline_draw_cursor(edit,x,y,width,foreground,background,true);}
 void ui_inline_draw_cursor(const UiInlineEdit *edit,int x,int y,int width,int foreground,int background,bool cursor)

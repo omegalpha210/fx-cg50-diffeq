@@ -4,13 +4,19 @@ from pathlib import Path
 app=str(Path(sys.argv[1]).resolve())
 BASE=['TRACE','ZOOM','V-WIN','TABLE','G-SLV','INIT']
 PAGE=['Y-CAL','X-CAL','','','','<']
+def cells(out,y):
+    """Right-aligned Table cells at physical row y, keyed by column (125px bands)."""
+    found={}
+    for x,t in re.findall(r'TEXT (\d+) '+str(y)+r' ([^\n]*)',out):
+        if 12<=int(x)<387:found[(int(x)-12)//125]=t
+    return found
 def run(keys):
     with tempfile.TemporaryDirectory() as directory:
         p=subprocess.run([app],cwd=directory,env=dict(os.environ,DIFFEQ_HOST_KEYS=keys,DIFFEQ_HOST_MAX_FRAMES='2000'),capture_output=True,text=True,timeout=15)
         assert p.returncode==0 and 'SCRIPT COMPLETE' in p.stdout and 'runtime error:' not in p.stderr,(keys,p.stderr,p.stdout[-1000:])
         return p.stdout
 def tail(s):return s[s.rfind('\nKEY '):]
-def bar(s):return re.findall(r'TEXT \d+ 206 ([^\n]*)',s)[-6:]
+def bar(s):return re.findall(r'TEXT \d+ 210 ([^\n]*)',s)[-6:]
 def last(s,name):return re.findall(r'^'+name+r' (\w+)',s,re.M)[-1]
 def work(s):return re.findall(r'METRICS solves=(\d+) searches=(\d+)',s)[-1]
 scalar='1 4 1 EXE F6 DOWN 0 EXE F6 F6 '
@@ -34,27 +40,28 @@ for graph in [scalar,subset]:
         assert 'Invalid number' in tail(run(prompt+'NEG EXE'))
         # F6 no longer advertises or commits a temporary numerical prompt.
         uncommitted=run(prompt+'2 DOT 5 F6');assert work(uncommitted)==work(opened)
-        assert bar(uncommitted)==['']*6
-assert 'X=0.5' in tail(run(scalar+'F5 F6 F1 0 DOT 5 EXE'))
-assert 'Y=0.5' in tail(run(scalar+'F5 F6 F2 0 DOT 5 EXE'))
+        panel=re.findall(r'TEXT \d+ 210 ([^\n]*)',tail(uncommitted))[-3:]
+        assert panel[0].startswith('IC') and panel[1] in ('Y-CAL','X-CAL') and panel[2]==''
+assert 'TEXT 9 210 x=0.5\n' in tail(run(scalar+'F5 F6 F1 0 DOT 5 EXE'))
+assert 'TEXT 169 210 y=0.5\n' in tail(run(scalar+'F5 F6 F2 0 DOT 5 EXE'))
 # The sparse mapping is IC2 then IC5, never hidden IC1/3/4.
 assert 'IC2 x=0 y=2' in tail(run(subset+'F1'))
 assert 'IC5 x=0 y=5' in tail(run(subset+'F1 DOWN'))
 assert 'IC2 x=0 y=2' in tail(run(subset+'F1 DOWN DOWN'))
-assert 'Y=2' in tail(run(subset+'F5 F6 F1 EXE 0 EXE'))
-assert 'Y=5' in tail(run(subset+'F5 F6 F1 DOWN EXE 0 EXE'))
+assert 'TEXT 169 210 y=2\n' in tail(run(subset+'F5 F6 F1 EXE 0 EXE'))
+assert 'TEXT 169 210 y=5\n' in tail(run(subset+'F5 F6 F1 DOWN EXE 0 EXE'))
 assert 'ICPT: Not found' in tail(run(subset+'F5 F5'))
 # A single remaining family skips selection; fewer than two cannot do ICPT.
 one=five+'F4 RIGHT DOWN RIGHT DOWN RIGHT DOWN RIGHT F6 F6 '
 assert 'SELECT GRAPH' not in run(one+'F5 F6 F1')
-assert 'Y=5' in tail(run(one+'F5 F6 F1 0 EXE'))
+assert ' y=5' in tail(run(one+'F5 F6 F1 0 EXE'))
 assert 'ICPT: Not available' in tail(run(one+'F5 F5'))
 all_off=five+'F4 '+('RIGHT DOWN '*5)+'F6 F6 '
 assert 'No visible graph' in tail(run(all_off+'F1'))
 assert bar(run(all_off+'F1 EXIT'))==BASE
 assert 'ROOT: Not available' in tail(run(all_off+'F5 F1'))
 assert 'ICPT: Not available' in tail(run(all_off+'F5 F5'))
-assert re.findall(r'TEXT 16 49 ([^\n]+)',tail(run(all_off+'F4')))==['x']
+assert list(cells(tail(run(all_off+'F4')),49).values())==['x']
 # A visibility-only edit is an input preference, just like an existing color edit.
 # The dimension-change guard must not silently reset it with untouched equations/ICs.
 changed='1 4 F6 F6 F4 RIGHT F6 EXIT EXIT EXIT EXIT 3 F6 '

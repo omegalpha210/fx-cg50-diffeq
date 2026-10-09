@@ -76,8 +76,9 @@ assert plot(run(edited+' EXIT EXIT F6 F6 '*30))==plot(baseline)
 _,images=run('2 F6 F6',frames=True)
 rgb=images[-1].split(b'\n',3)[3]
 def pixel(x,y): return rgb[(y*396+x)*3:(y*396+x)*3+3]
-assert pixel(327,203)==bytes([255,0,0])
-assert all(pixel(7+64*i,203)!=bytes([255,0,0]) for i in range(5))
+# Full-width tabs: GRAPH alone is a filled red tab; the others keep the dark tab.
+assert pixel(340,212)==bytes([213,32,32])
+assert all(pixel(10+66*i,212)!=bytes([213,32,32]) for i in range(5))
 
 prefix='1 4 F6 F6 F3 NEG 6 DOT 3 EXE 6 DOT 3 EXE EXIT'
 run(prefix,['TEXT 144 35 -6\n','TEXT 144 57 6\n'])
@@ -96,12 +97,12 @@ run('1 4 F6 F6 F3 NEG 7 EXE EXIT EXIT EXIT EXIT EXIT 2 F6 F6 F3',['View Window',
 
 graph='2 F6 F6 F6 '
 run(graph+'F5 F1 EXE RIGHT',['UP/DOWN: SELECT GRAPH,','ROOT 2/4'])
-run(graph+'F5 F2 EXE',['MAX 1/1','Y=1'])
+run(graph+'F5 F2 EXE',['IC1 y MAX 1/1\n','TEXT 9 210 x=','TEXT 169 210 y=1\n'])
 run(graph+'F5 F3 EXE RIGHT',['MIN 2/2'])
-run(graph+'F5 F4 EXE',['Y-ICPT 1/1','X=0','Y=1'])
+run(graph+'F5 F4 EXE',['IC1 y Y-ICPT 1/1\n','TEXT 9 210 x=0\n','TEXT 169 210 y=1\n'])
 run(graph+'F5 F5 RIGHT',['ICPT 2/4'])
 run('1 4 F6 F6 F6 F5 F5',['ICPT: Not available'])
-run(graph+'F5 F6 F1 EXE 1 EXE',['Y-CAL 1/1','X=1','Y=0.540302'])
+run(graph+'F5 F6 F1 EXE 1 EXE',['IC1 y Y-CAL 1/1\n','TEXT 9 210 x=1\n','TEXT 169 210 y=0.540302'])
 run(graph+'F5 F6 F2 EXE 0 EXE RIGHT',['X-CAL 2/4'])
 run(graph+'F5 RIGHT F2 EXE',['MAX 1/2'])
 run(graph+'F1 DOWN RIGHT',["IC1 x=0 y'=0","IC1 x=0.03333333 y'=-0.03327778"])
@@ -131,3 +132,19 @@ run('4 2 F6 F6 F6 F6 F4 F3 F2 F3 F5',
 run(graph+'EXIT EXIT EXIT EXIT 5 1',['Recall','DIFF EQ / Linear 2nd'])
 run('EXIT EXIT 6 EXE EXE EXIT',['No session.','SCRIPT COMPLETE'])
 print('UI workflows: seven families, return/drafts, 9 states, modifiers, range, G-Solve/TRACE, menu counters, Table/STAT passed.')
+# G-Solve results name the curve above (IC<n> <variable> <MODE> i/n); the
+# coordinates sit in the F1-F5 info panel: x left, <variable>= from the centre.
+run('2 F6 F6 F6 F5 F1 EXE',["IC1 y ROOT 1/4\n","TEXT 9 210 x=-4.7123929\n","TEXT 169 210 y="])
+run("2 F6 F6 F6 F5 F2 DOWN EXE",["IC1 y' MAX 1/2\n","TEXT 9 210 x=-1.5707976\n","TEXT 169 210 y'=0.9999999\n"])
+run("2 F6 F6 F6 F5 F4 DOWN EXE",["IC1 y' Y-ICPT 1/1\n","TEXT 9 210 x=0\n","TEXT 169 210 y'=0\n"])
+run('2 F6 F6 F6 F5 F5',["IC1 y & IC1 y' ICPT 1/4\n",'TEXT 9 210 x='])
+# Graph selection names the highlighted candidate (swatch + name) and context.
+run('2 F6 F6 F6 F5 F2 DOWN',["TEXT 23 210 IC1 y'\n",'TEXT 169 210 MAX: graph 2/2\n','CANCEL'])
+run('3 3 F6 F6 F6 F6 F5 F5 EXE DOWN',['TEXT 169 210 ICPT with IC1 y\n'])
+run('2 F6 F6 F6 F5 F6 F1 DOWN EXE',["TEXT 23 210 IC1 y'\n",'TEXT 169 210 Y-CAL\n'])
+# CALCULATING... uses the full-width bottom bar (label + EXIT cancels), not a corner patch.
+slow=run('2 F6 F6 DOWN DOWN RIGHT F6 TICKS:8 CANCEL:12 F5 F1 EXE')
+assert 'TEXT 10 210 CALCULATING...' in slow
+# TRACE preparation uses the same bar (no lower-left patch any more).
+slow=run('2 F6 F6 DOWN DOWN RIGHT F6 TICKS:8 CANCEL:12 F1')
+assert 'TEXT 10 210 CALCULATING...' in slow and 'TEXT 13 188 CALCULATING' not in slow
